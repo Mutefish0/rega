@@ -1,0 +1,3 @@
+#!/bin/bash
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+deno run --unstable-webgpu --unstable-ffi --allow-ffi --allow-net --allow-env --allow-read  --allow-write  --allow-hrtime ${SCRIPT_DIR}/index.js

@@ -1,0 +1,3 @@
+[submodule "packages/three.js"]
+	path = packages/three.js
+	url = git@github.com:Mutefish0/three.js.git
