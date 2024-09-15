@@ -26,7 +26,7 @@ export default defineConfig({
       external: [
         "jsr:@mutefish/gamepad-api",
         "jsr:@gfx/canvas@0.5.6",
-        "https://jsr.io/@mutefish/web-audio-api/0.1.2/mod.ts",
+        "https://jsr.io/@mutefish/web-audio-api/0.1.4/mod.ts",
         "node:module",
         "node:fs",
         "node:path",

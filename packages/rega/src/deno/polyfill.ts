@@ -1,5 +1,5 @@
 // @ts-ignore
-import { AudioContext } from "https://jsr.io/@mutefish/web-audio-api/0.1.2/mod.ts";
+import { AudioContext } from "https://jsr.io/@mutefish/web-audio-api/0.1.4/mod.ts";
 // @ts-ignore
 import { Image as UImage } from "jsr:@gfx/canvas@0.5.6";
 import { resolvePath } from "utils";
