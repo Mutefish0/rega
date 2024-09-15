@@ -1,5 +1,11 @@
 # Celeste Classic port
 
+<div style="display:flex;flex-direction:row;">
+<img width="300" alt="截屏2024-09-15 22 05 46" src="https://github.com/user-attachments/assets/a02280c5-b297-4ea4-bb44-bcfeca670a6d">
+<img width="300" alt="截屏2024-09-15 22 06 05" src="https://github.com/user-attachments/assets/46790e4d-0e23-4258-8f4c-7c25642740c1">
+<img width="300" alt="截屏2024-09-15 22 09 23" src="https://github.com/user-attachments/assets/e779fc9c-0475-4995-aa8b-702a32523f51">
+</div>
+
 A port of the PICO-8 game Celeste Classic built with Rega.
 
 Play in your browser:
