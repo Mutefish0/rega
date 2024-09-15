@@ -1,4 +1,4 @@
-# Celeste Classic
+# Celeste Classic port
 
 A port of the PICO-8 game Celeste Classic built with Rega.
 
