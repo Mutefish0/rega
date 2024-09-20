@@ -1,5 +1,4 @@
 import { View, Text, Animation, RigidBody2D } from "rega";
-import font from "../ui/font";
 
 const animConfig = {
   steps: ["#fff1e8", "#ff004d"],
@@ -14,7 +13,7 @@ export default function Lifeup() {
         config={animConfig}
         renderItem={(color) => (
           <View style={{ height: 20 }}>
-            <Text style={{ fontSize: 6, color }} font={font}>
+            <Text style={{ fontFamily: "celeste", fontSize: 6, color }}>
               1000
             </Text>
           </View>

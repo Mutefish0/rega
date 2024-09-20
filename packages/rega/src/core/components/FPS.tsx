@@ -4,11 +4,10 @@ import Text, { TextStyle } from "./UI/Text";
 import useFrame from "../hooks/useFrame";
 
 interface Props {
-  font: any;
   style: TextStyle;
 }
 
-export default function FPS({ font, style }: Props) {
+export default function FPS({ style }: Props) {
   const [fps, setFps] = useState(0);
   const frames = useRef(0);
   const timeElapsed = useRef(0);
@@ -25,7 +24,7 @@ export default function FPS({ font, style }: Props) {
 
   return (
     <GUIView>
-      <Text style={style} font={font}>{`FPS ${fps}`}</Text>
+      <Text style={style}>{`FPS ${fps}`}</Text>
     </GUIView>
   );
 }

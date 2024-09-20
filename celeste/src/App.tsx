@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
-import { TextureManager, SoundManager, Editor, Box2D, Order, FPS } from "rega";
+import {
+  TextureManager,
+  SoundManager,
+  FontManager,
+  Editor,
+  Box2D,
+  Order,
+  FPS,
+} from "rega";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
 import Camera from "./camera";
-import font from "./ui/font";
 
 export default function App() {
   const [loadingTexture, setLoadingTexture] = useState(true);
@@ -11,8 +18,9 @@ export default function App() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png", "/images/font.bmp"];
+    const textures: string[] = ["/images/atlas.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
+
     const sounds: string[] = [
       "/sounds/area1.mp3",
       "/sounds/area2.mp3",
@@ -36,7 +44,13 @@ export default function App() {
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 
-    Promise.all([p1, p2])
+    const p3 = FontManager.add("celeste", {
+      type: "bitmap",
+      url: "/fonts/font.bmp",
+      charSize: [8, 8],
+    });
+
+    Promise.all([p1, p2, p3])
       .then(() => {
         setLoadingTexture(false);
       })
@@ -56,8 +70,8 @@ export default function App() {
   const appElement = (
     <>
       <FPS
-        font={font}
         style={{
+          fontFamily: "celeste",
           marginLeft: "auto",
           fontSize: 12,
           margin: 16,

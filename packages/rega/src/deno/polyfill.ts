@@ -25,6 +25,8 @@ function getMimeByUrl(url: string) {
     mime = "image/x-icon";
   } else if (url.endsWith(".png")) {
     mime = "image/png";
+  } else if (url.endsWith(".json")) {
+    mime = "application/json";
   }
   return mime;
 }

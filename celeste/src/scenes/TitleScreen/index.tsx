@@ -10,7 +10,7 @@ import {
   GamepadInput,
   TextStyle,
 } from "rega";
-import font from "../../ui/font";
+
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "../Level/celesteLevel";
 import Snow from "../Snow";
 
@@ -19,6 +19,7 @@ interface Props {
 }
 
 const textStyle: TextStyle = {
+  fontFamily: "celeste",
   fontSize: 7,
   letterSpacing: -3,
   color: "#5f574f",
@@ -91,7 +92,6 @@ export default function TitleScreen({ onStart }: Props) {
               }}
             >
               <Text
-                font={font}
                 style={{
                   ...textStyle,
                   color,
@@ -101,12 +101,8 @@ export default function TitleScreen({ onStart }: Props) {
               >
                 x+c
               </Text>
-              <Text font={font} style={{ ...textStyle, color }}>
-                matt thorson
-              </Text>
-              <Text font={font} style={{ ...textStyle, color }}>
-                noel berry
-              </Text>
+              <Text style={{ ...textStyle, color }}>matt thorson</Text>
+              <Text style={{ ...textStyle, color }}>noel berry</Text>
             </View>
           </>
         )}

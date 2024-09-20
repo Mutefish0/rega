@@ -1,22 +1,19 @@
 import { useMemo, useState, useCallback } from "react";
-import Sprite2D from "../Sprite2D";
 import Relative from "../../primitives/Relative";
 import { Node, MeasureMode } from "yoga-layout";
 import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
-import BMPFont from "../../font/BMPFont";
+import TFFont, { GlyphData } from "../../font/TFFont";
 
-interface SpriteTextProps {
-  font: BMPFont;
+interface TextProps {
+  font: TFFont;
   children: string;
   style: TextStyle;
 }
 
 interface TextLayout {
-  segments: Array<
-    Array<{ clip: [number, number, number, number]; code: number }>
-  >;
+  segments: Array<Array<GlyphData>>;
 }
 interface ViewLayout {
   width: number;
@@ -26,16 +23,17 @@ interface ViewLayout {
 }
 
 function splitText(
-  charWidth: number,
+  glyphs: Array<{ ha: number }>,
   letterSpacing: number,
-  charCount: number,
   maxWidth: number
 ): Array<[number, number]> {
   const result: Array<[number, number]> = [];
+  const charCount = glyphs.length;
   let currentWidth = 0;
   let startIndex = 0;
 
   for (let i = 0; i < charCount; i++) {
+    const charWidth = glyphs[i].ha;
     // 计算当前字符的宽度，只在不是第一字符时才考虑间距
     const charTotalWidth = charWidth + (i > startIndex ? letterSpacing : 0);
 
@@ -56,7 +54,7 @@ function splitText(
   return result;
 }
 
-export default function SpriteText({ children, font, style }: SpriteTextProps) {
+export default function TypefaceText({ children, font, style }: TextProps) {
   const {
     fontSize,
     letterSpacing = 0,
@@ -64,27 +62,13 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
     lineHeight = fontSize,
     backgroundColor,
   } = style;
+
+  const scale = useMemo(() => fontSize / font.fontSize, [font]);
+
   const [layout, setLayout] = useState<{
     textLayout: TextLayout;
     viewLayout: ViewLayout;
   }>();
-
-  const clips = useMemo(() => {
-    const codes = children
-      ? children.split("").map((c) => c.charCodeAt(0))
-      : [];
-
-    const clips = codes
-      .map((c, i) => ({ clip: font.getClip(c), code: codes[i] }))
-      .filter((c) => !!c.clip);
-
-    return clips;
-  }, [children]);
-
-  const charWidth = useMemo(
-    () => fontSize * font.aspectRatio,
-    [font.aspectRatio, fontSize]
-  );
 
   const textStyle = useMemo(() => {
     return {
@@ -93,18 +77,22 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
     };
   }, [style, layout]);
 
+  const { glyphs, chars } = useMemo(() => {
+    const chars = children.split("").filter((char) => font.getGlyph(char));
+    const glyphs = chars.map((char) => font.getGlyph(char)!);
+    return {
+      chars,
+      glyphs,
+    };
+  }, [children, font]);
+
   function _handleLayout(node: Node) {
     if (node.hasNewLayout()) {
       const viewLayout = node.getComputedLayout();
-      const lines = splitText(
-        charWidth,
-        letterSpacing,
-        clips.length,
-        viewLayout.width
-      );
+      const lines = splitText(glyphs, letterSpacing, viewLayout.width);
 
       const textLayout = {
-        segments: lines.map((line) => clips.slice(line[0], line[1])),
+        segments: lines.map((line) => glyphs.slice(line[0], line[1])),
       };
 
       setLayout({ textLayout, viewLayout });
@@ -119,7 +107,8 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
   ) {
     let fullHeight = lineHeight;
     const fullWidth =
-      clips.length * charWidth + (clips.length - 1) * letterSpacing;
+      glyphs.reduce((prev, curr) => prev + curr.ha, 0) +
+      (glyphs.length - 1) * letterSpacing;
 
     let height = fullHeight;
     let width = fullWidth;
@@ -132,7 +121,7 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
           width = _width;
         }
       } else {
-        const lines = splitText(charWidth, letterSpacing, clips.length, _width);
+        const lines = splitText(glyphs, letterSpacing, _width);
         width = _width;
         fullHeight = lines.length * lineHeight;
         height = fullHeight;
@@ -151,15 +140,10 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
     return { height, width };
   }
 
-  const handleLayout = useCallback(_handleLayout, [
-    clips,
-    charWidth,
-    letterSpacing,
-  ]);
+  const handleLayout = useCallback(_handleLayout, [glyphs, letterSpacing]);
 
   const handleMeasure = useCallback(_handleMeasure, [
-    clips,
-    charWidth,
+    glyphs,
     letterSpacing,
     lineHeight,
   ]);
@@ -183,38 +167,43 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
         </Relative>
       )}
       {!!layout &&
-        layout.textLayout.segments.map((line, i) => (
-          <Relative
-            key={i}
-            translation={{
-              x: layout.viewLayout.left,
-              y: -i * lineHeight - layout.viewLayout.top,
-              z: 0,
-            }}
-          >
-            {line.map((clip, j) => (
-              <Relative
-                key={`${clip.code}:${i}:${j}`}
-                translation={{
-                  x:
-                    j * charWidth + (j === line.length ? 0 : j * letterSpacing),
-                  y: 0,
-                  z: 0,
-                }}
-              >
-                <Sprite2D
-                  anchor="top-left"
-                  textureId={font.textureId}
-                  clip={clip.clip}
-                  size={[charWidth, fontSize]}
-                  padding={0.1}
-                  color={color}
-                  alphaTextureId={font.textureId}
-                />
-              </Relative>
-            ))}
-          </Relative>
-        ))}
+        layout.textLayout.segments.map((line, i) => {
+          let offsetX = 0;
+          return (
+            <Relative
+              key={i}
+              translation={{
+                x: layout.viewLayout.left,
+                y: -i * lineHeight - layout.viewLayout.top,
+                z: 0,
+              }}
+            >
+              {line.map((glyph, j) => {
+                let x = offsetX;
+                offsetX += glyph.ha + letterSpacing;
+
+                return (
+                  <Relative
+                    key={`${glyph.o}:${i}:${j}`}
+                    translation={{
+                      x,
+                    }}
+                  >
+                    <Sprite2D
+                      anchor="top-left"
+                      textureId={font.textureId}
+                      clip={clip.clip}
+                      size={[charWidth, fontSize]}
+                      padding={0.1}
+                      color={color}
+                      alphaTextureId={font.textureId}
+                    />
+                  </Relative>
+                );
+              })}
+            </Relative>
+          );
+        })}
     </>
   );
 }
