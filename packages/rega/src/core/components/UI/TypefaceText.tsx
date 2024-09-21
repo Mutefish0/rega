@@ -180,16 +180,6 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     scale,
   ]);
 
-  // return (
-  //   <Relative translation={{ y: 0, x: 0 }}>
-  //     <Mesh
-  //       scale={{ x: scale, y: scale }}
-  //       geometry={font.getGeometry(chars[0])!}
-  //       material={material}
-  //     />
-  //   </Relative>
-  // );
-
   return (
     <>
       <YogaNode
