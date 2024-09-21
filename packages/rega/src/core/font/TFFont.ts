@@ -1,5 +1,5 @@
 /** Typeface font */
-import { BufferGeometry } from "three/webgpu";
+import { BufferGeometry, ShapePath, ExtrudeGeometry } from "three/webgpu";
 
 export interface GlyphData {
   ha: number;
@@ -27,6 +27,64 @@ export interface TypefaceData {
   cssFontStyle: "normal" | "italic";
 }
 
+function createGeometry(glyph: GlyphData) {
+  const path = new ShapePath();
+
+  let x, y, cpx, cpy, cpx1, cpy1, cpx2, cpy2;
+
+  if (glyph.o) {
+    const outline = glyph.o.split(" ") as any;
+
+    for (let i = 0, l = outline.length; i < l; ) {
+      const action = outline[i++];
+
+      switch (action) {
+        case "m": // moveTo
+          x = +outline[i++];
+          y = +outline[i++];
+
+          path.moveTo(x, y);
+
+          break;
+
+        case "l": // lineTo
+          x = +outline[i++];
+          y = +outline[i++];
+
+          path.lineTo(x, y);
+
+          break;
+
+        case "q": // quadraticCurveTo
+          cpx = +outline[i++];
+          cpy = +outline[i++];
+          cpx1 = +outline[i++];
+          cpy1 = +outline[i++];
+
+          path.quadraticCurveTo(cpx1, cpy1, cpx, cpy);
+
+          break;
+
+        case "b": // bezierCurveTo
+          cpx = +outline[i++];
+          cpy = +outline[i++];
+          cpx1 = +outline[i++];
+          cpy1 = +outline[i++];
+          cpx2 = +outline[i++];
+          cpy2 = +outline[i++];
+
+          path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, cpx, cpy);
+
+          break;
+      }
+    }
+  }
+
+  const shapes = path.toShapes() as any;
+
+  return new ExtrudeGeometry(shapes);
+}
+
 export default class TFFont {
   public ascender: number;
   public descender: number;
@@ -35,7 +93,7 @@ export default class TFFont {
   public fontSize: number;
 
   private glyphs: Record<string, GlyphData>;
-  private glyphCache: Record<string, BufferGeometry>;
+  private geometries: Record<string, BufferGeometry>;
 
   constructor(data: TypefaceData) {
     this.resolution = data.resolution;
@@ -43,7 +101,7 @@ export default class TFFont {
     this.descender = data.descender;
     this.boundingBox = data.boundingBox;
     this.glyphs = data.glyphs;
-    this.glyphCache = {};
+    this.geometries = {};
     this.fontSize = this.ascender - this.descender;
   }
 
@@ -52,9 +110,12 @@ export default class TFFont {
   }
 
   public getGeometry(char: string): BufferGeometry | undefined {
-    if (!this.glyphCache[char]) {
-      // TODO
+    if (!this.geometries[char]) {
+      const glyph = this.getGlyph(char);
+      if (glyph) {
+        this.geometries[char] = createGeometry(glyph);
+      }
     }
-    return this.glyphCache[char];
+    return this.geometries[char];
   }
 }

@@ -1,10 +1,13 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import Mesh from "../../primitives/Mesh";
+import { MeshBasicMaterial, Matrix4 } from "three/webgpu";
 import Relative from "../../primitives/Relative";
 import { Node, MeasureMode } from "yoga-layout";
 import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
 import TFFont, { GlyphData } from "../../font/TFFont";
+import { parseColor } from "../../tools/color";
 
 interface TextProps {
   font: TFFont;
@@ -13,7 +16,7 @@ interface TextProps {
 }
 
 interface TextLayout {
-  segments: Array<Array<GlyphData>>;
+  segments: Array<Array<{ char: string; glyph: GlyphData }>>;
 }
 interface ViewLayout {
   width: number;
@@ -25,6 +28,7 @@ interface ViewLayout {
 function splitText(
   glyphs: Array<{ ha: number }>,
   letterSpacing: number,
+  scale: number,
   maxWidth: number
 ): Array<[number, number]> {
   const result: Array<[number, number]> = [];
@@ -33,7 +37,7 @@ function splitText(
   let startIndex = 0;
 
   for (let i = 0; i < charCount; i++) {
-    const charWidth = glyphs[i].ha;
+    const charWidth = glyphs[i].ha * scale;
     // 计算当前字符的宽度，只在不是第一字符时才考虑间距
     const charTotalWidth = charWidth + (i > startIndex ? letterSpacing : 0);
 
@@ -63,7 +67,24 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     backgroundColor,
   } = style;
 
-  const scale = useMemo(() => fontSize / font.fontSize, [font]);
+  const lineSpacing = (lineHeight - fontSize) / 2;
+
+  const { scale, scaleMatrix } = useMemo(() => {
+    const scale = fontSize / font.fontSize;
+    return {
+      scale,
+      scaleMatrix: new Matrix4().makeScale(scale, scale, scale),
+    };
+  }, [font, fontSize]);
+
+  const material = useMemo(() => new MeshBasicMaterial(), []);
+
+  useEffect(() => {
+    const { opacity, array } = parseColor(color);
+    material.color.setRGB(array[0], array[1], array[2]);
+    material.opacity = opacity;
+    material.needsUpdate = true;
+  }, [color]);
 
   const [layout, setLayout] = useState<{
     textLayout: TextLayout;
@@ -89,10 +110,16 @@ export default function TypefaceText({ children, font, style }: TextProps) {
   function _handleLayout(node: Node) {
     if (node.hasNewLayout()) {
       const viewLayout = node.getComputedLayout();
-      const lines = splitText(glyphs, letterSpacing, viewLayout.width);
+      const lines = splitText(glyphs, letterSpacing, scale, viewLayout.width);
 
       const textLayout = {
-        segments: lines.map((line) => glyphs.slice(line[0], line[1])),
+        segments: lines.map((line) => {
+          const ret = [];
+          for (let i = line[0]; i < line[1]; i++) {
+            ret.push({ char: chars[i], glyph: glyphs[i] });
+          }
+          return ret;
+        }),
       };
 
       setLayout({ textLayout, viewLayout });
@@ -107,7 +134,7 @@ export default function TypefaceText({ children, font, style }: TextProps) {
   ) {
     let fullHeight = lineHeight;
     const fullWidth =
-      glyphs.reduce((prev, curr) => prev + curr.ha, 0) +
+      glyphs.reduce((prev, curr) => prev + curr.ha * scale, 0) +
       (glyphs.length - 1) * letterSpacing;
 
     let height = fullHeight;
@@ -121,7 +148,7 @@ export default function TypefaceText({ children, font, style }: TextProps) {
           width = _width;
         }
       } else {
-        const lines = splitText(glyphs, letterSpacing, _width);
+        const lines = splitText(glyphs, letterSpacing, scale, _width);
         width = _width;
         fullHeight = lines.length * lineHeight;
         height = fullHeight;
@@ -140,13 +167,28 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     return { height, width };
   }
 
-  const handleLayout = useCallback(_handleLayout, [glyphs, letterSpacing]);
+  const handleLayout = useCallback(_handleLayout, [
+    glyphs,
+    letterSpacing,
+    scale,
+  ]);
 
   const handleMeasure = useCallback(_handleMeasure, [
     glyphs,
     letterSpacing,
     lineHeight,
+    scale,
   ]);
+
+  // return (
+  //   <Relative translation={{ y: 0, x: 0 }}>
+  //     <Mesh
+  //       scale={{ x: scale, y: scale }}
+  //       geometry={font.getGeometry(chars[0])!}
+  //       material={material}
+  //     />
+  //   </Relative>
+  // );
 
   return (
     <>
@@ -169,35 +211,36 @@ export default function TypefaceText({ children, font, style }: TextProps) {
       {!!layout &&
         layout.textLayout.segments.map((line, i) => {
           let offsetX = 0;
+
           return (
             <Relative
               key={i}
               translation={{
                 x: layout.viewLayout.left,
-                y: -i * lineHeight - layout.viewLayout.top,
+                y:
+                  -(i + 1) * lineHeight -
+                  layout.viewLayout.top -
+                  font.descender * scale +
+                  lineSpacing,
                 z: 0,
               }}
             >
-              {line.map((glyph, j) => {
+              {line.map((item, j) => {
                 let x = offsetX;
-                offsetX += glyph.ha + letterSpacing;
-
+                offsetX += item.glyph.ha * scale + letterSpacing;
                 return (
                   <Relative
-                    key={`${glyph.o}:${i}:${j}`}
+                    key={`${item.glyph.o}:${i}:${j}`}
                     translation={{
                       x,
                     }}
                   >
-                    <Sprite2D
-                      anchor="top-left"
-                      textureId={font.textureId}
-                      clip={clip.clip}
-                      size={[charWidth, fontSize]}
-                      padding={0.1}
-                      color={color}
-                      alphaTextureId={font.textureId}
-                    />
+                    <Relative matrix={scaleMatrix}>
+                      <Mesh
+                        geometry={font.getGeometry(item.char)!}
+                        material={material}
+                      />
+                    </Relative>
                   </Relative>
                 );
               })}

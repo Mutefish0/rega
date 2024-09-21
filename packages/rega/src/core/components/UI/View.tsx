@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Relative from "../../primitives/Relative";
-import YogaNode from "../YogaFlex/YogaNode";
+import YogaNode, { Node } from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 
 import { FlexStyle } from "../YogaFlex/FlexStyle";
@@ -22,14 +22,13 @@ export default function View({ children = null, style = {} }: ViewProps) {
     top: 0,
   });
 
+  const onLayout = useCallback((node: Node) => {
+    const viewLayout = node.getComputedLayout();
+    setLayout(viewLayout);
+  }, []);
+
   return (
-    <YogaNode
-      style={style}
-      onLayout={(node) => {
-        const viewLayout = node.getComputedLayout();
-        setLayout(viewLayout);
-      }}
-    >
+    <YogaNode style={style} onLayout={onLayout}>
       {layout && (
         <Relative translation={{ x: layout.left, y: -layout.top }}>
           {!!style.backgroundColor && (

@@ -42,7 +42,7 @@ export default function CoreEngine(
   const camera = new ArrayCamera();
   const scene = new Scene();
   const guiScene = new Scene();
-  const guiCamera = new OrthographicCamera(0, width, 0, -height, -1, 1);
+  const guiCamera = new OrthographicCamera(0, width, 0, -height, -1000, 1000);
 
   const gameState = { paused: false };
 

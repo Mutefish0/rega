@@ -1,3 +1,8 @@
-export function keyStringify(v?: { x?: number; y?: number; z?: number }) {
-  return v ? `${v.x ?? 0}:${v.y ?? 0}:${v.z ?? 0}` : "";
+export function keyStringify(
+  v?: { x?: number; y?: number; z?: number },
+  defaultValue = 0
+) {
+  return v
+    ? `${v.x ?? defaultValue}:${v.y ?? defaultValue}:${v.z ?? defaultValue}`
+    : "";
 }

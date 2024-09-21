@@ -50,7 +50,12 @@ export default function App() {
       charSize: [8, 8],
     });
 
-    Promise.all([p1, p2, p3])
+    const p4 = FontManager.add("Arial", {
+      type: "typeface",
+      url: "/fonts/ArialBlack-Regular.json",
+    });
+
+    Promise.all([p1, p2, p3, p4])
       .then(() => {
         setLoadingTexture(false);
       })
@@ -71,12 +76,12 @@ export default function App() {
     <>
       <FPS
         style={{
-          fontFamily: "celeste",
+          fontFamily: "Arial",
           marginLeft: "auto",
           fontSize: 12,
-          margin: 16,
-          letterSpacing: -4,
-          color: "rgba(200, 200, 200, 0.2)",
+          marginTop: 8,
+          marginRight: 12,
+          color: "rgba(200, 200, 200, 0.3)",
         }}
       />
       <Camera shake={shake} onShakeEnd={() => setShake(0)} />
