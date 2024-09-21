@@ -29,6 +29,7 @@ export default React.memo(function Mesh({ geometry, material, order }: Props) {
     mesh.quaternion.set(0, 0, 0, 1);
     // @ts-ignore
     mesh.scale.set(1, 1, 1);
+
     mesh.applyMatrix4(transform.leafMatrix);
   }, [transform]);
 

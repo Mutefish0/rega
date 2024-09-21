@@ -4,6 +4,8 @@ import YogaContext from "./YogaContext";
 
 import { applyStyle, FlexStyle, FlexStyleNames } from "./FlexStyle";
 
+export type { Node };
+
 const DEFAULT_STYLE: FlexStyle = {
   alignContent: "flex-start",
   alignItems: "flex-start",

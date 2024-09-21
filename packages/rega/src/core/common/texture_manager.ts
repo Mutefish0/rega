@@ -9,6 +9,9 @@ export default class TextureManager {
   }
 
   public static async add(url: string) {
+    if (TextureManager.textures.has(url)) {
+      return;
+    }
     await new Promise<Texture>((resolve, reject) => {
       const image = new Image();
       image.onload = () => {

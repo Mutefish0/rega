@@ -42,11 +42,11 @@ import SoundManager from "./common/sound_manager";
 import SoundPlayer from "./components/SoundPlayer";
 import useSoundPlayer from "./hooks/useSoundPlayer";
 
-import BMPFont from "./components/UI/BMPFont";
+import FontManager from "./common/font_manager";
 import GUIView from "./components/UI/GUIView";
 import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
-import { TextStyle } from "./components/UI/SpriteText";
+import { TextStyle } from "./components/UI/Text";
 
 import {
   KeyboardInput,
@@ -144,7 +144,7 @@ export {
   Sprite2D,
 
   // ui
-  BMPFont,
+  FontManager,
   View,
   Text,
   GUIView,
