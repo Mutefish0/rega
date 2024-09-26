@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",
+  "types": "types/index.d.ts",
   "exports": {
     "./deno": "./src/deno/index.ts",
     "./web": "./src/web/index.ts",
