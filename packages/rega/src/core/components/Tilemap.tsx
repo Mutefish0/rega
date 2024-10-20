@@ -16,7 +16,9 @@ import {
   vec2,
   tslFn,
   If,
-  discard,
+
+  Discard,
+  
   vec4,
 } from "three/webgpu";
 import TextureManager from "../common/texture_manager";
@@ -185,7 +187,7 @@ export default React.memo(function Tilemap({
           cNode.assign(uniforms.tex, 1);
         }
       ).else(() => {
-        discard(true);
+        Discard(true);
       });
 
       return cNode.mul(uniforms.color);

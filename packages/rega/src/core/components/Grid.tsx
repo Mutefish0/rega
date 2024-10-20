@@ -21,7 +21,7 @@ import {
   max,
   abs,
   viewportCoordinate,
-  discard,
+  Discard,
   cond,
 } from "three/webgpu";
 import Color from "color";
@@ -87,7 +87,7 @@ const cnode = tslFn(
         cNode.assign(vec4(color, maxAlpha.mul(opacity)));
       })
       .else(() => {
-        discard(true);
+        Discard(true);
       });
 
     return cNode;
