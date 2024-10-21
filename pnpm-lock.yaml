@@ -59,6 +59,7 @@ importers:
       '@types/react-dom': ^18.3.0
       '@types/react-reconciler': ^0.28.8
       '@types/three': '0.166'
+      '@webgpu/types': ^0.1.49
       color: ^4.2.3
       d3-ease: ^3.0.1
       lodash: ^4.17.21
@@ -97,6 +98,7 @@ importers:
       '@types/d3-ease': 3.0.2
       '@types/pizzicato': 0.6.4
       '@types/react-reconciler': 0.28.8
+      '@webgpu/types': 0.1.49
 
   packages/three.js:
     specifiers:
@@ -1605,6 +1607,10 @@ packages:
       vite: 5.4.6
     transitivePeerDependencies:
       - '@swc/helpers'
+    dev: true
+
+  /@webgpu/types/0.1.49:
+    resolution: {integrity: sha512-NMmS8/DofhH/IFeW+876XrHVWel+J/vdcFCHLDqeJgkH9x0DeiwjVd8LcBdaxdG/T7Rf8VUAYsA8X1efMzLjRQ==}
     dev: true
 
   /abbrev/1.1.1:

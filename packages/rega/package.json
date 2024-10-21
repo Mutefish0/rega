@@ -9,7 +9,8 @@
     "./deno": "./src/deno/index.ts",
     "./web": "./src/web/index.ts",
     ".": "./src/index.ts",
-    "./three": "./src/three/index.ts"
+    "./three": "./src/three/index.ts",
+    "./core/renderer": "./src/core/render/index.ts"
   },
   "dependencies": {
     "@dimforge/rapier2d": "workspace:*",
@@ -36,6 +37,7 @@
     "@types/color": "^3.0.6",
     "@types/d3-ease": "^3.0.2",
     "@types/pizzicato": "^0.6.4",
-    "@types/react-reconciler": "^0.28.8"
+    "@types/react-reconciler": "^0.28.8",
+    "@webgpu/types": "^0.1.49"
   }
 }
