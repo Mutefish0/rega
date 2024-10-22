@@ -229,7 +229,11 @@ async function setupMaterial(cb: (material: NodeMaterial) => void) {
     name: string;
     type: "vec3" | "vec2";
   }>;
+
   console.log("attributes", attributes);
+
+  console.log("p-bindings", builder.bindings);
+  console.log("p-bindgroups", builder.bindGroups);
 
   const bindings = builder.getBindings();
   console.log("bindings", bindings);
@@ -290,7 +294,7 @@ async function setupMaterial(cb: (material: NodeMaterial) => void) {
 
     const arrayBuffer = new Float32Array(128 / 4);
 
-    arrayBuffer.set([0.0, 0.5, 0 - 0.5, -0.5, 0, 0.5, -0.5, 0]);
+    arrayBuffer.set([0.0, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0]);
 
     gpuVeterxBufferList.push({
       gpuBuffer: createAttributeBuffer(
@@ -394,8 +398,7 @@ setupMaterial((material) => {
   //material.positionNode = positionGeometry;
 
   material.vertexNode = vec4(positionGeometry, 1.0);
-
-  material.colorNode = vec4(1, 0, 0, 1);
+  material.fragmentNode = vec4(1, 0, 0, 1);
 
   // = cameraProjectionMatrix
   //   .mul(modelViewMatrix)
