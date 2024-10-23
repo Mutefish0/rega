@@ -6,12 +6,18 @@ import {
   attribute,
   modelViewMatrix,
   positionGeometry,
+  uniform,
 } from "three/src/nodes/TSL.js";
+import { CustomBlending } from "three/src/constants.js";
+
 import WGSLNodeBuilder from "three/src/renderers/webgpu/nodes/WGSLNodeBuilder.js";
 import NodeMaterial from "three/src/materials/nodes/NodeMaterial.js";
+import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipelineUtils.js";
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
 import { Type } from "typescript";
 import { TypedArray } from "three";
+
+const webGPUPipelineUtil = new WebGPUPipelineUtils();
 
 // 不重要
 const geometry = new BufferGeometry();
@@ -96,6 +102,8 @@ function createBindingsLayout(device: GPUDevice, bindGroup: any) {
 
   return device.createBindGroupLayout({ entries });
 }
+
+const gpuBufferMap = new Map<string, GPUBuffer>();
 
 function createBindGroup(
   device: GPUDevice,
@@ -244,6 +252,8 @@ async function setupMaterial(cb: (material: NodeMaterial) => void) {
   const device = await adapter!.requestDevice();
   const context = canvasEl.getContext("webgpu")!;
 
+  const blend = webGPUPipelineUtil._getBlending(material) as GPUBlendState;
+
   // 配置画布格式
   const swapChainFormat = "bgra8unorm";
   context.configure({
@@ -338,6 +348,7 @@ async function setupMaterial(cb: (material: NodeMaterial) => void) {
       targets: [
         {
           format: swapChainFormat,
+          blend,
         },
       ],
     },
@@ -383,7 +394,7 @@ async function setupMaterial(cb: (material: NodeMaterial) => void) {
 
     device.queue.submit([commandEncoder.finish()]);
 
-    // requestAnimationFrame(render);
+    requestAnimationFrame(render);
   }
 
   render();
@@ -394,11 +405,15 @@ interface MeshElement {
   fragmentShader: string;
 }
 
+const opacity = uniform(0.1, "float");
+
+opacity.value = 0.5;
+
 setupMaterial((material) => {
   //material.positionNode = positionGeometry;
 
   material.vertexNode = vec4(positionGeometry, 1.0);
-  material.fragmentNode = vec4(1, 0, 0, 1);
+  material.fragmentNode = vec4(1, 0, 0, opacity);
 
   // = cameraProjectionMatrix
   //   .mul(modelViewMatrix)
