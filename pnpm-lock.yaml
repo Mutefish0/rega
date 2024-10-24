@@ -22,6 +22,7 @@ importers:
       rega: workspace:*
       typescript: ^5.2.2
       vite: ^5.2.0
+      vite-plugin-cross-origin-isolation: ^0.1.6
       vite-plugin-static-copy: ^1.0.6
       vite-plugin-wasm: ^3.3.0
     dependencies:
@@ -41,6 +42,7 @@ importers:
       eslint-plugin-react-refresh: 0.4.12_eslint@8.57.1
       typescript: 5.6.2
       vite: 5.4.6
+      vite-plugin-cross-origin-isolation: 0.1.6
       vite-plugin-static-copy: 1.0.6_vite@5.4.6
       vite-plugin-wasm: 3.3.0_vite@5.4.6
 
@@ -5929,6 +5931,10 @@ packages:
   /vary/1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+    dev: true
+
+  /vite-plugin-cross-origin-isolation/0.1.6:
+    resolution: {integrity: sha512-OY0naW9nPUDrKTffYnY7FRYXOgZdHoNwMGpPxUmj/n32mGZi01fcq+J536jkmwGWX7DLT95XBQVHHbrAJzTvrw==}
     dev: true
 
   /vite-plugin-static-copy/1.0.6_vite@5.4.6:
