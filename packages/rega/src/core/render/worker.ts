@@ -1,15 +1,41 @@
-import { MaterialJSON, TransferBinding } from "./types";
-
 import {
-  createBindingsLayout,
-  createBindGroup,
-  createAttributeBuffer,
-} from "./utils";
+  MaterialJSON,
+  TransferObject,
+  TransferBinding,
+  TransferInput,
+} from "./types";
+
+import { createBindGroup, createRenderPipeline } from "./utils";
+
+import createGPUVertexBuffers from "./createGPUVertexBuffers";
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
 
-const swapChainFormat = "bgra8unorm";
+const pipelineMap = new Map<
+  string,
+  {
+    pipeline: GPURenderPipeline;
+    bindGroupLayoutMap: Map<string, GPUBindGroupLayout>;
+  }
+>();
+const vertexBuffersMap = new Map<string, GPUBuffer[]>();
+const bindGroupMap = new Map<
+  string,
+  {
+    gpuBindGroup: GPUBindGroup;
+    gpuBuffers: GPUBuffer[];
+  }
+>();
+const renderObjectMap = new Map<
+  string,
+  {
+    material: MaterialJSON;
+    pipelineKey: string;
+    bindings: TransferBinding[];
+    input: TransferInput;
+  }
+>();
 
 let _resolveInitCanvas: () => void;
 const _initCanvasPromise = new Promise<void>((resolve) => {
@@ -23,138 +49,51 @@ self.addEventListener("message", async (event) => {
     device = await adapter!.requestDevice();
 
     context = canvas.getContext("webgpu")!;
+
     // 配置画布格式
     context.configure({
       device: device,
-      format: swapChainFormat,
+      format: "bgra8unorm",
     });
     _resolveInitCanvas();
   } else if (event.data.type === "addObject") {
     await _initCanvasPromise;
-    setupMaterial(event.data.object.material, event.data.object.bindings);
+    const { id, material, bindings, input } = event.data
+      .object as TransferObject;
+    const pipelineKey = JSON.stringify(material);
+    if (!pipelineMap.has(pipelineKey)) {
+      const pl = createRenderPipeline(device, material);
+      pipelineMap.set(pipelineKey, pl);
+
+      const bindGroupLayoutMap = pl.bindGroupLayoutMap;
+
+      material.bindings.forEach((bg) => {
+        const bindGroupKey = `${pipelineKey},${bg.index}`;
+        if (!bindGroupMap.has(bindGroupKey)) {
+          const layout = bindGroupLayoutMap.get(bg.name)!;
+          const bindGroup = createBindGroup(device, layout, bg);
+          bindGroupMap.set(bindGroupKey, bindGroup);
+        }
+      });
+    }
+
+    if (!vertexBuffersMap.has(input.key)) {
+      vertexBuffersMap.set(
+        input.key,
+        createGPUVertexBuffers(device, material, input.vertexCount)
+      );
+    }
+
+    renderObjectMap.set(id, { pipelineKey, bindings, input, material });
   }
 });
 
-async function setupMaterial(
-  materialJSON: MaterialJSON,
-  tbindings: TransferBinding[]
-) {
-  const { fragmentShader, vertexShader } = materialJSON;
-
-  const attributes = materialJSON.attributes as Array<{
-    name: string;
-    type: "vec3" | "vec2";
-  }>;
-
-  const bindings = materialJSON.bindings;
-
-  const blend = materialJSON.blend;
-
-  const shaderModuleVertex = device.createShaderModule({
-    code: vertexShader,
-  });
-
-  const shaderModuleFragment = device.createShaderModule({
-    code: fragmentShader,
-  });
-
-  const bindGroupLayouts = [];
-
-  const bindGroupList: Array<{
-    index: number;
-    bindGroup: GPUBindGroup;
-    group: any;
-  }> = [];
-
-  // bindings
-  for (const group of bindings) {
-    const layout = createBindingsLayout(device, group);
-    const bindGroup = createBindGroup(device, layout, group);
-    bindGroupLayouts.push(layout);
-    bindGroupList.push({ index: group.index, bindGroup, group });
-  }
-
-  // attributes
-  const gpuVeterxBufferList: Array<{
-    gpuBuffer: GPUBuffer;
-    cpuBuffer: ArrayBuffer;
-  }> = [];
-
-  const gpuVeterxBufferLayouts: Array<GPUVertexBufferLayout> = [];
-
-  let location = 0;
-
-  for (const attribute of attributes) {
-    let arrayStride = 4;
-    let format: GPUVertexFormat = "float32";
-    if (attribute.type === "vec3") {
-      arrayStride = 4 * 4;
-      format = "float32x3";
-    } else if (attribute.type === "vec2") {
-      arrayStride = 2 * 4;
-      format = "float32x2";
-    }
-
-    const arrayBuffer = new Float32Array(128 / 4);
-
-    arrayBuffer.set([0.0, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0]);
-
-    gpuVeterxBufferList.push({
-      gpuBuffer: createAttributeBuffer(
-        device,
-        attribute,
-        GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        128
-      ),
-      cpuBuffer: arrayBuffer.buffer,
-    });
-
-    gpuVeterxBufferLayouts.push({
-      arrayStride,
-      attributes: [
-        {
-          shaderLocation: location,
-          offset: 0,
-          format,
-        },
-      ],
-    });
-
-    location++;
-  }
-
-  // 创建 Pipeline Layout
-  const pipelineLayout = device.createPipelineLayout({
-    bindGroupLayouts,
-  });
-
-  const pipeline = device.createRenderPipeline({
-    layout: pipelineLayout, // 使用自定义的管线布局
-    vertex: {
-      module: shaderModuleVertex,
-      entryPoint: "main",
-      buffers: gpuVeterxBufferLayouts,
-    },
-    fragment: {
-      module: shaderModuleFragment,
-      entryPoint: "main",
-      targets: [
-        {
-          format: swapChainFormat,
-          blend,
-        },
-      ],
-    },
-    primitive: {
-      topology: "triangle-list",
-    },
-  });
-
-  // 渲染三角形
+async function start() {
+  await _initCanvasPromise;
   function render() {
     const textureView = context.getCurrentTexture().createView();
     const commandEncoder = device.createCommandEncoder();
-    const renderPassDescriptor = {
+    const renderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
         {
           view: textureView,
@@ -166,30 +105,31 @@ async function setupMaterial(
     };
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-    passEncoder.setPipeline(pipeline);
 
-    gpuVeterxBufferList.forEach((bufferItem, index) => {
-      device.queue.writeBuffer(
-        bufferItem.gpuBuffer,
-        0,
-        bufferItem.cpuBuffer,
-        0
-      );
-      passEncoder.setVertexBuffer(index, bufferItem.gpuBuffer);
+    renderObjectMap.forEach(({ pipelineKey, bindings, input }) => {
+      const pipeline = pipelineMap.get(pipelineKey)!.pipeline;
+      passEncoder.setPipeline(pipeline);
+
+      bindings.forEach((binding) => {
+        const bindGroup = bindGroupMap.get(
+          `${pipelineKey},${binding.groupIndex}`
+        )!;
+        bindGroup.gpuBuffers.forEach((gpuBuffer, index) => {
+          device.queue.writeBuffer(gpuBuffer, 0, binding.buffers[index], 0);
+        });
+        passEncoder.setBindGroup(binding.groupIndex, bindGroup.gpuBindGroup);
+      });
+
+      const vertexBuffers = vertexBuffersMap.get(input.key)!;
+      input.vertexBuffers.forEach((buffer, index) => {
+        const gpuBuffer = vertexBuffers[index];
+        device.queue.writeBuffer(gpuBuffer, 0, buffer, 0);
+        passEncoder.setVertexBuffer(index, gpuBuffer);
+      });
+      passEncoder.draw(input.vertexCount);
     });
 
-    for (const bindGroupItem of bindGroupList) {
-      for (const binding of bindGroupItem.group.bindings) {
-        binding.update();
-        const gpuBuffer = getGPUBuffer(binding.gpuBufferId)!;
-        device.queue.writeBuffer(gpuBuffer, 0, binding.buffer, 0);
-      }
-      passEncoder.setBindGroup(bindGroupItem.index, bindGroupItem.bindGroup);
-    }
-
-    passEncoder.draw(3); // 绘制 3 个顶点组成的三角形
     passEncoder.end();
-
     device.queue.submit([commandEncoder.finish()]);
 
     requestAnimationFrame(render);
@@ -197,3 +137,5 @@ async function setupMaterial(
 
   render();
 }
+
+start();

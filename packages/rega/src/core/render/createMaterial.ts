@@ -40,8 +40,9 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
 
   const bindingGroups: BindGroupInfo[] = [];
 
-  const bindMap = new Map<string, TransferBinding>();
-  const bindHandleMap = new Map<string, any>();
+  const transferBindings: TransferBinding[] = [];
+
+  const bindMap = new Map<string, { update: () => void }>();
 
   builder.getBindings().forEach((binding: any) => {
     const { index, name, bindings: _bindings } = binding;
@@ -50,11 +51,13 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
 
     let bindingIndex = 0;
 
+    let uniformIds: string[] = [];
+    let buffers: SharedArrayBuffer[] = [];
+
     for (const b of _bindings) {
       const uniformId = b.uniforms[0].nodeUniform.node.uuid;
 
       bindings.push({
-        id: uniformId,
         isBuffer: b.isBuffer,
         isNodeUniformsGroup: b.isNodeUniformsGroup,
         isUniformBuffer: b.isUniformBuffer,
@@ -67,17 +70,18 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
         name: b.name,
       });
 
-      bindMap.set(uniformId, {
-        id: uniformId,
-        buffer: b.buffer.buffer,
-        groupIndex: index,
-        bindingIndex,
-      });
+      bindMap.set(uniformId, b);
 
-      bindHandleMap.set(uniformId, b);
+      uniformIds.push(uniformId);
+      buffers.push(b.buffer.buffer);
 
       bindingIndex++;
     }
+
+    transferBindings.push({
+      groupIndex: index,
+      buffers,
+    });
 
     bindingGroups.push({
       index,
@@ -87,17 +91,17 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
   });
 
   const mat: MaterialJSON = {
-    id: crypto.randomUUID(),
     vertexShader: builder.vertexShader,
     fragmentShader: builder.fragmentShader,
     attributes: builder.attributes,
     bindings: bindingGroups,
     blend,
+    format: "bgra8unorm",
   };
 
   return {
     material: mat,
+    transferBindings,
     bindMap,
-    bindHandleMap,
   };
 }

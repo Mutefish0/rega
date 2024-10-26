@@ -1,4 +1,4 @@
-import { BindGroupInfo } from "./types";
+import { BindGroupInfo, MaterialJSON } from "./types";
 
 export function createBindingsLayout(
   device: GPUDevice,
@@ -85,13 +85,6 @@ export function createBindingsLayout(
   return device.createBindGroupLayout({ entries });
 }
 
-const gpuBufferMap = new Map<string, GPUBuffer>();
-const bindMap = new Map<string, string>();
-
-export function getGPUBuffer(id: string) {
-  return gpuBufferMap.get(id);
-}
-
 export function createBindGroup(
   device: GPUDevice,
   gpuBindGroupLayout: GPUBindGroupLayout,
@@ -99,6 +92,8 @@ export function createBindGroup(
 ) {
   let bindingPoint = 0;
   const entriesGPU = [];
+
+  const gpuBuffers = [];
 
   for (const binding of bindGroup.bindings) {
     if (binding.isUniformBuffer) {
@@ -112,10 +107,7 @@ export function createBindGroup(
         usage: usage,
       });
 
-      const id = crypto.randomUUID();
-      gpuBufferMap.set(id, gpuBuffer);
-
-      bindMap.set(binding.id, id);
+      gpuBuffers.push(gpuBuffer);
 
       entriesGPU.push({
         binding: bindingPoint,
@@ -179,11 +171,16 @@ export function createBindGroup(
     bindingPoint++;
   }
 
-  return device.createBindGroup({
+  const gpuBindGroup = device.createBindGroup({
     label: "bindGroup_" + bindGroup.name,
     layout: gpuBindGroupLayout,
     entries: entriesGPU,
   });
+
+  return {
+    gpuBindGroup,
+    gpuBuffers,
+  };
 }
 
 export function createAttributeBuffer(
@@ -201,4 +198,89 @@ export function createAttributeBuffer(
   });
 
   return buffer;
+}
+
+export function createRenderPipeline(
+  device: GPUDevice,
+  materialJSON: MaterialJSON
+) {
+  const bindGroupLayoutMap = new Map<string, GPUBindGroupLayout>();
+
+  const { fragmentShader, vertexShader, blend, bindings, attributes, format } =
+    materialJSON;
+
+  const shaderModuleVertex = device.createShaderModule({
+    code: vertexShader,
+  });
+
+  const shaderModuleFragment = device.createShaderModule({
+    code: fragmentShader,
+  });
+
+  const bindGroupLayouts = [];
+
+  // bindings
+  for (const group of bindings) {
+    const layout = createBindingsLayout(device, group);
+    bindGroupLayouts.push(layout);
+    bindGroupLayoutMap.set(group.name, layout);
+  }
+
+  const gpuVeterxBufferLayouts: Array<GPUVertexBufferLayout> = [];
+
+  let location = 0;
+
+  for (const attribute of attributes) {
+    let arrayStride = 4;
+    let format: GPUVertexFormat = "float32";
+    if (attribute.type === "vec3") {
+      arrayStride = 4 * 4;
+      format = "float32x3";
+    } else if (attribute.type === "vec2") {
+      arrayStride = 2 * 4;
+      format = "float32x2";
+    }
+
+    gpuVeterxBufferLayouts.push({
+      arrayStride,
+      attributes: [
+        {
+          shaderLocation: location,
+          offset: 0,
+          format,
+        },
+      ],
+    });
+
+    location++;
+  }
+
+  // 创建 Pipeline Layout
+  const pipelineLayout = device.createPipelineLayout({
+    bindGroupLayouts,
+  });
+
+  const pipeline = device.createRenderPipeline({
+    layout: pipelineLayout, // 使用自定义的管线布局
+    vertex: {
+      module: shaderModuleVertex,
+      entryPoint: "main",
+      buffers: gpuVeterxBufferLayouts,
+    },
+    fragment: {
+      module: shaderModuleFragment,
+      entryPoint: "main",
+      targets: [
+        {
+          format,
+          blend,
+        },
+      ],
+    },
+    primitive: {
+      topology: "triangle-list",
+    },
+  });
+
+  return { pipeline, bindGroupLayoutMap };
 }

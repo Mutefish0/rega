@@ -1,12 +1,22 @@
-export interface TransferBinding {
+export interface TransferObject {
   id: string;
+  material: MaterialJSON;
+  bindings: TransferBinding[];
+  input: TransferInput;
+}
+
+export interface TransferInput {
+  key: string;
+  vertexBuffers: SharedArrayBuffer[];
+  vertexCount: number;
+}
+
+export interface TransferBinding {
   groupIndex: number;
-  bindingIndex: number;
-  buffer: SharedArrayBuffer;
+  buffers: SharedArrayBuffer[];
 }
 
 export interface BindInfo {
-  id: string;
   byteLength: number;
   bytesPerElement: number;
   name: string;
@@ -26,7 +36,6 @@ export interface BindGroupInfo {
 }
 
 export interface MaterialJSON {
-  id: string;
   vertexShader: string;
   fragmentShader: string;
   attributes: Array<{
@@ -35,4 +44,5 @@ export interface MaterialJSON {
   }>;
   bindings: Array<BindGroupInfo>;
   blend: GPUBlendState;
+  format: GPUTextureFormat;
 }
