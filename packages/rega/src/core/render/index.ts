@@ -1,81 +1,68 @@
 /// <reference types="@webgpu/types" />
 
-import {
-  vec4,
-  cameraProjectionMatrix,
-  attribute,
-  modelViewMatrix,
-  positionGeometry,
-  uniform,
-} from "three/src/nodes/TSL.js";
+export type * from "./types";
 
-import { createPlaneGeometry } from "../objects/plane/utils";
+// import {
+//   vec4,
+//   cameraProjectionMatrix,
+//   attribute,
+//   modelViewMatrix,
+//   positionGeometry,
+//   uniform,
+// } from "three/src/nodes/TSL.js";
 
-import { TransferObject } from "./types";
+// import { createPlaneGeometry } from "../objects/plane/utils";
 
-import createMaterial from "./createMaterial";
-import createIndexBuffer from "./createIndexBuffer";
-import createVertexBuffers from "./createVertexBuffers";
+// import RenderServer from "./server";
 
-const canvasEl = document.createElement("canvas");
-document.body.appendChild(canvasEl);
+// import createMaterial from "./createMaterial";
+// import createIndexBuffer from "./createIndexBuffer";
+// import createVertexBuffers from "./createVertexBuffers";
 
-const offscreenCanvas = canvasEl.transferControlToOffscreen();
+// const server = new RenderServer();
 
-const worker = new Worker(import.meta.resolve("./worker.ts"), {
-  type: "module",
-});
+// const opacity = uniform(0.1, "float");
 
-worker.postMessage(
-  {
-    type: "initCanvas",
-    canvas: offscreenCanvas,
-  },
-  [offscreenCanvas]
-);
+// const material = createMaterial(
+//   vec4(positionGeometry, 1.0),
+//   vec4(1, 0, 0, opacity)
+// );
 
-const opacity = uniform(0.1, "float");
+// const opacityHandle = material.bindMap.get(opacity.uuid)!;
 
-const material = createMaterial(
-  vec4(positionGeometry, 1.0),
-  vec4(1, 0, 0, opacity)
-);
+// const geometry = createPlaneGeometry();
 
-const opacityHandle = material.bindMap.get(opacity.uuid)!;
+// const vertexBuffers = createVertexBuffers(
+//   material.material,
+//   geometry.vertexCount
+// );
 
-const geometry = createPlaneGeometry();
+// const vs = new Float32Array(vertexBuffers.bufferMap.get("position")!);
+// vs.set(geometry.vertices);
 
-const vertexBuffers = createVertexBuffers(
-  material.material,
-  geometry.vertexCount
-);
-const vs = new Float32Array(vertexBuffers.bufferMap.get("position")!);
-vs.set(geometry.vertices);
+// const indexBuffer = createIndexBuffer(geometry.indices.length);
+// new Uint16Array(indexBuffer).set(geometry.indices);
 
-const indexBuffer = createIndexBuffer(geometry.indices.length);
-new Uint16Array(indexBuffer).set(geometry.indices);
+// server.init().then(() => {
+//   server.addObject({
+//     id: crypto.randomUUID(),
+//     material: material.material,
+//     bindings: material.transferBindings,
+//     input: {
+//       key: crypto.randomUUID(),
+//       vertexBuffers: vertexBuffers.buffers,
+//       vertexCount: geometry.vertexCount,
+//       index: {
+//         key: "rega_internal_plane",
+//         indexBuffer,
+//         indexFormat: "uint16",
+//         indexCount: geometry.indices.length,
+//       },
+//     },
+//   });
+// });
 
-worker.postMessage({
-  type: "addObject",
-  object: {
-    id: crypto.randomUUID(),
-    material: material.material,
-    bindings: material.transferBindings,
-    input: {
-      key: crypto.randomUUID(),
-      vertexBuffers: vertexBuffers.buffers,
-      vertexCount: geometry.vertexCount,
-      index: {
-        key: "rega_internal_plane",
-        indexBuffer,
-        indexFormat: "uint16",
-        indexCount: geometry.indices.length,
-      },
-    },
-  } as TransferObject,
-});
-
-setInterval(() => {
-  opacity.value = Math.random();
-  opacityHandle.update();
-}, 1000);
+// setInterval(() => {
+//   opacity.value = Math.random();
+//   opacityHandle.update();
+// }, 1000);

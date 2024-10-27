@@ -42,26 +42,23 @@ const renderObjectMap = new Map<
   }
 >();
 
-let _resolveInitCanvas: () => void;
-const _initCanvasPromise = new Promise<void>((resolve) => {
-  _resolveInitCanvas = resolve;
-});
+let _initialized = false;
 
 self.addEventListener("message", async (event) => {
-  if (event.data.type === "initCanvas") {
+  if (event.data.type === "initCanvas" && !_initialized) {
+    _initialized = true;
     const canvas = event.data.canvas;
     const adapter = await navigator.gpu.requestAdapter();
     device = await adapter!.requestDevice();
     context = canvas.getContext("webgpu")!;
-
     // 配置画布格式
     context.configure({
       device: device,
       format: "bgra8unorm",
     });
-    _resolveInitCanvas();
+    self.postMessage({ type: "ready" });
+    start();
   } else if (event.data.type === "addObject") {
-    await _initCanvasPromise;
     const { id, material, bindings, input } = event.data
       .object as TransferObject;
     const pipelineKey = JSON.stringify(material);
@@ -89,7 +86,6 @@ self.addEventListener("message", async (event) => {
     }
     if (input.index) {
       const { key: indexKey, indexBuffer } = input.index;
-
       if (!indexBufferMap.has(indexKey)) {
         const buffer = device.createBuffer({
           size: indexBuffer.byteLength,
@@ -102,13 +98,13 @@ self.addEventListener("message", async (event) => {
         indexBufferMap.set(indexKey, buffer);
       }
     }
-
     renderObjectMap.set(id, { pipelineKey, bindings, input, material });
+  } else if (event.data.type === "removeObject") {
+    renderObjectMap.delete(event.data.objectID);
   }
 });
 
 async function start() {
-  await _initCanvasPromise;
   function render() {
     const textureView = context.getCurrentTexture().createView();
     const commandEncoder = device.createCommandEncoder();
@@ -168,5 +164,3 @@ async function start() {
 
   render();
 }
-
-start();

@@ -10,7 +10,7 @@ import ThreeContext, {
   createContextValues,
 } from "../../primitives/ThreeContext";
 import { parseColor } from "../../tools/color";
-
+import RenderServer from "../../render/server";
 import { RendererConstructor, RenderHandler } from "./renderer";
 
 // @ts-ignore
@@ -60,13 +60,16 @@ export default function CoreEngine(
     }
   }
 
+  const renderServer = new RenderServer();
+
   const ctx = createContextValues({
+    renderServer,
     scene,
     guiScene,
     camera,
     assetsPixelRatio: config?.assetsPixelRatio ?? 1,
     fixedTimestep: config?.fixedTimestep,
-  } as any);
+  });
 
   const root = reconciler.createContainer(
     {},
@@ -79,47 +82,7 @@ export default function CoreEngine(
     null
   );
 
-  const renderer = new rendererConstructor(
-    (deltaTime, now) => {
-      ctx.removedCallbacks.forEach((cb) => {
-        ctx.frameCallbacks.delete(cb);
-      });
-      ctx.removedCallbacks.clear();
-      ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
-    },
-    (renderHandler: RenderHandler) => {
-      renderHandler.clear();
-
-      for (const camera of ctx.camera.cameras) {
-        // @ts-ignore
-        const cid = camera.cid;
-        const viewport = ctx.viewportMap.get(cid);
-        if (viewport) {
-          camera.viewport!.copy(viewport);
-        }
-      }
-
-      // render world
-      renderHandler.render(scene, ctx.camera);
-      renderHandler.clearDepth();
-      // render gui
-      renderHandler.render(guiScene, guiCamera);
-      renderHandler.present?.();
-    },
-    {
-      width,
-      height,
-      canvas: canvas,
-      outputColorSpace: config.outputColorSpace,
-      title: config.title,
-    }
-  );
-
-  renderer.setup().then(() => {
-    const pixelRatio = renderer.getPixelRatio();
-    ctx.size = [width * pixelRatio, height * pixelRatio];
-    ctx.pixelRatio = pixelRatio;
-
+  renderServer.init(canvas as HTMLCanvasElement).then(() => {
     reconciler.updateContainer(
       <ThreeContext.Provider value={ctx}>
         <GameStateContext.Provider value={gameState}>
@@ -131,23 +94,74 @@ export default function CoreEngine(
       </ThreeContext.Provider>,
       root
     );
-
-    renderer.start();
   });
+
+  // const renderer = new rendererConstructor(
+  //   (deltaTime, now) => {
+  //     ctx.removedCallbacks.forEach((cb) => {
+  //       ctx.frameCallbacks.delete(cb);
+  //     });
+  //     ctx.removedCallbacks.clear();
+  //     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
+  //   },
+  //   (renderHandler: RenderHandler) => {
+  //     renderHandler.clear();
+
+  //     for (const camera of ctx.camera.cameras) {
+  //       // @ts-ignore
+  //       const cid = camera.cid;
+  //       const viewport = ctx.viewportMap.get(cid);
+  //       if (viewport) {
+  //         camera.viewport!.copy(viewport);
+  //       }
+  //     }
+
+  //     // render world
+  //     renderHandler.render(scene, ctx.camera);
+  //     renderHandler.clearDepth();
+  //     // render gui
+  //     renderHandler.render(guiScene, guiCamera);
+  //     renderHandler.present?.();
+  //   },
+  //   {
+  //     width,
+  //     height,
+  //     canvas: canvas,
+  //     outputColorSpace: config.outputColorSpace,
+  //     title: config.title,
+  //   }
+  // );
+
+  // renderer.setup().then(() => {
+  //   const pixelRatio = renderer.getPixelRatio();
+  //   ctx.size = [width * pixelRatio, height * pixelRatio];
+  //   ctx.pixelRatio = pixelRatio;
+
+  //   reconciler.updateContainer(
+  //     <ThreeContext.Provider value={ctx}>
+  //       <GameStateContext.Provider value={gameState}>
+  //         <InputSystem />
+  //         <Physics>
+  //           <SceneContext.Provider value="world">{app}</SceneContext.Provider>
+  //         </Physics>
+  //       </GameStateContext.Provider>
+  //     </ThreeContext.Provider>,
+  //     root
+  //   );
+
+  //   renderer.start();
+  // });
 
   function pause() {
     gameState.paused = true;
-    renderer.pause();
   }
 
   function resume() {
     gameState.paused = false;
-    renderer.resume();
   }
 
   function stop() {
     gameState.paused = true;
-    renderer.stop();
   }
 
   return {

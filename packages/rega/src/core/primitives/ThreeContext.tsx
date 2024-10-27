@@ -1,5 +1,6 @@
 import { createContext } from "react";
 import { ArrayCamera, Vector4Like, Scene } from "three/webgpu";
+import RenderServer from "../render/server";
 
 declare global {
   interface Window {
@@ -20,16 +21,19 @@ export function createContextValues({
   size,
   assetsPixelRatio,
   fixedTimestep = 20,
+  renderServer,
 }: {
   scene: Scene;
   guiScene: Scene;
   camera: ArrayCamera;
+  renderServer: RenderServer;
   size?: [number, number];
   assetsPixelRatio: number;
   fixedTimestep?: number;
 }) {
   return {
     id: Math.random().toString(36).slice(2),
+    renderServer,
     camera,
     scene,
     guiScene,
