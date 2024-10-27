@@ -11,7 +11,7 @@ export default function createGPUVertexBuffers(
   for (const attribute of attributes) {
     let arrayStride = 4;
     if (attribute.type === "vec3") {
-      arrayStride = 4 * 4;
+      arrayStride = 3 * 4;
     } else if (attribute.type === "vec2") {
       arrayStride = 2 * 4;
     }

@@ -19,7 +19,11 @@ const pipelineMap = new Map<
     bindGroupLayoutMap: Map<string, GPUBindGroupLayout>;
   }
 >();
+
 const vertexBuffersMap = new Map<string, GPUBuffer[]>();
+
+const indexBufferMap = new Map<string, GPUBuffer>();
+
 const bindGroupMap = new Map<
   string,
   {
@@ -27,6 +31,7 @@ const bindGroupMap = new Map<
     gpuBuffers: GPUBuffer[];
   }
 >();
+
 const renderObjectMap = new Map<
   string,
   {
@@ -47,7 +52,6 @@ self.addEventListener("message", async (event) => {
     const canvas = event.data.canvas;
     const adapter = await navigator.gpu.requestAdapter();
     device = await adapter!.requestDevice();
-
     context = canvas.getContext("webgpu")!;
 
     // 配置画布格式
@@ -82,6 +86,21 @@ self.addEventListener("message", async (event) => {
         input.key,
         createGPUVertexBuffers(device, material, input.vertexCount)
       );
+    }
+    if (input.index) {
+      const { key: indexKey, indexBuffer } = input.index;
+
+      if (!indexBufferMap.has(indexKey)) {
+        const buffer = device.createBuffer({
+          size: indexBuffer.byteLength,
+          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+          mappedAtCreation: true,
+        });
+        const mappedRange = buffer.getMappedRange();
+        new Uint16Array(mappedRange).set(new Uint16Array(indexBuffer));
+        buffer.unmap();
+        indexBufferMap.set(indexKey, buffer);
+      }
     }
 
     renderObjectMap.set(id, { pipelineKey, bindings, input, material });
@@ -126,7 +145,19 @@ async function start() {
         device.queue.writeBuffer(gpuBuffer, 0, buffer, 0);
         passEncoder.setVertexBuffer(index, gpuBuffer);
       });
-      passEncoder.draw(input.vertexCount);
+      if (input.index) {
+        const {
+          indexCount,
+          indexFormat,
+          key: indexKey,
+          // indexBuffer,
+        } = input.index;
+        const gpuIndexBuffer = indexBufferMap.get(indexKey)!;
+        passEncoder.setIndexBuffer(gpuIndexBuffer, indexFormat);
+        passEncoder.drawIndexed(indexCount);
+      } else {
+        passEncoder.draw(input.vertexCount);
+      }
     });
 
     passEncoder.end();

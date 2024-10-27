@@ -9,6 +9,12 @@ export interface TransferInput {
   key: string;
   vertexBuffers: SharedArrayBuffer[];
   vertexCount: number;
+  index?: {
+    key: string;
+    indexBuffer: SharedArrayBuffer;
+    indexCount: number;
+    indexFormat: GPUIndexFormat;
+  };
 }
 
 export interface TransferBinding {

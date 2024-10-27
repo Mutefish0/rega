@@ -234,7 +234,7 @@ export function createRenderPipeline(
     let arrayStride = 4;
     let format: GPUVertexFormat = "float32";
     if (attribute.type === "vec3") {
-      arrayStride = 4 * 4;
+      arrayStride = 3 * 4;
       format = "float32x3";
     } else if (attribute.type === "vec2") {
       arrayStride = 2 * 4;
