@@ -3,12 +3,7 @@ import NodeMaterial from "three/src/materials/nodes/NodeMaterial.js";
 import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipelineUtils.js";
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
 
-import {
-  BindGroupInfo,
-  BindInfo,
-  MaterialJSON,
-  TransferBinding,
-} from "./types";
+import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
 
 const webGPUPipelineUtil = new WebGPUPipelineUtils();
 
@@ -40,10 +35,6 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
 
   const bindingGroups: BindGroupInfo[] = [];
 
-  const transferBindings: TransferBinding[] = [];
-
-  const bindMap = new Map<string, { update: () => void }>();
-
   builder.getBindings().forEach((binding: any) => {
     const { index, name, bindings: _bindings } = binding;
 
@@ -52,11 +43,11 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
     let bindingIndex = 0;
 
     let uniformIds: string[] = [];
-    let buffers: SharedArrayBuffer[] = [];
 
     for (const b of _bindings) {
-      const uniformId = b.uniforms[0].nodeUniform.node.uuid;
+      debugger;
 
+      const uniformId = b.uniforms[0].nodeUniform.node.uuid;
       bindings.push({
         isBuffer: b.isBuffer,
         isNodeUniformsGroup: b.isNodeUniformsGroup,
@@ -70,18 +61,10 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
         name: b.name,
       });
 
-      bindMap.set(uniformId, b);
-
       uniformIds.push(uniformId);
-      buffers.push(b.buffer.buffer);
 
       bindingIndex++;
     }
-
-    transferBindings.push({
-      groupIndex: index,
-      buffers,
-    });
 
     bindingGroups.push({
       index,
@@ -99,9 +82,5 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
     format: "bgra8unorm",
   };
 
-  return {
-    material: mat,
-    transferBindings,
-    bindMap,
-  };
+  return mat;
 }

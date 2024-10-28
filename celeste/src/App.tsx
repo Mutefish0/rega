@@ -72,28 +72,30 @@ export default function App() {
     return null;
   }
 
-  const appElement = (
-    <>
-      <FPS
-        style={{
-          fontFamily: "Arial",
-          marginLeft: "auto",
-          fontSize: 12,
-          marginTop: 8,
-          marginRight: 12,
-          color: "rgba(200, 200, 200, 0.3)",
-        }}
-      />
-      <Camera shake={shake} onShakeEnd={() => setShake(0)} />
-      <Order order={1}>
-        {!started && <TitleScreen onStart={() => setStarted(true)} />}
-        {!!started && <Level initialLevel={0} onShake={onShake} />}
-      </Order>
-      <Order order={-1}>
-        <Box2D size={[128, 128]} color="black" anchor="top-left" />
-      </Order>
-    </>
-  );
+  const appElement = <Box2D size={[1, 1]} color="skyblue" anchor="center" />;
+
+  // const appElement = (
+  //   <>
+  //     <FPS
+  //       style={{
+  //         fontFamily: "Arial",
+  //         marginLeft: "auto",
+  //         fontSize: 12,
+  //         marginTop: 8,
+  //         marginRight: 12,
+  //         color: "rgba(200, 200, 200, 0.3)",
+  //       }}
+  //     />
+  //     <Camera shake={shake} onShakeEnd={() => setShake(0)} />
+  //     <Order order={1}>
+  //       {!started && <TitleScreen onStart={() => setStarted(true)} />}
+  //       {!!started && <Level initialLevel={0} onShake={onShake} />}
+  //     </Order>
+  //     <Order order={-1}>
+  //       <Box2D size={[128, 128]} color="black" anchor="top-left" />
+  //     </Order>
+  //   </>
+  // );
 
   if (import.meta.env.DEV) {
     return (
