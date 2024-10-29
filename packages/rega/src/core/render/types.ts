@@ -22,6 +22,11 @@ export interface TransferBinding {
   buffers: SharedArrayBuffer[];
 }
 
+export interface BindingHandle {
+  transferBindings: TransferBinding[];
+  bufferMap: Map<string, Float32Array>;
+}
+
 export interface BindInfo {
   byteLength: number;
   bytesPerElement: number;
@@ -33,6 +38,11 @@ export interface BindInfo {
   isStorageBuffer: boolean;
   visibility: number;
   access: any;
+
+  uniforms: Array<{
+    offset: number;
+    name: string;
+  }>;
 }
 
 export interface BindGroupInfo {

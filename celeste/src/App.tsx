@@ -7,6 +7,7 @@ import {
   Box2D,
   Order,
   FPS,
+  Relative,
 } from "rega";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
@@ -72,7 +73,16 @@ export default function App() {
     return null;
   }
 
-  const appElement = <Box2D size={[1, 1]} color="skyblue" anchor="center" />;
+  const appElement = (
+    <>
+      <Relative translation={{ x: 0.2, y: 0.2 }}>
+        <Box2D size={[1, 1]} color="#4b358a" anchor="center" />
+      </Relative>
+      <Relative translation={{ x: -0.2, y: -0.2 }}>
+        <Box2D size={[1, 1]} color="red" anchor="center" />
+      </Relative>
+    </>
+  );
 
   // const appElement = (
   //   <>

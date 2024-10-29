@@ -4,11 +4,61 @@ import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipeline
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
 
 import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
+import { off } from "process";
 
 const webGPUPipelineUtil = new WebGPUPipelineUtils();
 
 // 不重要
 const geometry = new BufferGeometry();
+
+interface UniformLayout {
+  boundary: number;
+  itemSize: number;
+}
+
+const BYTES_PER_ELEMENT = 4;
+// size of a chunk in bytes (STD140 layout)
+export const GPU_CHUNK_BYTES = 16;
+
+function calcBindingBufferLayout(uniforms: UniformLayout[]) {
+  let offset = 0; // global buffer offset in bytes
+
+  let offsets = [];
+
+  for (let i = 0, l = uniforms.length; i < l; i++) {
+    const uniform = uniforms[i];
+
+    const { boundary, itemSize } = uniform;
+
+    // offset within a single chunk in bytes
+
+    const chunkOffset = offset % GPU_CHUNK_BYTES;
+    const remainingSizeInChunk = GPU_CHUNK_BYTES - chunkOffset;
+
+    // conformance tests
+
+    if (chunkOffset !== 0 && remainingSizeInChunk - boundary < 0) {
+      // check for chunk overflow
+
+      offset += GPU_CHUNK_BYTES - chunkOffset;
+    } else if (chunkOffset % boundary !== 0) {
+      // check for correct alignment
+
+      offset += chunkOffset % boundary;
+    }
+
+    offsets.push(offset);
+
+    offset += itemSize * BYTES_PER_ELEMENT;
+  }
+
+  const byteLength = Math.ceil(offset / GPU_CHUNK_BYTES) * GPU_CHUNK_BYTES;
+
+  return {
+    byteLength,
+    offsets,
+  };
+}
 
 export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
   const material = new NodeMaterial();
@@ -35,19 +85,19 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
 
   const bindingGroups: BindGroupInfo[] = [];
 
-  builder.getBindings().forEach((binding: any) => {
-    const { index, name, bindings: _bindings } = binding;
+  builder.getBindings().forEach((bg: any) => {
+    const { index, name } = bg;
 
     const bindings: BindInfo[] = [];
 
-    let bindingIndex = 0;
+    for (const b of bg.bindings) {
+      const { byteLength, offsets } = calcBindingBufferLayout(b.uniforms);
 
-    let uniformIds: string[] = [];
+      const us = b.uniforms.map((u: any, i: number) => ({
+        name: u.name,
+        offset: offsets[i],
+      }));
 
-    for (const b of _bindings) {
-      debugger;
-
-      const uniformId = b.uniforms[0].nodeUniform.node.uuid;
       bindings.push({
         isBuffer: b.isBuffer,
         isNodeUniformsGroup: b.isNodeUniformsGroup,
@@ -56,14 +106,11 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
         isStorageBuffer: b.isStorageBuffer,
         visibility: b.visibility,
         access: b.access,
-        bytesPerElement: b.bytesPerElement,
-        byteLength: b.byteLength,
+        bytesPerElement: BYTES_PER_ELEMENT,
+        byteLength,
         name: b.name,
+        uniforms: us,
       });
-
-      uniformIds.push(uniformId);
-
-      bindingIndex++;
     }
 
     bindingGroups.push({

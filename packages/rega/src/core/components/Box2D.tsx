@@ -1,10 +1,18 @@
 import React, { useEffect, useMemo } from "react";
-import { positionGeometry, vec4, uniform } from "three/src/nodes/TSL.js";
-import { Vector3 } from "three/tsl";
+import {
+  positionGeometry,
+  vec4,
+  uniform,
+  modelWorldMatrix,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+} from "three/src/nodes/TSL.js";
+import { Vector3, Matrix4 } from "three/tsl";
 
 import createMaterial from "../render/createMaterial";
 import createVertexBuffers from "../render/createVertexBuffers";
 import createIndexBuffer from "../render/createIndexBuffer";
+import createBindingBuffers from "../render/createBindingBuffers";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -18,11 +26,19 @@ interface Props {
   color?: string;
 }
 
-const color = uniform(new Vector3(0, 0, 0), "vec3").label("color1");
-const opacity = uniform(1, "float").label("opacity1");
+const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
+const opacity = uniform(1, "float").label("opacity");
+
+// const material = createMaterial(
+//   cameraProjectionMatrix
+//     .mul(cameraViewMatrix)
+//     .mul(modelWorldMatrix)
+//     .mul(positionGeometry),
+//   vec4(color, opacity)
+// );
 
 const material = createMaterial(
-  vec4(positionGeometry, 1),
+  modelWorldMatrix.mul(positionGeometry),
   vec4(color, opacity)
 );
 
@@ -32,9 +48,11 @@ const gpuIndexKey = crypto.randomUUID();
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 const vertexBuffers = createVertexBuffers(material, vertexCount);
+
 const positionBuffer = vertexBuffers.bufferMap.get(
   positionGeometry._attributeName
 )!;
+
 new Float32Array(positionBuffer).set(vertices);
 
 const indexBuffer = createIndexBuffer(indices.length);
@@ -106,7 +124,18 @@ export default React.memo(function Box2D({
   anchor = "center",
   color = "white",
 }: Props) {
-  useMemo(() => {}, []);
+  const bindingHandle = useMemo(() => {
+    const bindingBuffers = createBindingBuffers(material);
+    return bindingBuffers;
+  }, []);
+
+  useEffect(() => {
+    const { opacity, array } = parseColor(color);
+    const b1 = bindingHandle.bufferMap.get("opacity")!;
+    b1.set([opacity]);
+    const b2 = bindingHandle.bufferMap.get("color")!;
+    b2.set(array);
+  }, [color]);
 
   //   const { geometry, material } = useMemo(() => {
   //     const geometry = new PlaneGeometry(1, 1);
@@ -122,26 +151,17 @@ export default React.memo(function Box2D({
   //     };
   //   }, []);
 
-  //   const anchorMatrix = useAnchor(anchor, size);
+  const anchorMatrix = useAnchor(anchor, size);
 
-  //   const matrix = useMemo(() => {
-  //     const mat = new Matrix4();
-  //     mat.makeScale(size[0], size[1], 1);
-  //     mat.premultiply(anchorMatrix);
-  //     return mat;
-  //   }, [anchorMatrix, size.join(",")]);
-
-  //   useEffect(() => {
-  //     const { opacity, array } = parseColor(color);
-  //     material.color.setRGB(array[0], array[1], array[2]);
-  //     material.opacity = opacity;
-  //     material.needsUpdate = true;
-  //   }, [color]);
+  const matrix = useMemo(() => {
+    const mat = new Matrix4();
+    mat.makeScale(size[0], size[1], 1);
+    mat.premultiply(anchorMatrix);
+    return mat;
+  }, [anchorMatrix, size.join(",")]);
 
   return (
-    <Relative
-    //matrix={matrix}
-    >
+    <Relative matrix={matrix}>
       <RenderObject
         material={material}
         input={{
@@ -155,7 +175,7 @@ export default React.memo(function Box2D({
             indexCount: indices.length,
           },
         }}
-        bindings={[]}
+        bindingHandle={bindingHandle}
       />
     </Relative>
   );

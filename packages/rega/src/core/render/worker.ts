@@ -141,13 +141,9 @@ async function start() {
         device.queue.writeBuffer(gpuBuffer, 0, buffer, 0);
         passEncoder.setVertexBuffer(index, gpuBuffer);
       });
+
       if (input.index) {
-        const {
-          indexCount,
-          indexFormat,
-          key: indexKey,
-          // indexBuffer,
-        } = input.index;
+        const { indexCount, indexFormat, key: indexKey } = input.index;
         const gpuIndexBuffer = indexBufferMap.get(indexKey)!;
         passEncoder.setIndexBuffer(gpuIndexBuffer, indexFormat);
         passEncoder.drawIndexed(indexCount);
