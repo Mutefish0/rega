@@ -76,10 +76,10 @@ export default function App() {
   const appElement = (
     <>
       <Relative translation={{ x: 0.2, y: 0.2 }}>
-        <Box2D size={[1, 1]} color="#4b358a" anchor="center" />
+        <Box2D size={[1, 1]} color="rgba(0,255,0,0.2)" anchor="center" />
       </Relative>
       <Relative translation={{ x: -0.2, y: -0.2 }}>
-        <Box2D size={[1, 1]} color="red" anchor="center" />
+        <Box2D size={[1, 1]} color="rgba(255,0,0,0.3)" anchor="center" />
       </Relative>
     </>
   );
