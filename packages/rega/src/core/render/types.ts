@@ -36,6 +36,7 @@ export interface BindInfo {
   isUniformBuffer: boolean;
   isUniformsGroup: boolean;
   isStorageBuffer: boolean;
+  isSampler: boolean;
   visibility: number;
   access: any;
 

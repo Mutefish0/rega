@@ -1,4 +1,5 @@
 import { MaterialJSON, TransferBinding, BindingHandle } from "./types";
+import sortBy from "lodash/sortBy";
 
 export default function createBindingHandle(
   material: MaterialJSON
@@ -28,7 +29,7 @@ export default function createBindingHandle(
   }
 
   return {
-    transferBindings,
+    transferBindings: sortBy(transferBindings, "groupIndex"),
     bufferMap,
   };
 }

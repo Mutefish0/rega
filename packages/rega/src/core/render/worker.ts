@@ -5,7 +5,13 @@ import {
   TransferInput,
 } from "./types";
 
-import { createBindGroup } from "./utils";
+import {
+  getGPUBuffer,
+  addObjectGPUBuffer,
+  removeObjectGPUBuffer,
+  updateGPUBuffer,
+} from "./bufferPair";
+import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
 import createGPUVertexBuffers from "./createGPUVertexBuffers";
 
@@ -24,14 +30,6 @@ const vertexBuffersMap = new Map<string, GPUBuffer[]>();
 
 const indexBufferMap = new Map<string, GPUBuffer>();
 
-const bindGroupMap = new Map<
-  string,
-  {
-    gpuBindGroup: GPUBindGroup;
-    gpuBuffers: GPUBuffer[];
-  }
->();
-
 const renderObjectMap = new Map<
   string,
   {
@@ -39,10 +37,7 @@ const renderObjectMap = new Map<
     pipelineKey: string;
     bindings: TransferBinding[];
 
-    gpuBindings: Array<{
-      gpuBindGroup: GPUBindGroup;
-      gpuBuffers: GPUBuffer[];
-    }>;
+    gpuBindGroups: GPUBindGroup[];
 
     input: TransferInput;
   }
@@ -75,15 +70,20 @@ self.addEventListener("message", async (event) => {
 
     const pl = pipelineMap.get(pipelineKey)!;
 
-    const gpuBindings: Array<{
-      gpuBindGroup: GPUBindGroup;
-      gpuBuffers: GPUBuffer[];
-    }> = [];
+    const gpuBindGroups: GPUBindGroup[] = [];
 
-    material.bindings.forEach((bg) => {
+    bindings.forEach(({ buffers }, index) => {
+      const bg = material.bindings[index];
+      const gpuBuffers = buffers.map((buffer, bIndex) => {
+        const info = bg.bindings[bIndex];
+        let usage = GPUBufferUsage.UNIFORM;
+        if (info.isUniformBuffer) {
+          usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+        }
+        return addObjectGPUBuffer(device, buffer, usage);
+      });
       const layout = pl.bindGroupLayoutMap.get(bg.name)!;
-      const gpuBinding = createBindGroup(device, layout, bg);
-      gpuBindings[bg.index] = gpuBinding;
+      gpuBindGroups.push(createGPUBindGroup(device, layout, bg, gpuBuffers));
     });
 
     if (!vertexBuffersMap.has(input.key)) {
@@ -111,15 +111,15 @@ self.addEventListener("message", async (event) => {
       bindings,
       input,
       material,
-      gpuBindings,
+      gpuBindGroups,
     });
   } else if (event.data.type === "removeObject") {
     const object = renderObjectMap.get(event.data.objectID);
     if (object) {
-      const { gpuBindings } = object;
-      gpuBindings.forEach(({ gpuBuffers }) => {
-        gpuBuffers.forEach((gpuBuffer) => {
-          gpuBuffer.destroy();
+      const { bindings } = object;
+      bindings.forEach(({ buffers }) => {
+        buffers.forEach((buffer) => {
+          removeObjectGPUBuffer(buffer);
         });
       });
       renderObjectMap.delete(event.data.objectID);
@@ -150,36 +150,37 @@ async function start() {
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
-    renderObjectMap.forEach(({ pipelineKey, bindings, input, gpuBindings }) => {
-      const pipeline = pipelineMap.get(pipelineKey)!.pipeline;
-      passEncoder.setPipeline(pipeline);
+    renderObjectMap.forEach(
+      ({ pipelineKey, bindings, input, gpuBindGroups }) => {
+        const pipeline = pipelineMap.get(pipelineKey)!.pipeline;
+        passEncoder.setPipeline(pipeline);
 
-      bindings.forEach((binding) => {
-        const gpuBinding = gpuBindings[binding.groupIndex];
-
-        gpuBinding.gpuBuffers.forEach((gpuBuffer, index) => {
-          const cpuBuffer = binding.buffers[index];
-          device.queue.writeBuffer(gpuBuffer, 0, cpuBuffer, 0);
+        bindings.forEach((binding) => {
+          binding.buffers.forEach((buffer) => {
+            updateGPUBuffer(device, buffer);
+          });
+          passEncoder.setBindGroup(
+            binding.groupIndex,
+            gpuBindGroups[binding.groupIndex]
+          );
         });
 
-        passEncoder.setBindGroup(binding.groupIndex, gpuBinding.gpuBindGroup);
-      });
-
-      const vertexBuffers = vertexBuffersMap.get(input.key)!;
-      input.vertexBuffers.forEach((buffer, index) => {
-        const gpuBuffer = vertexBuffers[index];
-        device.queue.writeBuffer(gpuBuffer, 0, buffer, 0);
-        passEncoder.setVertexBuffer(index, gpuBuffer);
-      });
-      if (input.index) {
-        const { indexCount, indexFormat, key: indexKey } = input.index;
-        const gpuIndexBuffer = indexBufferMap.get(indexKey)!;
-        passEncoder.setIndexBuffer(gpuIndexBuffer, indexFormat);
-        passEncoder.drawIndexed(indexCount);
-      } else {
-        passEncoder.draw(input.vertexCount);
+        const vertexBuffers = vertexBuffersMap.get(input.key)!;
+        input.vertexBuffers.forEach((buffer, index) => {
+          const gpuBuffer = vertexBuffers[index];
+          device.queue.writeBuffer(gpuBuffer, 0, buffer, 0);
+          passEncoder.setVertexBuffer(index, gpuBuffer);
+        });
+        if (input.index) {
+          const { indexCount, indexFormat, key: indexKey } = input.index;
+          const gpuIndexBuffer = indexBufferMap.get(indexKey)!;
+          passEncoder.setIndexBuffer(gpuIndexBuffer, indexFormat);
+          passEncoder.drawIndexed(indexCount);
+        } else {
+          passEncoder.draw(input.vertexCount);
+        }
       }
-    });
+    );
 
     passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);

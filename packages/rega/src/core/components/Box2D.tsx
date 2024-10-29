@@ -12,7 +12,7 @@ import { Vector3, Matrix4 } from "three/tsl";
 import createMaterial from "../render/createMaterial";
 import createVertexBuffers from "../render/createVertexBuffers";
 import createIndexBuffer from "../render/createIndexBuffer";
-import createBindingBuffers from "../render/createBindingBuffers";
+import createBindingHandle from "../render/createBindingHandle";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -124,10 +124,7 @@ export default React.memo(function Box2D({
   anchor = "center",
   color = "white",
 }: Props) {
-  const bindingHandle = useMemo(() => {
-    const bindingBuffers = createBindingBuffers(material);
-    return bindingBuffers;
-  }, []);
+  const bindingHandle = useMemo(() => createBindingHandle(material), []);
 
   useEffect(() => {
     const { opacity, array } = parseColor(color);

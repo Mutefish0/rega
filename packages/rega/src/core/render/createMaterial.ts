@@ -2,9 +2,8 @@ import WGSLNodeBuilder from "three/src/renderers/webgpu/nodes/WGSLNodeBuilder.js
 import NodeMaterial from "three/src/materials/nodes/NodeMaterial.js";
 import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipelineUtils.js";
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
-
+import sortBy from "lodash/sortBy";
 import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
-import { off } from "process";
 
 const webGPUPipelineUtil = new WebGPUPipelineUtils();
 
@@ -104,6 +103,7 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
         isUniformBuffer: b.isUniformBuffer,
         isUniformsGroup: b.isUniformsGroup,
         isStorageBuffer: b.isStorageBuffer,
+        isSampler: b.isSampler,
         visibility: b.visibility,
         access: b.access,
         bytesPerElement: BYTES_PER_ELEMENT,
@@ -124,7 +124,7 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
     vertexShader: builder.vertexShader,
     fragmentShader: builder.fragmentShader,
     attributes: builder.attributes,
-    bindings: bindingGroups,
+    bindings: sortBy(bindingGroups, "index"),
     blend,
     format: "bgra8unorm",
   };
