@@ -64,18 +64,24 @@ self.addEventListener("message", async (event) => {
 
     const gpuBindGroups: GPUBindGroup[] = [];
 
-    bindings.forEach(({ buffers }, index) => {
+    bindings.forEach(({ resources }, index) => {
       const bg = material.bindings[index];
-      const gpuBuffers = buffers.map((buffer, bIndex) => {
+      const gpuResources = resources.map((res, bIndex) => {
         const info = bg.bindings[bIndex];
-        let usage = GPUBufferUsage.UNIFORM;
-        if (info.isUniformBuffer) {
-          usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+        if (res.type === "uniformBuffer") {
+          let usage = GPUBufferUsage.UNIFORM;
+          if (info.type === "uniformBuffer") {
+            usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+          }
+          const gpuBuffer = addObjectGPUBuffer(device, res.buffer, usage);
+          return { buffer: gpuBuffer } as GPUBufferBinding;
+        } else {
+          throw new Error("not supported uniform type: " + res.type);
         }
-        return addObjectGPUBuffer(device, buffer, usage);
       });
+
       const layout = pl.bindGroupLayoutMap.get(bg.name)!;
-      gpuBindGroups.push(createGPUBindGroup(device, layout, bg, gpuBuffers));
+      gpuBindGroups.push(createGPUBindGroup(device, layout, bg, gpuResources));
     });
 
     input.vertexBuffers.forEach((buffer) => {
@@ -104,9 +110,15 @@ self.addEventListener("message", async (event) => {
     const object = renderObjectMap.get(event.data.objectID);
     if (object) {
       const { bindings, input } = object;
-      bindings.forEach(({ buffers }) => {
-        buffers.forEach((buffer) => {
-          removeObjectGPUBuffer(buffer);
+      bindings.forEach(({ resources }) => {
+        resources.forEach((res) => {
+          if (res.type === "uniformBuffer") {
+            removeObjectGPUBuffer(res.buffer);
+          } else {
+            throw new Error(
+              "RemoveObject: not supported uniform type: " + res.type
+            );
+          }
         });
       });
       input.vertexBuffers.forEach((buffer) => {
@@ -147,8 +159,10 @@ async function start() {
         passEncoder.setPipeline(pipeline);
 
         bindings.forEach((binding) => {
-          binding.buffers.forEach((buffer) => {
-            updateGPUBuffer(device, buffer);
+          binding.resources.forEach((res) => {
+            if (res.type === "uniformBuffer") {
+              updateGPUBuffer(device, res.buffer);
+            }
           });
           passEncoder.setBindGroup(
             binding.groupIndex,

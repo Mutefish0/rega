@@ -8,10 +8,11 @@ import {
   Order,
   FPS,
   Relative,
+  // Sprite2D,
 } from "rega";
-import Level from "./scenes/Level";
-import TitleScreen from "./scenes/TitleScreen";
-import Camera from "./camera";
+// import Level from "./scenes/Level";
+// import TitleScreen from "./scenes/TitleScreen";
+// import Camera from "./camera";
 
 export default function App() {
   const [loadingTexture, setLoadingTexture] = useState(true);
@@ -81,6 +82,7 @@ export default function App() {
       <Relative translation={{ x: -0.2, y: -0.2 }}>
         <Box2D size={[1, 1]} color="rgba(255,0,0,0.3)" anchor="center" />
       </Relative>
+      {/* <Sprite2D textureId="/images/atlas.png" clip={[48, 8, 8, 8]} /> */}
     </>
   );
 

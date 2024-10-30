@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import {
-  uv,
+  //uv,
   normalGeometry,
   normalLocal,
   positionGeometry,

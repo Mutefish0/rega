@@ -19,6 +19,10 @@ export function createUint16Array(sab: SharedArrayBuffer) {
   return new Uint16Array(sab, HEADER_SIZE);
 }
 
+export function createUint8Array(sab: SharedArrayBuffer) {
+  return new Uint8Array(sab, HEADER_SIZE);
+}
+
 export function createVersionView(sab: SharedArrayBuffer) {
   const view = new DataView(sab, UUID_BYTES, VERSION_BYTES);
   return view;

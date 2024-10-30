@@ -14,9 +14,21 @@ export interface TransferInput {
   };
 }
 
+export type TransferResource =
+  | {
+      type: "uniformBuffer";
+      buffer: SharedArrayBuffer;
+    }
+  | { type: "sampler" }
+  | {
+      type: "sampledTexture";
+      buffer: SharedArrayBuffer;
+      width: number;
+      height: number;
+    };
 export interface TransferBinding {
   groupIndex: number;
-  buffers: SharedArrayBuffer[];
+  resources: TransferResource[];
 }
 
 export interface BindingHandle {
@@ -29,24 +41,50 @@ export interface VertexHandle {
   update: (name: string, value: number[]) => void;
 }
 
-export interface BindInfo {
+interface UniformBindInfo {
+  type: "uniformBuffer";
   byteLength: number;
-  bytesPerElement: number;
-  name: string;
-  isBuffer: boolean;
-  isNodeUniformsGroup: boolean;
-  isUniformBuffer: boolean;
-  isUniformsGroup: boolean;
-  isStorageBuffer: boolean;
-  isSampler: boolean;
   visibility: number;
-  access: any;
-
   uniforms: Array<{
     offset: number;
     name: string;
   }>;
 }
+
+interface SamplerBindInfo {
+  type: "sampler";
+  visibility: number;
+}
+
+interface SampledTextureBindInfo {
+  type: "sampledTexture";
+  visibility: number;
+  name: string;
+}
+
+export type BindInfo =
+  | UniformBindInfo
+  | SamplerBindInfo
+  | SampledTextureBindInfo;
+
+// export interface BindInfo {
+//   byteLength: number;
+//   bytesPerElement: number;
+//   name: string;
+//   isBuffer: boolean;
+//   isNodeUniformsGroup: boolean;
+//   isUniformBuffer: boolean;
+//   isUniformsGroup: boolean;
+//   isStorageBuffer: boolean;
+//   isSampler: boolean;
+//   visibility: number;
+//   access: any;
+
+//   uniforms: Array<{
+//     offset: number;
+//     name: string;
+//   }>;
+// }
 
 export interface BindGroupInfo {
   index: number;

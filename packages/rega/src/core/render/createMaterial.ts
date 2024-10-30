@@ -5,6 +5,8 @@ import { BufferGeometry } from "three/src/core/BufferGeometry.js";
 import sortBy from "lodash/sortBy";
 import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
 
+import { hasFeature } from "./features";
+
 const webGPUPipelineUtil = new WebGPUPipelineUtils();
 
 // 不重要
@@ -77,6 +79,7 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
         },
       },
       getMRT: () => null,
+      hasFeature,
     }
   );
 
@@ -90,27 +93,30 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
     const bindings: BindInfo[] = [];
 
     for (const b of bg.bindings) {
-      const { byteLength, offsets } = calcBindingBufferLayout(b.uniforms);
-
-      const us = b.uniforms.map((u: any, i: number) => ({
-        name: u.name,
-        offset: offsets[i],
-      }));
-
-      bindings.push({
-        isBuffer: b.isBuffer,
-        isNodeUniformsGroup: b.isNodeUniformsGroup,
-        isUniformBuffer: b.isUniformBuffer,
-        isUniformsGroup: b.isUniformsGroup,
-        isStorageBuffer: b.isStorageBuffer,
-        isSampler: b.isSampler,
-        visibility: b.visibility,
-        access: b.access,
-        bytesPerElement: BYTES_PER_ELEMENT,
-        byteLength,
-        name: b.name,
-        uniforms: us,
-      });
+      if (b.isUniformBuffer) {
+        const { byteLength, offsets } = calcBindingBufferLayout(b.uniforms);
+        const us = b.uniforms.map((u: any, i: number) => ({
+          name: u.name,
+          offset: offsets[i],
+        }));
+        bindings.push({
+          type: "uniformBuffer",
+          visibility: b.visibility,
+          byteLength,
+          uniforms: us,
+        });
+      } else if (b.isSampler) {
+        bindings.push({
+          type: "sampler",
+          visibility: b.visibility,
+        });
+      } else if (b.isSampledTexture) {
+        bindings.push({
+          type: "sampledTexture",
+          visibility: b.visibility,
+          name: b.name,
+        });
+      }
     }
 
     bindingGroups.push({

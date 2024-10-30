@@ -4,7 +4,9 @@ import { fetchBufferData } from "../../core/common/utils";
 await wasmInit();
 
 let UImage: {
-  new (width?: number, height?: number): HTMLImageElement;
+  new (width?: number, height?: number): HTMLImageElement & {
+    data: Uint8Array;
+  };
 };
 
 // @ts-ignore

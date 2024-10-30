@@ -14,13 +14,8 @@ export function createBindingsLayout(
       visibility: binding.visibility,
     };
 
-    if (binding.isUniformBuffer || binding.isStorageBuffer) {
+    if (binding.type === "uniformBuffer") {
       const buffer: GPUBufferBindingLayout = {}; // GPUBufferBindingLayout
-
-      if (binding.isStorageBuffer) {
-        buffer.type = binding.access;
-      }
-
       bindingGPU.buffer = buffer;
     }
     //  else if (binding.isSampler) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useContext } from "react";
+import React, { useEffect, useMemo, useContext, useState } from "react";
 import {
   varying,
   uv,
@@ -57,7 +57,9 @@ const opacity = uniform(1, "float").label("opacity");
 
 await TextureManager.add("/images/atlas.png");
 
-const tex = texture(TextureManager.get("/images/atlas.png"));
+const tex = texture(TextureManager.get("/images/atlas.png")!.texture3).label(
+  "tex"
+);
 tex.uvNode = varying(uv());
 
 const material = createMaterial(
@@ -73,6 +75,7 @@ vertexHandle.update("position", vertices);
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
 
+// 不支持更换 Texture，但是支持编辑
 export default React.memo(function Sprite2D({
   textureId,
   clip,
@@ -87,7 +90,26 @@ export default React.memo(function Sprite2D({
 }: Props) {
   const ctx = useContext(ThreeContext);
 
-  const bindingHandle = useMemo(() => createBindingHandle(material), []);
+  const bindingHandle = useMemo(() => {
+    const t = TextureManager.get(textureId)!;
+    return createBindingHandle(material, {
+      textures: {
+        tex: {
+          buffer: t.sab,
+          width: t.width,
+          height: t.height,
+        },
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    if (bindingHandle) {
+      const { opacity: opacity1, array } = parseColor(color || "#fff");
+      bindingHandle.update("opacity", [opacity ?? opacity1]);
+      bindingHandle.update("color", array);
+    }
+  }, [color, opacity, bindingHandle]);
 
   const scale = useMemo(() => {
     if (size) {
@@ -115,17 +137,26 @@ export default React.memo(function Sprite2D({
 
   const { texture, width, height } = useMemo(() => {
     const texture = TextureManager.get(textureId)!;
-    const { width, height } = texture!.image!;
+    const { width, height } = texture;
     return { texture, width, height };
   }, [textureId]);
 
   const anchorMatrix = useAnchor(anchor, [scale[0], scale[1]]);
 
-  const translation = useMemo(() => {
-    const v = new Vector3();
-    v.applyMatrix4(anchorMatrix);
-    return v;
-  }, [anchorMatrix]);
+  const matrix = useMemo(() => {
+    const mat = new Matrix4();
+
+    if (flipY) {
+      mat.makeRotationX(Math.PI);
+    }
+    if (flipX) {
+      mat.makeRotationY(Math.PI);
+    }
+
+    mat.makeScale(...scale);
+    mat.premultiply(anchorMatrix);
+    return mat;
+  }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
   // useEffect(() => {
   //   material.map = texture;
@@ -133,13 +164,6 @@ export default React.memo(function Sprite2D({
   //     material.alphaMap = TextureManager.get(alphaTextureId)!;
   //   }
   // }, [texture, alphaTextureId]);
-
-  // useEffect(() => {
-  //   const { opacity, array } = parseColor(color || "#ffffff");
-  //   material.opacity = opacity;
-  //   material.color.setRGB(array[0], array[1], array[2]);
-  //   material.needsUpdate = true;
-  // }, [color]);
 
   // useEffect(() => {
   //   const cWidth = (clip[2] - 2 * padding) / width;
@@ -160,19 +184,8 @@ export default React.memo(function Sprite2D({
   //   geometry.attributes.uv.needsUpdate = true;
   // }, [clip.join(","), width, height]);
 
-  // useEffect(() => {
-  //   material.opacity = opacity ?? 1;
-  // }, [opacity]);
-
   return (
-    <Relative
-      translation={translation}
-      rotation={{
-        x: flipY ? Math.PI : 0,
-        y: flipX ? Math.PI : 0,
-        z: 0,
-      }}
-    >
+    <Relative matrix={matrix}>
       <RenderObject
         material={material}
         input={{
