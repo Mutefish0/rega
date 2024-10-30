@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo } from "react";
 import {
+  uv,
+  normalGeometry,
+  normalLocal,
   positionGeometry,
   vec4,
   uniform,
@@ -10,8 +13,8 @@ import {
 import { Vector3, Matrix4 } from "three/tsl";
 
 import createMaterial from "../render/createMaterial";
-import createVertexBuffers from "../render/createVertexBuffers";
-import createIndexBuffer from "../render/createIndexBuffer";
+import createVertexHandle from "../render/createVertexHandle";
+import createIndexHandle from "../render/createIndexHandle";
 import createBindingHandle from "../render/createBindingHandle";
 
 import RenderObject from "../primitives/RenderObject";
@@ -42,23 +45,17 @@ const material = createMaterial(
   vec4(color, opacity)
 );
 
-const gpuVertexKey = crypto.randomUUID();
-const gpuIndexKey = crypto.randomUUID();
-
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
-const vertexBuffers = createVertexBuffers(material, vertexCount);
+const vertexHandle = createVertexHandle(material, vertexCount);
 
-const positionBuffer = vertexBuffers.bufferMap.get(
-  positionGeometry._attributeName
-)!;
+const positionBuffer = vertexHandle.bufferMap.get("position")!;
+positionBuffer.set(vertices);
 
-new Float32Array(positionBuffer).set(vertices);
+const indexHandle = createIndexHandle(indices.length);
+indexHandle.view.set(indices);
 
-const indexBuffer = createIndexBuffer(indices.length);
-new Uint16Array(indexBuffer).set(indices);
-
-function createPlaneGeometry(width = 1, height = 1) {
+export function createPlaneGeometry(width = 1, height = 1) {
   const width_half = width / 2;
   const height_half = height / 2;
 
@@ -134,20 +131,6 @@ export default React.memo(function Box2D({
     b2.set(array);
   }, [color]);
 
-  //   const { geometry, material } = useMemo(() => {
-  //     const geometry = new PlaneGeometry(1, 1);
-
-  //     const material = new MeshBasicMaterial({
-  //       color: 0xffffff,
-  //       transparent: true,
-  //     });
-
-  //     return {
-  //       geometry,
-  //       material,
-  //     };
-  //   }, []);
-
   const anchorMatrix = useAnchor(anchor, size);
 
   const matrix = useMemo(() => {
@@ -162,12 +145,10 @@ export default React.memo(function Box2D({
       <RenderObject
         material={material}
         input={{
-          key: gpuVertexKey,
-          vertexBuffers: vertexBuffers.buffers,
+          vertexBuffers: vertexHandle.buffers,
           vertexCount,
           index: {
-            key: gpuIndexKey,
-            indexBuffer,
+            indexBuffer: indexHandle.buffer,
             indexFormat: "uint16",
             indexCount: indices.length,
           },

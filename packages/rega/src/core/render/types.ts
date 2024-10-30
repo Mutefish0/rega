@@ -6,11 +6,9 @@ export interface TransferObject {
 }
 
 export interface TransferInput {
-  key: string;
   vertexBuffers: SharedArrayBuffer[];
   vertexCount: number;
   index?: {
-    key: string;
     indexBuffer: SharedArrayBuffer;
     indexCount: number;
     indexFormat: GPUIndexFormat;
@@ -24,6 +22,11 @@ export interface TransferBinding {
 
 export interface BindingHandle {
   transferBindings: TransferBinding[];
+  bufferMap: Map<string, Float32Array>;
+}
+
+export interface VertexHandle {
+  buffers: SharedArrayBuffer[];
   bufferMap: Map<string, Float32Array>;
 }
 

@@ -1,5 +1,7 @@
 import { MaterialJSON, TransferBinding, BindingHandle } from "./types";
 import sortBy from "lodash/sortBy";
+import createSharedBuffer from "./createSharedBuffer";
+import { HEADER_SIZE } from "./sharedBufferLayout";
 
 export default function createBindingHandle(
   material: MaterialJSON
@@ -15,9 +17,12 @@ export default function createBindingHandle(
     const buffers: SharedArrayBuffer[] = [];
 
     bindings.forEach((binding) => {
-      const buffer = new SharedArrayBuffer(binding.byteLength);
+      const buffer = createSharedBuffer(binding.byteLength);
       binding.uniforms.forEach((uniform) => {
-        bufferMap.set(uniform.name, new Float32Array(buffer, uniform.offset));
+        bufferMap.set(
+          uniform.name,
+          new Float32Array(buffer, HEADER_SIZE + uniform.offset)
+        );
       });
       buffers.push(buffer);
     });
