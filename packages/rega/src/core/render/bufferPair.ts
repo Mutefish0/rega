@@ -1,4 +1,5 @@
 import { getUUID, HEADER_SIZE } from "./sharedBufferLayout";
+import { createVersionView, getVersion } from "./createSharedBuffer";
 
 const buffersMap = new Map<
   string,
@@ -8,6 +9,7 @@ const buffersMap = new Map<
     cpuUint8Array: Uint8Array;
     cpuUint16Array: Uint16Array;
     cpuFloat32Array: Float32Array;
+    versionView: DataView;
     refenceCount: number;
     usage: GPUBufferUsageFlags;
   }
@@ -60,6 +62,7 @@ export function addObjectGPUBuffer(
       cpuUint8Array: cpuUint8Array,
       cpuUint16Array: new Uint16Array(sab, HEADER_SIZE),
       cpuFloat32Array: new Float32Array(sab, HEADER_SIZE),
+      versionView: createVersionView(sab),
       refenceCount: 1,
       usage,
     };
@@ -90,16 +93,21 @@ export function removeObjectGPUBuffer(sab: SharedArrayBuffer) {
 }
 
 export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
-  // @TODO update based on the version
   const uuid = getUUID(sab);
   const record = buffersMap.get(uuid)!;
 
-  device.queue.writeBuffer(record.gpuBuffer, 0, record.cpuUint8Array, 0);
+  const version = getVersion(record.versionView);
 
-  // console.debug(
-  //   `[buffer ${uuid}] write, <${usageToString(record.usage)}>`,
-  //   record.cpuFloat32Array
-  // );
+  if (record.version < version) {
+    record.version = version;
+    device.queue.writeBuffer(record.gpuBuffer, 0, record.cpuUint8Array, 0);
+    console.debug(
+      `[buffer ${uuid}] write, <${usageToString(record.usage)}>`,
+      "version: ",
+      version,
+      record.cpuFloat32Array
+    );
+  }
 
   return record.gpuBuffer;
 }

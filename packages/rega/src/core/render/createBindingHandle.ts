@@ -24,10 +24,11 @@ export default function createBindingHandle(
 
     bindings.forEach((binding) => {
       const buffer = createSharedBuffer(binding.byteLength);
+      const version = createVersionView(buffer);
       binding.uniforms.forEach((uniform) => {
         bufferMap.set(uniform.name, {
-          buffer: createFloat32Array(buffer),
-          version: createVersionView(buffer),
+          buffer: createFloat32Array(buffer, uniform.offset),
+          version,
         });
       });
       buffers.push(buffer);

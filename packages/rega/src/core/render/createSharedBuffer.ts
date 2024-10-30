@@ -12,8 +12,8 @@ export default function createSharedBuffer(size: number) {
   return sab;
 }
 
-export function createFloat32Array(sab: SharedArrayBuffer) {
-  return new Float32Array(sab, HEADER_SIZE);
+export function createFloat32Array(sab: SharedArrayBuffer, offset = 0) {
+  return new Float32Array(sab, HEADER_SIZE + offset);
 }
 export function createUint16Array(sab: SharedArrayBuffer) {
   return new Uint16Array(sab, HEADER_SIZE);
@@ -29,6 +29,6 @@ export function getVersion(view: DataView) {
 }
 
 export function updateVersion(view: DataView) {
-  // const version = view.getUint32(0) + 1;
-  // view.setUint32(0, version);
+  const version = view.getUint32(0) + 1;
+  view.setUint32(0, version);
 }
