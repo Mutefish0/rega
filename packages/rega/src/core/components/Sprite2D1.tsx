@@ -1,29 +1,16 @@
 import React, { useEffect, useMemo, useContext } from "react";
-import {
-  uv,
-  normalGeometry,
-  normalLocal,
-  positionGeometry,
-  vec4,
-  uniform,
-  modelWorldMatrix,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
-} from "three/src/nodes/TSL.js";
-import { Vector3, Matrix4 } from "three/tsl";
-
-import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
-
-import createMaterial from "../render/createMaterial";
-import createVertexHandle from "../render/createVertexHandle";
-import createIndexBuffer from "../render/createIndexBuffer";
-import createBindingHandle from "../render/createBindingHandle";
-
-import RenderObject from "../primitives/RenderObject";
-
-import useAnchor, { AnchorType } from "../hooks/useAnchor";
+import Mesh from "../primitives/Mesh";
+import TextureManager from "../common/texture_manager";
+import {
+  PlaneGeometry,
+  MeshBasicMaterial,
+  Float32BufferAttribute,
+  DoubleSide,
+  Vector3,
+} from "three/webgpu";
 import Relative from "../primitives/Relative";
+import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import { parseColor } from "../tools/color";
 
 interface Props {
@@ -37,96 +24,6 @@ interface Props {
   padding?: number;
   color?: string;
   size?: [number, number];
-}
-
-const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
-const opacity = uniform(1, "float").label("opacity");
-
-// const material = createMaterial(
-//   cameraProjectionMatrix
-//     .mul(cameraViewMatrix)
-//     .mul(modelWorldMatrix)
-//     .mul(positionGeometry),
-//   vec4(color, opacity)
-// );
-
-const material = createMaterial(
-  modelWorldMatrix.mul(positionGeometry),
-  vec4(color, opacity)
-);
-
-const gpuVertexKey = crypto.randomUUID();
-const gpuIndexKey = crypto.randomUUID();
-
-const { vertices, vertexCount, indices } = createPlaneGeometry();
-
-const vertexHandle = createVertexHandle(material, vertexCount);
-
-const positionBuffer = vertexHandle.bufferMap.get("position")!;
-positionBuffer.set(vertices);
-
-const indexBuffer = createIndexBuffer(indices.length);
-new Uint16Array(indexBuffer).set(indices);
-
-export function createPlaneGeometry(width = 1, height = 1) {
-  const width_half = width / 2;
-  const height_half = height / 2;
-
-  const widthSegments = 1;
-  const heightSegments = 1;
-
-  const gridX = Math.floor(widthSegments);
-  const gridY = Math.floor(heightSegments);
-
-  const gridX1 = gridX + 1;
-  const gridY1 = gridY + 1;
-
-  const segment_width = width / gridX;
-  const segment_height = height / gridY;
-
-  const indices = [];
-  const vertices = [];
-  const normals = [];
-  const uvs = [];
-
-  let vertexCount = 0;
-
-  for (let iy = 0; iy < gridY1; iy++) {
-    const y = iy * segment_height - height_half;
-
-    for (let ix = 0; ix < gridX1; ix++) {
-      const x = ix * segment_width - width_half;
-
-      vertices.push(x, -y, 0);
-
-      vertexCount++;
-
-      normals.push(0, 0, 1);
-
-      uvs.push(ix / gridX);
-      uvs.push(1 - iy / gridY);
-    }
-  }
-
-  for (let iy = 0; iy < gridY; iy++) {
-    for (let ix = 0; ix < gridX; ix++) {
-      const a = ix + gridX1 * iy;
-      const b = ix + gridX1 * (iy + 1);
-      const c = ix + 1 + gridX1 * (iy + 1);
-      const d = ix + 1 + gridX1 * iy;
-
-      indices.push(a, b, d);
-      indices.push(b, c, d);
-    }
-  }
-
-  return {
-    vertices,
-    indices,
-    normals,
-    uvs,
-    vertexCount,
-  };
 }
 
 export default React.memo(function Sprite2D({
@@ -227,7 +124,7 @@ export default React.memo(function Sprite2D({
         z: 0,
       }}
     >
-      {/* <Mesh geometry={geometry} material={material} /> */}
+      <Mesh geometry={geometry} material={material} />
     </Relative>
   );
 });

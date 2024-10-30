@@ -11,7 +11,6 @@ export interface TransferInput {
   index?: {
     indexBuffer: SharedArrayBuffer;
     indexCount: number;
-    indexFormat: GPUIndexFormat;
   };
 }
 

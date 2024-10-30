@@ -160,9 +160,9 @@ async function start() {
           passEncoder.setVertexBuffer(index, gpuBuffer);
         });
         if (input.index) {
-          const { indexBuffer, indexFormat, indexCount } = input.index;
+          const { indexBuffer, indexCount } = input.index;
           const gpuBuffer = updateGPUBuffer(device, indexBuffer);
-          passEncoder.setIndexBuffer(gpuBuffer, indexFormat);
+          passEncoder.setIndexBuffer(gpuBuffer, "uint16");
           passEncoder.drawIndexed(indexCount);
         } else {
           passEncoder.draw(input.vertexCount);

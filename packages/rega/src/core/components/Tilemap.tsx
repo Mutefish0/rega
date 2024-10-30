@@ -16,9 +16,7 @@ import {
   vec2,
   tslFn,
   If,
-
   Discard,
-  
   vec4,
 } from "three/webgpu";
 import TextureManager from "../common/texture_manager";
