@@ -1,4 +1,4 @@
-import { UUID_BYTES, VERSION_BYTES } from "./sharedBufferLayout";
+import { UUID_BYTES, VERSION_BYTES, HEADER_SIZE } from "./sharedBufferLayout";
 
 export default function createSharedBuffer(size: number) {
   const id = crypto.randomUUID();
@@ -10,4 +10,25 @@ export default function createSharedBuffer(size: number) {
   }
 
   return sab;
+}
+
+export function createFloat32Array(sab: SharedArrayBuffer, offset = 0) {
+  return new Float32Array(sab, HEADER_SIZE + offset);
+}
+export function createUint16Array(sab: SharedArrayBuffer) {
+  return new Uint16Array(sab, HEADER_SIZE);
+}
+
+export function createVersionView(sab: SharedArrayBuffer) {
+  const view = new DataView(sab, UUID_BYTES, VERSION_BYTES);
+  return view;
+}
+
+export function getVersion(view: DataView) {
+  return view.getUint32(0);
+}
+
+export function updateVersion(view: DataView) {
+  const version = view.getUint32(0) + 1;
+  view.setUint32(0, version);
 }

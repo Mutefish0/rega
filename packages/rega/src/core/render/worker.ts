@@ -6,14 +6,12 @@ import {
 } from "./types";
 
 import {
-  getGPUBuffer,
   addObjectGPUBuffer,
   removeObjectGPUBuffer,
   updateGPUBuffer,
 } from "./bufferPair";
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
-import createGPUVertexBuffers from "./createGPUVertexBuffers";
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
@@ -175,9 +173,11 @@ async function start() {
     passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);
 
-    if (frame < 200) {
-      requestAnimationFrame(render);
-    }
+    requestAnimationFrame(render);
+
+    // if (frame < 200) {
+    //   requestAnimationFrame(render);
+    // }
   }
 
   render();

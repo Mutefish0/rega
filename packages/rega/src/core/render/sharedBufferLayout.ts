@@ -1,5 +1,5 @@
 export const UUID_BYTES = 36;
-export const VERSION_BYTES = 32;
+export const VERSION_BYTES = 4;
 export const HEADER_SIZE = UUID_BYTES + VERSION_BYTES;
 
 export function getUUID(sab: SharedArrayBuffer): string {

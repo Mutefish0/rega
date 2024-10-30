@@ -1,7 +1,10 @@
 import { MaterialJSON, TransferBinding, BindingHandle } from "./types";
 import sortBy from "lodash/sortBy";
-import createSharedBuffer from "./createSharedBuffer";
-import { HEADER_SIZE } from "./sharedBufferLayout";
+import createSharedBuffer, {
+  createFloat32Array,
+  createVersionView,
+  updateVersion,
+} from "./createSharedBuffer";
 
 export default function createBindingHandle(
   material: MaterialJSON
@@ -10,7 +13,10 @@ export default function createBindingHandle(
 
   const transferBindings: TransferBinding[] = [];
 
-  const bufferMap = new Map<string, Float32Array>();
+  const bufferMap = new Map<
+    string,
+    { buffer: Float32Array; version: DataView }
+  >();
 
   for (const bindGroup of bindings) {
     const { bindings, index } = bindGroup;
@@ -18,11 +24,12 @@ export default function createBindingHandle(
 
     bindings.forEach((binding) => {
       const buffer = createSharedBuffer(binding.byteLength);
+      const version = createVersionView(buffer);
       binding.uniforms.forEach((uniform) => {
-        bufferMap.set(
-          uniform.name,
-          new Float32Array(buffer, HEADER_SIZE + uniform.offset)
-        );
+        bufferMap.set(uniform.name, {
+          buffer: createFloat32Array(buffer, uniform.offset),
+          version,
+        });
       });
       buffers.push(buffer);
     });
@@ -33,8 +40,16 @@ export default function createBindingHandle(
     });
   }
 
+  function update(name: string, value: number[]) {
+    const buf = bufferMap.get(name);
+    if (buf) {
+      buf.buffer.set(value);
+      updateVersion(buf.version);
+    }
+  }
+
   return {
     transferBindings: sortBy(transferBindings, "groupIndex"),
-    bufferMap,
+    update,
   };
 }

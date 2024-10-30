@@ -22,12 +22,12 @@ export interface TransferBinding {
 
 export interface BindingHandle {
   transferBindings: TransferBinding[];
-  bufferMap: Map<string, Float32Array>;
+  update: (name: string, value: number[]) => void;
 }
 
 export interface VertexHandle {
   buffers: SharedArrayBuffer[];
-  bufferMap: Map<string, Float32Array>;
+  update: (name: string, value: number[]) => void;
 }
 
 export interface BindInfo {

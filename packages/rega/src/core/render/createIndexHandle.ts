@@ -1,5 +1,8 @@
-import createSharedBuffer from "./createSharedBuffer";
-import { HEADER_SIZE } from "./sharedBufferLayout";
+import createSharedBuffer, {
+  createUint16Array,
+  createVersionView,
+  updateVersion,
+} from "./createSharedBuffer";
 
 export default function createIndexHandle(indexCount: number) {
   let size = indexCount * 2;
@@ -7,8 +10,16 @@ export default function createIndexHandle(indexCount: number) {
   size += (4 - (size % 4)) % 4;
   const buf = createSharedBuffer(size);
 
+  const view = createUint16Array(buf);
+  const version = createVersionView(buf);
+
+  function update(value: number[]) {
+    view.set(value);
+    updateVersion(version);
+  }
+
   return {
     buffer: buf,
-    view: new Uint16Array(buf, HEADER_SIZE),
+    update,
   };
 }
