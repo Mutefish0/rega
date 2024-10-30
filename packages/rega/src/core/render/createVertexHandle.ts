@@ -1,6 +1,9 @@
 import { MaterialJSON, VertexHandle } from "./types";
-import createSharedBuffer from "./createSharedBuffer";
-import { HEADER_SIZE } from "./sharedBufferLayout";
+import createSharedBuffer, {
+  createFloat32Array,
+  createVersionView,
+  updateVersion,
+} from "./createSharedBuffer";
 
 export default function createVertexHandle(
   materialJSON: MaterialJSON,
@@ -8,7 +11,10 @@ export default function createVertexHandle(
 ): VertexHandle {
   const { attributes } = materialJSON;
 
-  const bufferMap = new Map<string, Float32Array>();
+  const bufferMap = new Map<
+    string,
+    { buffer: Float32Array; version: DataView }
+  >();
 
   const buffers: SharedArrayBuffer[] = [];
 
@@ -21,8 +27,19 @@ export default function createVertexHandle(
     }
     const buffer = createSharedBuffer(vertexCount * arrayStride);
     buffers.push(buffer);
-    bufferMap.set(attribute.name, new Float32Array(buffer, HEADER_SIZE));
+    bufferMap.set(attribute.name, {
+      buffer: createFloat32Array(buffer),
+      version: createVersionView(buffer),
+    });
   }
 
-  return { buffers, bufferMap };
+  function update(name: string, value: number[]) {
+    const buf = bufferMap.get(name);
+    if (buf) {
+      buf.buffer.set(value);
+      updateVersion(buf.version);
+    }
+  }
+
+  return { buffers, update };
 }

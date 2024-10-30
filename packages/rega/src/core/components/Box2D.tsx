@@ -48,12 +48,10 @@ const material = createMaterial(
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 const vertexHandle = createVertexHandle(material, vertexCount);
-
-const positionBuffer = vertexHandle.bufferMap.get("position")!;
-positionBuffer.set(vertices);
+vertexHandle.update("position", vertices);
 
 const indexHandle = createIndexHandle(indices.length);
-indexHandle.view.set(indices);
+indexHandle.update(indices);
 
 export function createPlaneGeometry(width = 1, height = 1) {
   const width_half = width / 2;
@@ -125,10 +123,8 @@ export default React.memo(function Box2D({
 
   useEffect(() => {
     const { opacity, array } = parseColor(color);
-    const b1 = bindingHandle.bufferMap.get("opacity")!;
-    b1.set([opacity]);
-    const b2 = bindingHandle.bufferMap.get("color")!;
-    b2.set(array);
+    bindingHandle.update("opacity", [opacity]);
+    bindingHandle.update("color", array);
   }, [color]);
 
   const anchorMatrix = useAnchor(anchor, size);
