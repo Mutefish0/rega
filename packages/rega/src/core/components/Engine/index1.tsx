@@ -52,14 +52,19 @@ export default function CoreEngine(
 
   let canvas = config.canvas;
 
+  let pixelRatio = window.devicePixelRatio;
+  let size = [width * pixelRatio, height * pixelRatio] as [number, number];
+
   if (!isDeno) {
     if (!canvas) {
       const _canvas = document.createElement("canvas");
       document.body.appendChild(_canvas as HTMLCanvasElement);
       canvas = _canvas;
     }
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = size[0];
+    canvas.height = size[1];
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
   }
 
   const renderServer = new RenderServer();
@@ -71,6 +76,8 @@ export default function CoreEngine(
     camera,
     assetsPixelRatio: config?.assetsPixelRatio ?? 1,
     fixedTimestep: config?.fixedTimestep,
+    size,
+    pixelRatio,
   });
 
   const root = reconciler.createContainer(

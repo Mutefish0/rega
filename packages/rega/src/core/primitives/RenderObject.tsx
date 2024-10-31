@@ -29,6 +29,7 @@ export default function RenderObject({
       material,
       bindings: bindingHandle.transferBindings,
       input,
+      viewport: [0, 0, ctx.size[0], ctx.size[1]],
     });
     return () => {
       ctx.renderServer.removeObject(id);

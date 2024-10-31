@@ -146,7 +146,7 @@ export default function createMaterial(
     blend,
     format: "bgra8unorm",
     frontFace: options.frontFace || "ccw",
-    cullMode: options.cullMode || "none",
+    cullMode: options.cullMode || "back",
   };
 
   return mat;

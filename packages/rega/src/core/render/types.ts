@@ -3,6 +3,7 @@ export interface TransferObject {
   material: MaterialJSON;
   bindings: TransferBinding[];
   input: TransferInput;
+  viewport: [number, number, number, number];
 }
 
 export interface TransferInput {

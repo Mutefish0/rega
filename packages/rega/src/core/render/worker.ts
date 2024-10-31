@@ -36,6 +36,7 @@ const renderObjectMap = new Map<
     bindings: TransferBinding[];
     gpuBindGroups: GPUBindGroup[];
     input: TransferInput;
+    viewport: [number, number, number, number, number, number];
   }
 >();
 
@@ -56,7 +57,7 @@ self.addEventListener("message", async (event) => {
     self.postMessage({ type: "ready" });
     start();
   } else if (event.data.type === "addObject") {
-    const { id, material, bindings, input } = event.data
+    const { id, material, bindings, input, viewport } = event.data
       .object as TransferObject;
     const pipelineKey = JSON.stringify(material);
 
@@ -116,6 +117,7 @@ self.addEventListener("message", async (event) => {
       input,
       material,
       gpuBindGroups,
+      viewport: [...viewport, 0, 1],
     });
   } else if (event.data.type === "removeObject") {
     const object = renderObjectMap.get(event.data.objectID);
@@ -167,10 +169,10 @@ async function start() {
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
     renderObjectMap.forEach(
-      ({ pipelineKey, bindings, input, gpuBindGroups }) => {
+      ({ pipelineKey, bindings, input, gpuBindGroups, viewport }) => {
         const pipeline = pipelineMap.get(pipelineKey)!.pipeline;
         passEncoder.setPipeline(pipeline);
-
+        passEncoder.setViewport(...viewport);
         bindings.forEach((binding) => {
           binding.resources.forEach((res) => {
             if (res.type === "uniformBuffer") {

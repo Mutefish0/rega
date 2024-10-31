@@ -158,7 +158,7 @@ export default React.memo(function Sprite2D({
     const matRZ = new Matrix4();
     const matT = new Matrix4();
 
-    matRX.makeRotationX(Math.PI);
+    matRX.makeRotationX(Math.PI - 0.00001);
 
     //matRY.makeRotationY(Math.PI);
 

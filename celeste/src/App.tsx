@@ -82,7 +82,7 @@ export default function App() {
         clip={[8, 0, 8, 8]}
         //flipY={true}
       />
-      <Box2D size={[1, 1]} color="rgba(100,0,0,0.3)" />
+      <Box2D size={[2, 2]} color="rgba(100,0,0,0.3)" />
     </>
   );
 
