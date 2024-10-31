@@ -58,6 +58,8 @@ export default function CoreEngine(
       document.body.appendChild(_canvas as HTMLCanvasElement);
       canvas = _canvas;
     }
+    canvas.width = width;
+    canvas.height = height;
   }
 
   const renderServer = new RenderServer();

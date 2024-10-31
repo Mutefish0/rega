@@ -121,7 +121,7 @@ export default React.memo(function Sprite2D({
     const cHeight = (clip[3] - 2 * padding) / height;
     const cLeftTop = [
       (clip[0] + padding) / width,
-      1 - (clip[1] + padding) / height,
+      (clip[1] + padding) / height,
     ];
 
     vertexHandle.update("uv", [
@@ -132,10 +132,10 @@ export default React.memo(function Sprite2D({
       cLeftTop[1],
       // --
       cLeftTop[0],
-      cLeftTop[1] - cHeight,
+      cLeftTop[1] + cHeight,
       // --
       cLeftTop[0] + cWidth,
-      cLeftTop[1] - cHeight,
+      cLeftTop[1] + cHeight,
     ]);
   }, [clip.join(","), width, height]);
 
