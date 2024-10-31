@@ -77,9 +77,10 @@ export default function App() {
   const appElement = (
     <>
       <Sprite2D
-        size={[1, 1]}
+        size={[0.1, 0.1]}
         textureId="/images/atlas.png"
         clip={[8, 0, 8, 8]}
+        //flipY={true}
       />
       <Box2D size={[1, 1]} color="rgba(100,0,0,0.3)" />
     </>

@@ -61,7 +61,19 @@ function calcBindingBufferLayout(uniforms: UniformLayout[]) {
   };
 }
 
-export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
+interface Options {
+  frontFace?: GPUFrontFace;
+  cullMode?: GPUCullMode;
+}
+
+export default function createMaterial(
+  vertexNode: Node,
+  fragmentNode: Node,
+  options: Options = {
+    frontFace: "ccw",
+    cullMode: "none",
+  }
+) {
   const material = new NodeMaterial();
 
   material.vertexNode = vertexNode;
@@ -133,6 +145,8 @@ export default function createMaterial(vertexNode: Node, fragmentNode: Node) {
     bindings: sortBy(bindingGroups, "index"),
     blend,
     format: "bgra8unorm",
+    frontFace: options.frontFace || "ccw",
+    cullMode: options.cullMode || "none",
   };
 
   return mat;

@@ -102,4 +102,7 @@ export interface MaterialJSON {
   bindings: Array<BindGroupInfo>;
   blend: GPUBlendState;
   format: GPUTextureFormat;
+
+  frontFace: GPUFrontFace;
+  cullMode: GPUCullMode;
 }

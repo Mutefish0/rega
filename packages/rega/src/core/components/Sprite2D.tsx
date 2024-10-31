@@ -152,10 +152,48 @@ export default React.memo(function Sprite2D({
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
+
+    const matRX = new Matrix4();
+    const matRY = new Matrix4();
+    const matRZ = new Matrix4();
+    const matT = new Matrix4();
+
+    matRX.makeRotationX(Math.PI);
+
+    //matRY.makeRotationY(Math.PI);
+
+    //matRZ.makeRotationZ(Math.PI / 3);
+
+    // if (rotation) {
+    //   matRX.makeRotationX(rotation.x);
+    //   matRY.makeRotationY(rotation.y);
+    //   matRZ.makeRotationZ(rotation.z);
+    // }
+
+    // if (flipY) {
+    //   mat.makeRotationX(Math.PI);
+    // }
+    // if (flipX) {
+    //   mat.makeRotationY(Math.PI);
+    // }
+
+    //mat.makeRotationX(Math.PI / 3);
+
     mat.makeScale(scale[0], scale[1], 1);
-    mat.premultiply(anchorMatrix);
-    return mat;
-  }, [anchorMatrix, scale.join(",")]);
+
+    // mat
+    //   //.premultiply(anchorMatrix)
+    //   .multiply(matRZ)
+    //   .multiply(matRY)
+    //   .multiply(matRX);
+    //return mat.multiply(matRX);
+
+    //matRX
+
+    return mat.premultiply(anchorMatrix).multiply(matRX);
+
+    //return matRX.multiply(anchorMatrix).multiply(mat);
+  }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
   return (
     <Relative matrix={matrix}>

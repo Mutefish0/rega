@@ -7,8 +7,16 @@ export default function createRenderPipeline(
 ) {
   const bindGroupLayoutMap = new Map<string, GPUBindGroupLayout>();
 
-  const { fragmentShader, vertexShader, blend, bindings, attributes, format } =
-    materialJSON;
+  const {
+    fragmentShader,
+    vertexShader,
+    blend,
+    bindings,
+    attributes,
+    format,
+    frontFace,
+    cullMode,
+  } = materialJSON;
 
   const shaderModuleVertex = device.createShaderModule({
     code: vertexShader,
@@ -80,6 +88,8 @@ export default function createRenderPipeline(
     },
     primitive: {
       topology: "triangle-list",
+      cullMode,
+      frontFace,
     },
   });
 
