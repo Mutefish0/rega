@@ -28,6 +28,7 @@
     "react-reconciler": "^0.29.2",
     "rxjs": "^7.8.1",
     "three": "workspace:*",
+    "pure3": "workspace:*",
     "typescript": "^5.4.5",
     "utils": "workspace:*",
     "wasm-image-decoder": "workspace:*",

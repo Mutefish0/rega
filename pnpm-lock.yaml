@@ -66,6 +66,12 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.4.6)
 
+  packages/pure3:
+    dependencies:
+      three:
+        specifier: workspace:*
+        version: link:../three.js
+
   packages/rapier: {}
 
   packages/rega:
@@ -100,6 +106,9 @@ importers:
       oggmented:
         specifier: ^1.0.1
         version: 1.0.1
+      pure3:
+        specifier: workspace:*
+        version: link:../pure3
       react:
         specifier: ^18.3.1
         version: 18.3.1

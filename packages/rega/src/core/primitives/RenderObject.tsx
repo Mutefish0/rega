@@ -20,7 +20,7 @@ export default function RenderObject({
 
   useEffect(() => {
     const mat = transform.leafMatrix;
-    bindingHandle.update("worldMatrix", mat.elements)!;
+    bindingHandle.update("modelWorldMatrix", mat.elements)!;
   }, [transform]);
 
   useEffect(() => {

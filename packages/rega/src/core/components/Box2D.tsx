@@ -1,15 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import {
-  //uv,
-  normalGeometry,
-  normalLocal,
-  positionGeometry,
-  vec4,
-  uniform,
-  modelWorldMatrix,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
-} from "three/src/nodes/TSL.js";
+import { positionGeometry, vec4, uniform, modelWorldMatrix } from "pure3";
 import { Vector3, Matrix4 } from "three/tsl";
 
 import createMaterial from "../render/createMaterial";

@@ -8,7 +8,7 @@ import {
   Order,
   FPS,
   Relative,
-  // Sprite2D,
+  Sprite2D,
 } from "rega";
 // import Level from "./scenes/Level";
 // import TitleScreen from "./scenes/TitleScreen";
@@ -82,7 +82,12 @@ export default function App() {
       <Relative translation={{ x: -0.2, y: -0.2 }}>
         <Box2D size={[1, 1]} color="rgba(255,0,0,0.3)" anchor="center" />
       </Relative>
-      {/* <Sprite2D textureId="/images/atlas.png" clip={[48, 8, 8, 8]} /> */}
+      <Sprite2D
+        size={[0.5, 0.5]}
+        textureId="/images/atlas.png"
+        clip={[48, 8, 8, 8]}
+        color="rgba(51, 83, 209, 0.5)"
+      />
     </>
   );
 

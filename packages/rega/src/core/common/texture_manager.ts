@@ -6,12 +6,15 @@ import {
 import Image from "../io/image";
 import createSharedBuffer, {
   createUint8Array,
+  createVersionView,
+  updateVersion,
 } from "../render/createSharedBuffer";
 
 interface Texture {
   texture3: Texture3;
   sab: SharedArrayBuffer;
   data: Uint8Array;
+  versionView: DataView;
   width: number;
   height: number;
 }
@@ -42,12 +45,17 @@ export default class TextureManager {
 
         dataView.set(image.data);
 
+        const versionView = createVersionView(sab);
+
+        updateVersion(versionView);
+
         const texture = {
           texture3,
           height: image.height,
           width: image.width,
           data: dataView,
           sab,
+          versionView,
         };
 
         TextureManager.textures.set(url, texture);

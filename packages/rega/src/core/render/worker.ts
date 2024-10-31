@@ -8,7 +8,11 @@ import {
 import {
   addObjectGPUBuffer,
   removeObjectGPUBuffer,
+  addObjectGPUTexture,
+  removeObjectGPUTexture,
+  addObjectGPUSampler,
   updateGPUBuffer,
+  updateGPUTexture,
 } from "./bufferPair";
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
@@ -66,17 +70,24 @@ self.addEventListener("message", async (event) => {
 
     bindings.forEach(({ resources }, index) => {
       const bg = material.bindings[index];
-      const gpuResources = resources.map((res, bIndex) => {
-        const info = bg.bindings[bIndex];
+      const gpuResources = resources.map((res) => {
         if (res.type === "uniformBuffer") {
-          let usage = GPUBufferUsage.UNIFORM;
-          if (info.type === "uniformBuffer") {
-            usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-          }
+          const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
           const gpuBuffer = addObjectGPUBuffer(device, res.buffer, usage);
           return { buffer: gpuBuffer } as GPUBufferBinding;
+        } else if (res.type === "sampledTexture") {
+          const usage =
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+          const texture = addObjectGPUTexture(device, res.buffer, {
+            width: res.width,
+            height: res.height,
+            usage,
+          });
+          return texture.createView();
+        } else if (res.type === "sampler") {
+          return addObjectGPUSampler(device, {});
         } else {
-          throw new Error("not supported uniform type: " + res.type);
+          throw new Error("not supported uniform type: " + (res as any).type);
         }
       });
 
@@ -114,9 +125,13 @@ self.addEventListener("message", async (event) => {
         resources.forEach((res) => {
           if (res.type === "uniformBuffer") {
             removeObjectGPUBuffer(res.buffer);
+          } else if (res.type === "sampledTexture") {
+            removeObjectGPUTexture(res.buffer);
+          } else if (res.type === "sampler") {
+            // do nothing
           } else {
             throw new Error(
-              "RemoveObject: not supported uniform type: " + res.type
+              "RemoveObject: not supported uniform type: " + (res as any).type
             );
           }
         });
@@ -129,8 +144,6 @@ self.addEventListener("message", async (event) => {
     }
   }
 });
-
-// @TODO reuse camera gpu bindGroup per frame
 
 async function start() {
   let frame = 0;
@@ -162,6 +175,14 @@ async function start() {
           binding.resources.forEach((res) => {
             if (res.type === "uniformBuffer") {
               updateGPUBuffer(device, res.buffer);
+            } else if (res.type === "sampledTexture") {
+              updateGPUTexture(device, res.buffer);
+            } else if (res.type === "sampler") {
+              // do nothing
+            } else {
+              throw new Error(
+                "update: not supported uniform type: " + (res as any).type
+              );
             }
           });
           passEncoder.setBindGroup(
