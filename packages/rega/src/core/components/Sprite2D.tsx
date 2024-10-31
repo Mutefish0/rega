@@ -1,8 +1,13 @@
 import React, { useEffect, useMemo, useContext } from "react";
 
-import { texture, positionGeometry, uniform, modelWorldMatrix } from "pure3";
-
-import { Vector3, Matrix4 } from "three/tsl";
+import {
+  vec4,
+  texture,
+  positionGeometry,
+  uniform,
+  modelWorldMatrix,
+  Matrix4,
+} from "pure3";
 
 import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
@@ -33,8 +38,11 @@ interface Props {
   size?: [number, number];
 }
 
-const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
-const opacity = uniform(1, "float").label("opacity");
+//const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
+//const opacity = uniform(1, "float").label("opacity");
+
+const color = uniform("vec3").label("color");
+const opacity = uniform("float").label("opacity");
 
 // const material = createMaterial(
 //   cameraProjectionMatrix
@@ -54,20 +62,12 @@ const tex = texture(TextureManager.get("/images/atlas.png")!.texture3).label(
 
 const material = createMaterial(
   modelWorldMatrix.mul(positionGeometry),
-  tex
+  //tex
   //vec4(color, opacity)
-  //tex.mul(vec4(color, opacity))
+  tex.mul(vec4(color, opacity))
 );
 
-console.log("vertex:", material.vertexShader);
-console.log("fragment:", material.fragmentShader);
-console.log("bindings:", material.bindings);
-
 const { vertices, vertexCount, indices, uvs } = createPlaneGeometry();
-
-const vertexHandle = createVertexHandle(material, vertexCount);
-vertexHandle.update("position", vertices);
-vertexHandle.update("uv", uvs);
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
@@ -87,17 +87,27 @@ export default React.memo(function Sprite2D({
 }: Props) {
   const ctx = useContext(ThreeContext);
 
-  const bindingHandle = useMemo(() => {
+  const vertexHandle = useMemo(() => {
+    const vertexHandle = createVertexHandle(material, vertexCount);
+    vertexHandle.update("position", vertices);
+    return vertexHandle;
+  }, []);
+
+  const { bindingHandle, width, height } = useMemo(() => {
     const t = TextureManager.get(textureId)!;
-    return createBindingHandle(material, {
-      textures: {
-        tex: {
-          buffer: t.sab,
-          width: t.width,
-          height: t.height,
+    return {
+      bindingHandle: createBindingHandle(material, {
+        textures: {
+          tex: {
+            buffer: t.sab,
+            width: t.width,
+            height: t.height,
+          },
         },
-      },
-    });
+      }),
+      width: t.width,
+      height: t.height,
+    };
   }, []);
 
   useEffect(() => {
@@ -105,6 +115,29 @@ export default React.memo(function Sprite2D({
     bindingHandle.update("opacity", [opacity ?? opacity1]);
     bindingHandle.update("color", array);
   }, [color, opacity]);
+
+  useEffect(() => {
+    const cWidth = (clip[2] - 2 * padding) / width;
+    const cHeight = (clip[3] - 2 * padding) / height;
+    const cLeftTop = [
+      (clip[0] + padding) / width,
+      1 - (clip[1] + padding) / height,
+    ];
+
+    vertexHandle.update("uv", [
+      cLeftTop[0],
+      cLeftTop[1],
+      // --
+      cLeftTop[0] + cWidth,
+      cLeftTop[1],
+      // --
+      cLeftTop[0],
+      cLeftTop[1] - cHeight,
+      // --
+      cLeftTop[0] + cWidth,
+      cLeftTop[1] - cHeight,
+    ]);
+  }, [clip.join(","), width, height]);
 
   const anchorMatrix = useAnchor(anchor, size);
 

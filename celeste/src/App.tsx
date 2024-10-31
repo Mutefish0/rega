@@ -85,8 +85,8 @@ export default function App() {
       <Sprite2D
         size={[0.5, 0.5]}
         textureId="/images/atlas.png"
-        clip={[48, 8, 8, 8]}
-        color="rgba(51, 83, 209, 0.5)"
+        clip={[24, 8, 8, 8]}
+        //color="rgba(51, 83, 209, 0.5)"
       />
     </>
   );

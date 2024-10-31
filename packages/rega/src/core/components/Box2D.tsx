@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { positionGeometry, vec4, uniform, modelWorldMatrix } from "pure3";
-import { Vector3, Matrix4 } from "three/tsl";
+import {
+  positionGeometry,
+  vec4,
+  uniform,
+  modelWorldMatrix,
+  Matrix4,
+} from "pure3";
 
 import createMaterial from "../render/createMaterial";
 import createVertexHandle from "../render/createVertexHandle";
@@ -21,8 +26,8 @@ interface Props {
   color?: string;
 }
 
-const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
-const opacity = uniform(1, "float").label("opacity");
+const color = uniform("vec3").label("color");
+const opacity = uniform("float").label("opacity");
 
 // const material = createMaterial(
 //   cameraProjectionMatrix
