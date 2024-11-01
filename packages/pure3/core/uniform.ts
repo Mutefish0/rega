@@ -13,7 +13,8 @@ import type { Node } from "./types";
 import { NodeValueType } from "./types";
 
 export const UNIFORM_INIT_VALUES: Record<NodeValueType, any> = {
-  float: 1,
+  lit_float: 0,
+  float: 0,
   vec2: new Vector2(0, 0),
   vec3: new Vector3(0, 0, 0),
   vec4: new Vector4(0, 0, 0, 0),

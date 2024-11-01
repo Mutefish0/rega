@@ -7,7 +7,8 @@ import {
   uniform,
   modelWorldMatrix,
   Matrix4,
-  vec2,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
 } from "pure3";
 
 import TextureManager from "../common/texture_manager";
@@ -39,9 +40,6 @@ interface Props {
   size?: [number, number];
 }
 
-//const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
-//const opacity = uniform(1, "float").label("opacity");
-
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 
@@ -56,11 +54,14 @@ const opacity = uniform("float", "opacity");
 const tex = texture("tex");
 
 const material = createMaterial(
-  modelWorldMatrix.mul(vec4(positionGeometry, 1)),
+  cameraProjectionMatrix
+    .mul(cameraViewMatrix)
+    .mul(modelWorldMatrix)
+    .mul(vec4(positionGeometry, 1)),
   tex.mul(vec4(color, opacity))
 );
 
-const { vertices, vertexCount, indices, uvs } = createPlaneGeometry();
+const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);

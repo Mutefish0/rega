@@ -5,9 +5,17 @@ import uniform from "./core/uniform";
 import type { Node } from "./core/types";
 export type { Node };
 
-import { positionGeometry as _positionGeometry } from "three/src/nodes/TSL.js";
+import {
+  positionGeometry as _positionGeometry,
+  cameraProjectionMatrix as _cameraProjectionMatrix,
+  cameraViewMatrix as _cameraViewMatrix,
+} from "three/src/nodes/TSL.js";
 const positionGeometry = _positionGeometry as Node<"vec3">;
-export { positionGeometry };
+
+const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
+const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
+
+export { positionGeometry, cameraProjectionMatrix, cameraViewMatrix };
 
 export { float, vec2, vec3, vec4 } from "./core/conv";
 
