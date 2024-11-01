@@ -4,14 +4,8 @@ import { textureSize } from "three/src/nodes/accessors/TextureSizeNode.js";
 import { colorSpaceToWorking } from "three/src/nodes/display/ColorSpaceNode.js";
 import { expression } from "three/src/nodes/code/ExpressionNode.js";
 import { maxMipLevel } from "three/src/nodes/utils/MaxMipLevelNode.js";
-import {
-  nodeProxy,
-  vec3,
-  nodeObject,
-  int,
-} from "three/src/nodes/tsl/TSLBase.js";
+import { vec3, nodeObject, int } from "three/src/nodes/tsl/TSLBase.js";
 import { NodeUpdateType } from "three/src/nodes/core/constants.js";
-
 import { IntType, UnsignedIntType } from "three/src/constants.js";
 
 class TextureNode extends UniformNode {
@@ -76,7 +70,7 @@ class TextureNode extends UniformNode {
   }
 
   getDefaultUV() {
-    return uv(this.value.channel);
+    return uv(this.value ? this.value.channel : 0);
   }
 
   updateReference(/*state*/) {
@@ -423,4 +417,4 @@ class TextureNode extends UniformNode {
   }
 }
 
-export default nodeProxy(TextureNode);
+export default TextureNode;

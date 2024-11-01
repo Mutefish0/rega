@@ -26,8 +26,8 @@ interface Props {
   color?: string;
 }
 
-const color = uniform("vec3").label("color");
-const opacity = uniform("float").label("opacity");
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
 
 // const material = createMaterial(
 //   cameraProjectionMatrix

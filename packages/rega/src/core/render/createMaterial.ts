@@ -4,6 +4,7 @@ import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipeline
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
 import sortBy from "lodash/sortBy";
 import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
+import { Node } from "pure3";
 
 import { hasFeature } from "./features";
 
@@ -67,8 +68,8 @@ interface Options {
 }
 
 export default function createMaterial(
-  vertexNode: Node,
-  fragmentNode: Node,
+  vertexNode: Node<"vec4">,
+  fragmentNode: Node<"vec4">,
   options: Options = {
     frontFace: "ccw",
     cullMode: "none",

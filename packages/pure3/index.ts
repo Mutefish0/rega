@@ -1,10 +1,14 @@
-import texture from "./accessors/texture";
+import texture from "./accessors/texture/index";
 import modelWorldMatrix from "./accessors/modelWorldMatrix";
 import uniform from "./core/uniform";
 
-import { vec2, vec3, vec4, positionGeometry } from "three/src/nodes/TSL.js";
+export type { Node } from "./core/types";
 
-import {
+export { positionGeometry } from "three/src/nodes/TSL.js";
+
+export { float, vec2, vec3, vec4 } from "./core/conv";
+
+export {
   Vector2,
   Vector3,
   Vector4,
@@ -14,18 +18,8 @@ import {
 } from "three/src/Three.WebGPU.Nodes.js";
 
 export {
-  vec2,
-  vec3,
-  vec4,
   texture,
-  positionGeometry,
   uniform,
   modelWorldMatrix,
   // math
-  Vector2,
-  Vector3,
-  Vector4,
-  Matrix2,
-  Matrix3,
-  Matrix4,
 };

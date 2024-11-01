@@ -41,8 +41,8 @@ interface Props {
 //const color = uniform(new Vector3(0, 0, 0), "vec3").label("color");
 //const opacity = uniform(1, "float").label("opacity");
 
-const color = uniform("vec3").label("color");
-const opacity = uniform("float").label("opacity");
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
 
 // const material = createMaterial(
 //   cameraProjectionMatrix
@@ -52,11 +52,7 @@ const opacity = uniform("float").label("opacity");
 //   vec4(color, opacity)
 // );
 
-await TextureManager.add("/images/atlas.png");
-
-const tex = texture(TextureManager.get("/images/atlas.png")!.texture3).label(
-  "tex"
-);
+const tex = texture().label("tex");
 
 // tex.uvNode = varying(uv());
 
