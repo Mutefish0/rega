@@ -5,11 +5,11 @@ import {
   vec4 as _vec4,
 } from "three/src/nodes/TSL.js";
 
-import { Node, UniformNode } from "./types";
+import { Node } from "./types";
 
-type FloatLitOrNode = number | Node<"float">;
+type FloatLitOrNode = Node<"float" | "lit_float">;
 
-type FloatCon = (a: number | Node<"float">) => Node<"float">;
+type FloatCon = (a: FloatLitOrNode) => Node<"float">;
 
 export const float = _float as FloatCon;
 

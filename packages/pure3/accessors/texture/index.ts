@@ -1,14 +1,17 @@
 import { nodeProxy } from "three/src/nodes/tsl/TSLBase.js";
 import TextureNode from "./TextureNode";
-
-import type { UniformNode } from "../../core/types.ts";
+import type { Node } from "../../core/types.ts";
 
 const _texture = nodeProxy(TextureNode);
 
-function texture() {
-  return _texture({
+function texture(label?: string) {
+  const t = _texture({
     isTexture: true,
-  }) as UniformNode<"vec4">;
+  });
+  if (label) {
+    t.label(label);
+  }
+  return t as Node<"vec4">;
 }
 
 export default texture;

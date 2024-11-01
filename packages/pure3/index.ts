@@ -2,9 +2,12 @@ import texture from "./accessors/texture/index";
 import modelWorldMatrix from "./accessors/modelWorldMatrix";
 import uniform from "./core/uniform";
 
-export type { Node } from "./core/types";
+import type { Node } from "./core/types";
+export type { Node };
 
-export { positionGeometry } from "three/src/nodes/TSL.js";
+import { positionGeometry as _positionGeometry } from "three/src/nodes/TSL.js";
+const positionGeometry = _positionGeometry as Node<"vec3">;
+export { positionGeometry };
 
 export { float, vec2, vec3, vec4 } from "./core/conv";
 

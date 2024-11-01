@@ -1,4 +1,4 @@
-export type NodeValueType =
+export type BoxValueType =
   | "float"
   | "vec2"
   | "vec3"
@@ -7,9 +7,69 @@ export type NodeValueType =
   | "mat3"
   | "mat4";
 
-type Mul<A, B> = A;
+export type NodeValueType = "lit_float" | BoxValueType;
 
-export interface Node<T extends NodeValueType> {
-  mul<T extends Node<any>>(node: T): Mul<this, T>;
+type Mul<A extends BoxValueType, B extends NodeValueType> =
+  // 矢量和矩阵只能左乘标量，反之无效
+  A extends "vec2"
+    ? B extends "float" | "lit_float"
+      ? "vec2"
+      : B extends "vec2"
+      ? "vec2"
+      : unknown
+    : A extends "vec3"
+    ? B extends "float" | "lit_float"
+      ? "vec3"
+      : B extends "vec3"
+      ? "vec3"
+      : unknown
+    : A extends "vec4"
+    ? B extends "float" | "lit_float"
+      ? "vec4"
+      : B extends "vec4"
+      ? "vec4"
+      : unknown
+    : // 矩阵规则：矩阵可以左乘标量或同维度矩阵
+    A extends "mat2"
+    ? B extends "float" | "lit_float"
+      ? "mat2"
+      : B extends "vec2"
+      ? "vec2"
+      : B extends "mat2"
+      ? "mat2"
+      : unknown
+    : A extends "mat3"
+    ? B extends "float" | "lit_float"
+      ? "mat3"
+      : B extends "vec3"
+      ? "vec3"
+      : B extends "mat3"
+      ? "mat3"
+      : unknown
+    : A extends "mat4"
+    ? B extends "float" | "lit_float"
+      ? "mat4"
+      : B extends "vec4"
+      ? "vec4"
+      : B extends "mat4"
+      ? "mat4"
+      : unknown
+    : // 标量乘法仅限标量类型本身
+    A extends "float"
+    ? B extends "float" | "lit_float"
+      ? "float"
+      : unknown
+    : unknown;
+
+export interface BoxNode<T extends BoxValueType> {
+  mul<B extends NodeValueType>(
+    node: Node<B>
+  ): Mul<T, B> extends NodeValueType ? Node<Mul<T, B>> : unknown;
   nodeType: T;
 }
+
+export type Node<T extends NodeValueType> = T extends "lit_float"
+  ? number
+  : T extends BoxValueType
+  ? BoxNode<T>
+  : unknown;

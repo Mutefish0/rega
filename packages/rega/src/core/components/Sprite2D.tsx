@@ -7,6 +7,7 @@ import {
   uniform,
   modelWorldMatrix,
   Matrix4,
+  vec2,
 } from "pure3";
 
 import TextureManager from "../common/texture_manager";
@@ -52,14 +53,10 @@ const opacity = uniform("float", "opacity");
 //   vec4(color, opacity)
 // );
 
-const tex = texture().label("tex");
-
-// tex.uvNode = varying(uv());
+const tex = texture("tex");
 
 const material = createMaterial(
-  modelWorldMatrix.mul(positionGeometry),
-  //tex
-  //vec4(color, opacity)
+  modelWorldMatrix.mul(vec4(positionGeometry, 1)),
   tex.mul(vec4(color, opacity))
 );
 

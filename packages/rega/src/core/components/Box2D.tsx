@@ -38,7 +38,7 @@ const opacity = uniform("float", "opacity");
 // );
 
 const material = createMaterial(
-  modelWorldMatrix.mul(positionGeometry),
+  modelWorldMatrix.mul(vec4(positionGeometry, 1)),
   vec4(color, opacity)
 );
 
