@@ -10,7 +10,7 @@ const buffersMap = new Map<
     gpuBuffer: GPUBuffer;
     cpuUint8Array: Uint8Array;
     versionView: DataView;
-    refenceCount: number;
+    referenceCount: number;
     usage: GPUBufferUsageFlags;
   }
 >();
@@ -22,7 +22,7 @@ const texturesMap = new Map<
     gpuTexture: GPUTexture;
     cpuUint8Array: Uint8Array;
     versionView: DataView;
-    refenceCount: number;
+    referenceCount: number;
     usage: GPUTextureUsageFlags;
     width: number;
     height: number;
@@ -89,7 +89,7 @@ export function addObjectGPUBuffer(
       gpuBuffer,
       cpuUint8Array: cpuUint8Array,
       versionView: createVersionView(sab),
-      refenceCount: 1,
+      referenceCount: 1,
       usage,
     };
 
@@ -97,7 +97,7 @@ export function addObjectGPUBuffer(
 
     return gpuBuffer;
   } else {
-    record.refenceCount++;
+    record.referenceCount++;
 
     return record.gpuBuffer;
   }
@@ -107,8 +107,8 @@ export function removeObjectGPUBuffer(sab: SharedArrayBuffer) {
   const uuid = getUUID(sab);
   const record = buffersMap.get(uuid);
   if (record) {
-    record.refenceCount--;
-    if (record.refenceCount === 0) {
+    record.referenceCount--;
+    if (record.referenceCount === 0) {
       record.gpuBuffer.destroy();
       buffersMap.delete(uuid);
       idsMap.delete(sab);
@@ -162,7 +162,7 @@ export function addObjectGPUTexture(
       gpuTexture,
       cpuUint8Array: cpuUint8Array,
       versionView: createVersionView(sab),
-      refenceCount: 1,
+      referenceCount: 1,
       usage: opts.usage,
       width: opts.width,
       height: opts.height,
@@ -172,7 +172,7 @@ export function addObjectGPUTexture(
 
     return gpuTexture;
   } else {
-    record.refenceCount++;
+    record.referenceCount++;
     return record.gpuTexture;
   }
 }
@@ -191,8 +191,8 @@ export function removeObjectGPUTexture(sab: SharedArrayBuffer) {
   const uuid = getUUID(sab);
   const record = texturesMap.get(uuid);
   if (record) {
-    record.refenceCount--;
-    if (record.refenceCount === 0) {
+    record.referenceCount--;
+    if (record.referenceCount === 0) {
       record.gpuTexture.destroy();
       texturesMap.delete(uuid);
       idsMap.delete(sab);

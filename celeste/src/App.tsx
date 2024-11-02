@@ -9,6 +9,8 @@ import {
   FPS,
   Relative,
   Sprite2D,
+  RenderGroup,
+  RenderTarget,
 } from "rega";
 // import Level from "./scenes/Level";
 // import TitleScreen from "./scenes/TitleScreen";
@@ -76,13 +78,16 @@ export default function App() {
 
   const appElement = (
     <>
-      <Sprite2D
-        size={[0.1, 0.1]}
-        textureId="/images/atlas.png"
-        clip={[8, 0, 8, 8]}
-        //flipY={true}
-      />
-      <Box2D size={[2, 2]} color="rgba(100,0,0,0.3)" />
+      <RenderTarget main />
+      <RenderGroup targetId="___main___">
+        <Sprite2D
+          size={[0.1, 0.1]}
+          textureId="/images/atlas.png"
+          clip={[8, 0, 8, 8]}
+          //flipY={true}
+        />
+        <Box2D size={[2, 2]} color="rgba(100,0,0,0.3)" />
+      </RenderGroup>
     </>
   );
 

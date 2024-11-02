@@ -1,17 +1,15 @@
 import { ReactElement } from "react";
-import { ArrayCamera, Color, Scene, OrthographicCamera } from "three/webgpu";
 import type { ColorSpace } from "three";
 import reconciler from "./reconciler";
 import Physics from "../../primitives/Physics";
 import InputSystem from "../InputSystem";
 import GameStateContext from "../../primitives/GameStateContext";
-import SceneContext from "../../primitives/SceneContext";
 import ThreeContext, {
   createContextValues,
 } from "../../primitives/ThreeContext";
 import { parseColor } from "../../tools/color";
+import RenderContext from "../../primitives/RenderContext";
 import RenderServer from "../../render/server";
-import { RendererConstructor, RenderHandler } from "./renderer";
 
 // @ts-ignore
 const isDeno = typeof Deno !== "undefined";
@@ -33,22 +31,18 @@ export interface EngineConfig {
   backgroundColor?: string;
 }
 
-export default function CoreEngine(
-  app: ReactElement,
-  config: EngineConfig,
-  rendererConstructor: RendererConstructor
-) {
+export default function CoreEngine(app: ReactElement, config: EngineConfig) {
   const { width, height } = config;
-  const camera = new ArrayCamera();
-  const scene = new Scene();
-  const guiScene = new Scene();
-  const guiCamera = new OrthographicCamera(0, width, 0, -height, -1000, 1000);
+
+  //const scene = new Scene();
+  //const guiScene = new Scene();
+  // const guiCamera = new OrthographicCamera(0, width, 0, -height, -1000, 1000);
 
   const gameState = { paused: false };
 
   const c = parseColor(config.backgroundColor ?? "rgb(255,255,255)");
 
-  scene.background = new Color().fromArray(c.array);
+  //scene.background = new Color().fromArray(c.array);
 
   let canvas = config.canvas;
 
@@ -69,11 +63,11 @@ export default function CoreEngine(
 
   const renderServer = new RenderServer();
 
+  const renderCtx = {
+    server: renderServer,
+  };
+
   const ctx = createContextValues({
-    renderServer,
-    scene,
-    guiScene,
-    camera,
     assetsPixelRatio: config?.assetsPixelRatio ?? 1,
     fixedTimestep: config?.fixedTimestep,
     size,
@@ -97,69 +91,15 @@ export default function CoreEngine(
         <GameStateContext.Provider value={gameState}>
           <InputSystem />
           <Physics>
-            <SceneContext.Provider value="world">{app}</SceneContext.Provider>
+            <RenderContext.Provider value={renderCtx}>
+              {app}
+            </RenderContext.Provider>
           </Physics>
         </GameStateContext.Provider>
       </ThreeContext.Provider>,
       root
     );
   });
-
-  // const renderer = new rendererConstructor(
-  //   (deltaTime, now) => {
-  //     ctx.removedCallbacks.forEach((cb) => {
-  //       ctx.frameCallbacks.delete(cb);
-  //     });
-  //     ctx.removedCallbacks.clear();
-  //     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
-  //   },
-  //   (renderHandler: RenderHandler) => {
-  //     renderHandler.clear();
-
-  //     for (const camera of ctx.camera.cameras) {
-  //       // @ts-ignore
-  //       const cid = camera.cid;
-  //       const viewport = ctx.viewportMap.get(cid);
-  //       if (viewport) {
-  //         camera.viewport!.copy(viewport);
-  //       }
-  //     }
-
-  //     // render world
-  //     renderHandler.render(scene, ctx.camera);
-  //     renderHandler.clearDepth();
-  //     // render gui
-  //     renderHandler.render(guiScene, guiCamera);
-  //     renderHandler.present?.();
-  //   },
-  //   {
-  //     width,
-  //     height,
-  //     canvas: canvas,
-  //     outputColorSpace: config.outputColorSpace,
-  //     title: config.title,
-  //   }
-  // );
-
-  // renderer.setup().then(() => {
-  //   const pixelRatio = renderer.getPixelRatio();
-  //   ctx.size = [width * pixelRatio, height * pixelRatio];
-  //   ctx.pixelRatio = pixelRatio;
-
-  //   reconciler.updateContainer(
-  //     <ThreeContext.Provider value={ctx}>
-  //       <GameStateContext.Provider value={gameState}>
-  //         <InputSystem />
-  //         <Physics>
-  //           <SceneContext.Provider value="world">{app}</SceneContext.Provider>
-  //         </Physics>
-  //       </GameStateContext.Provider>
-  //     </ThreeContext.Provider>,
-  //     root
-  //   );
-
-  //   renderer.start();
-  // });
 
   function pause() {
     gameState.paused = true;

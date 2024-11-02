@@ -1,4 +1,4 @@
-export type BoxValueType =
+export type WGSLValueType =
   | "float"
   | "vec2"
   | "vec3"
@@ -7,9 +7,9 @@ export type BoxValueType =
   | "mat3"
   | "mat4";
 
-export type NodeValueType = "lit_float" | BoxValueType;
+export type NodeValueType = "lit_float" | WGSLValueType;
 
-type Mul<A extends BoxValueType, B extends NodeValueType> =
+type Mul<A extends WGSLValueType, B extends NodeValueType> =
   // 矢量和矩阵只能左乘标量，反之无效
   A extends "vec2"
     ? B extends "float" | "lit_float"
@@ -61,7 +61,7 @@ type Mul<A extends BoxValueType, B extends NodeValueType> =
       : unknown
     : unknown;
 
-export interface BoxNode<T extends BoxValueType> {
+export interface BoxNode<T extends WGSLValueType> {
   mul<B extends NodeValueType>(
     node: Node<B>
   ): Mul<T, B> extends NodeValueType ? Node<Mul<T, B>> : unknown;
@@ -70,6 +70,6 @@ export interface BoxNode<T extends BoxValueType> {
 
 export type Node<T extends NodeValueType> = T extends "lit_float"
   ? number
-  : T extends BoxValueType
+  : T extends WGSLValueType
   ? BoxNode<T>
   : unknown;

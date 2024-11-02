@@ -1,7 +1,4 @@
 import { createContext } from "react";
-import { Scene } from "three/webgpu";
-import RenderServer from "../render/server";
-import { Matrix4 } from "pure3";
 
 declare global {
   interface Window {
@@ -16,17 +13,11 @@ const ThreeContext = createContext<ReturnType<typeof createContextValues>>(
 );
 
 export function createContextValues({
-  scene,
-  guiScene,
   size,
   assetsPixelRatio,
   fixedTimestep = 20,
-  renderServer,
   pixelRatio = 1,
 }: {
-  scene: Scene;
-  guiScene: Scene;
-  renderServer: RenderServer;
   size?: [number, number];
   assetsPixelRatio: number;
   fixedTimestep?: number;
@@ -34,23 +25,6 @@ export function createContextValues({
 }) {
   return {
     id: Math.random().toString(36).slice(2),
-    renderServer,
-    scene,
-    guiScene,
-
-    cameras: new Map<
-      string,
-      {
-        matrix: Matrix4;
-        projectionMatrix: Matrix4;
-      }
-    >(),
-
-    subScreens: Array<{
-      viewport: [number, number, number, number];
-      cameraId: string;
-    }>,
-
     size: size || [0, 0],
     frameCallbacks: new Set<FrameCallback>(),
     removedCallbacks: new Set<FrameCallback>(),

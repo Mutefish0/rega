@@ -2,8 +2,8 @@ import texture from "./accessors/texture/index";
 import modelWorldMatrix from "./accessors/modelWorldMatrix";
 import uniform from "./core/uniform";
 
-import type { Node } from "./core/types";
-export type { Node };
+import type { Node, WGSLValueType } from "./core/types";
+export type { Node, WGSLValueType };
 
 import {
   positionGeometry as _positionGeometry,

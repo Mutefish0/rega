@@ -3,6 +3,7 @@ import {
   TransferObject,
   TransferBinding,
   TransferInput,
+  TransferResource,
 } from "./types";
 
 import {
@@ -29,16 +30,70 @@ const pipelineMap = new Map<
 >();
 
 const renderObjectMap = new Map<
-  string,
+  string, // object ID
   {
     material: MaterialJSON;
     pipelineKey: string;
-    bindings: TransferBinding[];
-    gpuBindGroups: GPUBindGroup[];
+
+    // index 3
+    // check-every-frame
+    // check-every-scene
+    // check-every-object
+    slotMap: Map<number, number>;
+    currentSlot: 0;
+    resources: TransferResource[];
+    bindGroup: GPUBindGroup;
+
     input: TransferInput;
-    viewport: [number, number, number, number, number, number];
+
+    referenceCount: number;
   }
 >();
+
+// index 2
+// check-every-frame
+// check-every-scene
+const renderTargets = new Map<
+  string, // scene ID
+  {
+    objects: Set<string>;
+
+    viewportView: Float32Array;
+
+    slotMap: Map<number, number>;
+    currentSlot: 0;
+    resources: TransferResource[];
+    bindGroup: GPUBindGroup;
+  }
+>();
+
+// index 1
+// check-every-frame
+const frameBindGroup: {
+  slotMap: Map<number, number>;
+  currentSlot: number;
+  bindGroup: GPUBindGroup;
+  resources: TransferResource[];
+} = {
+  slotMap: new Map(),
+  currentSlot: 0,
+  resources: [],
+  bindGroup: null as any as GPUBindGroup,
+};
+
+// index 0
+// check on signal
+const globalBindGroup: {
+  slotMap: Map<number, number>;
+  currentSlot: number;
+  bindGroup: GPUBindGroup | null;
+  resources: TransferResource[];
+} = {
+  slotMap: new Map(),
+  currentSlot: 0,
+  resources: [],
+  bindGroup: null as any as GPUBindGroup,
+};
 
 let _initialized = false;
 
@@ -54,9 +109,49 @@ self.addEventListener("message", async (event) => {
       device: device,
       format: "bgra8unorm",
     });
+
+    globalBindGroup.bindGroup = createGPUBindGroup(
+      device,
+      device.createBindGroupLayout({ entries: [] }),
+      []
+    );
+    frameBindGroup.bindGroup = createGPUBindGroup(
+      device,
+      device.createBindGroupLayout({ entries: [] }),
+      []
+    );
+
     self.postMessage({ type: "ready" });
     start();
-  } else if (event.data.type === "addObject") {
+  } else if (event.data.type === "createRenderTarget") {
+    const { id, sab } = event.data.type;
+    const viewportView = new Float32Array(sab);
+    renderTargets.set(id, {
+      objects: new Set(),
+      viewportView,
+      slotMap: new Map(),
+      currentSlot: 0,
+      resources: [],
+      bindGroup: createGPUBindGroup(
+        device,
+        device.createBindGroupLayout({ entries: [] }),
+        []
+      ),
+    });
+  } else if (event.data.type === "removeRenderTarget") {
+  } else if (event.data.type === "addObjectToTarget") {
+    const { targetId, objectId } = event.data;
+    const target = renderTargets.get(targetId);
+    if (target) {
+      target.objects.add(objectId);
+    }
+  } else if (event.data.type === "removeObjectFromTarget") {
+    const { targetId, objectId } = event.data;
+    const target = renderTargets.get(targetId);
+    if (target) {
+      target.objects.delete(objectId);
+    }
+  } else if (event.data.type === "createObject") {
     const { id, material, bindings, input, viewport } = event.data
       .object as TransferObject;
     const pipelineKey = JSON.stringify(material);

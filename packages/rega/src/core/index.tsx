@@ -1,5 +1,8 @@
 import { Vector } from "@dimforge/rapier2d";
 
+import RenderGroup from "./primitives/RenderGroup";
+import RenderTarget from "./primitives/RenderTarget";
+
 import AnimationTree from "./components/Animation/AnimationTree";
 import Transition from "./components/Animation/Transition";
 import Animation from "./components/Animation/Animation";
@@ -75,6 +78,8 @@ export type {
   ViewStyle,
   TextStyle,
 };
+
+export { RenderGroup, RenderTarget };
 
 export {
   // animations

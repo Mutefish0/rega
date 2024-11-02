@@ -28,9 +28,9 @@ class RenderServer {
     });
   }
 
-  addObject(object: TransferObject) {
+  createObject(object: TransferObject) {
     this.worker.postMessage({
-      type: "addObject",
+      type: "createObject",
       object,
     });
   }
@@ -38,7 +38,38 @@ class RenderServer {
   removeObject(id: string) {
     this.worker.postMessage({
       type: "removeObject",
-      objectID: id,
+      id,
+    });
+  }
+
+  createRenderTarget(id: string, sab: SharedArrayBuffer) {
+    this.worker.postMessage({
+      type: "createRenderTarget",
+      id,
+      sab,
+    });
+  }
+
+  removeRenderTarget(id: string) {
+    this.worker.postMessage({
+      type: "removeRenderTarget",
+      id,
+    });
+  }
+
+  addObjectToTarget(targetId: string, objectId: string) {
+    this.worker.postMessage({
+      type: "addObjectToScene",
+      targetId,
+      objectId,
+    });
+  }
+
+  removeObjectFromTarget(targetId: string, objectId: string) {
+    this.worker.postMessage({
+      type: "removeObjectFromTarget",
+      targetId,
+      objectId,
     });
   }
 }
