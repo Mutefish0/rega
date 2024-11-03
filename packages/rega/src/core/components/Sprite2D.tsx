@@ -19,7 +19,10 @@ import { createPlaneGeometry } from "../tools/geometry";
 import createMaterial from "../render/createMaterial";
 import createVertexHandle from "../render/createVertexHandle";
 import createIndexHandle from "../render/createIndexHandle";
-import createBindingHandle from "../render/createBindingHandle";
+
+import { BindingContextProvider } from "../primitives/BindingContext";
+
+import { createUniformBinding } from "../../core/render/binding";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -87,30 +90,22 @@ export default React.memo(function Sprite2D({
     return vertexHandle;
   }, []);
 
-  const { bindingHandle, width, height } = useMemo(() => {
-    const t = TextureManager.get(textureId)!;
-    return {
-      bindingHandle: createBindingHandle(material, {
-        textures: {
-          tex: {
-            buffer: t.sab,
-            width: t.width,
-            height: t.height,
-          },
-        },
-      }),
-      width: t.width,
-      height: t.height,
-    };
-  }, []);
+  const texture = useMemo(() => {
+    return TextureManager.get(textureId)!;
+  }, [textureId]);
+
+  const bOpacity = useMemo(() => createUniformBinding("float"), []);
+  const bColor = useMemo(() => createUniformBinding("vec3"), []);
 
   useEffect(() => {
     const { opacity: opacity1, array } = parseColor(color || "#fff");
-    bindingHandle.update("opacity", [opacity ?? opacity1]);
-    bindingHandle.update("color", array);
+    bOpacity.update([opacity ?? opacity1]);
+    bColor.update(array);
   }, [color, opacity]);
 
   useEffect(() => {
+    const { width, height } = texture;
+
     const cWidth = (clip[2] - 2 * padding) / width;
     const cHeight = (clip[3] - 2 * padding) / height;
     const cLeftTop = [
@@ -131,7 +126,7 @@ export default React.memo(function Sprite2D({
       cLeftTop[0] + cWidth,
       cLeftTop[1] + cHeight,
     ]);
-  }, [clip.join(","), width, height]);
+  }, [clip.join(","), texture]);
 
   const anchorMatrix = useAnchor(anchor, size);
 
@@ -189,20 +184,35 @@ export default React.memo(function Sprite2D({
     //return matRX.multiply(anchorMatrix).multiply(mat);
   }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
+  const bindings = useMemo(
+    () => ({
+      tex: {
+        type: "sampledTexture" as const,
+        buffer: texture.sab,
+        width: texture.width,
+        height: texture.height,
+      },
+      color: bColor.resource,
+      opacity: bOpacity.resource,
+    }),
+    []
+  );
+
   return (
     <Relative matrix={matrix}>
-      <RenderObject
-        material={material}
-        input={{
-          vertexBuffers: vertexHandle.buffers,
-          vertexCount,
-          index: {
-            indexBuffer: indexHandle.buffer,
-            indexCount: indices.length,
-          },
-        }}
-        bindingHandle={bindingHandle}
-      />
+      <BindingContextProvider value={bindings}>
+        <RenderObject
+          material={material}
+          input={{
+            vertexBuffers: vertexHandle.buffers,
+            vertexCount,
+            index: {
+              indexBuffer: indexHandle.buffer,
+              indexCount: indices.length,
+            },
+          }}
+        />
+      </BindingContextProvider>
     </Relative>
   );
 

@@ -8,7 +8,9 @@ import ThreeContext, {
   createContextValues,
 } from "../../primitives/ThreeContext";
 import { parseColor } from "../../tools/color";
-import RenderContext from "../../primitives/RenderContext";
+import RenderContext, {
+  createRenderContext,
+} from "../../primitives/RenderContext";
 import RenderServer from "../../render/server";
 
 // @ts-ignore
@@ -63,9 +65,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
 
   const renderServer = new RenderServer();
 
-  const renderCtx = {
-    server: renderServer,
-  };
+  const renderCtx = createRenderContext(renderServer);
 
   const ctx = createContextValues({
     assetsPixelRatio: config?.assetsPixelRatio ?? 1,

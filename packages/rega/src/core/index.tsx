@@ -18,8 +18,9 @@ import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
 import Order from "./primitives/Order";
 import useTransform from "./hooks/useTransform";
-import Lens from "./components/Camera/Lens";
-import Screen from "./components/Camera/Screen";
+
+import Camera from "./primitives/Camera";
+
 import TextureManager from "./common/texture_manager";
 import Tilemap from "./components/Tilemap";
 
@@ -122,8 +123,7 @@ export {
   FPS,
 
   // camera
-  Lens,
-  Screen,
+  Camera,
 
   // audio
   SoundManager,

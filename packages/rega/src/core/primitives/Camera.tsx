@@ -1,14 +1,14 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import TransformContext from "./TransformContext";
-import RenderContext from "./RenderContext";
+import { useTargetBindingView } from "./RenderTarget";
 import { WebGPUCoordinateSystem } from "three/src/constants.js";
-import { createUniformBinding } from "../../core/render/binding";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
+import { mainTarget } from "./RenderTarget";
 
 import { Matrix4 } from "pure3";
 
 interface CommonProps {
-  targetId: string;
+  targetId?: string;
 }
 
 interface PerspectiveProps {
@@ -34,7 +34,7 @@ interface OrthographicProps {
 type Props = (PerspectiveProps | OrthographicProps) & CommonProps;
 
 export default function Camera({
-  targetId,
+  targetId = mainTarget,
   type,
   width,
   height,
@@ -44,10 +44,8 @@ export default function Camera({
   near = 0.1,
   far = 2000,
 }: Props) {
-  const renderCtx = useContext(RenderContext);
-
   const transform = useContext(TransformContext);
-  //
+
   const projectionMatrix = useMemo(() => {
     if (type === "perspective") {
       let top = near * Math.tan(DEG2RAD * 0.5 * fov);
@@ -86,17 +84,17 @@ export default function Camera({
     }
   }, [type, fov, aspect, near, far, width, height]);
 
-  const { bCameraProjectionMatrix, bCameraViewMatrix } = useMemo(() => {
-    // "cameraProjectionMatrix",
-    const bCameraProjectionMatrix = createUniformBinding("mat4");
-    // "cameraViewMatrix"
-    const bCameraViewMatrix = createUniformBinding("mat4");
+  const bCameraProjectionMatrix = useTargetBindingView(
+    targetId,
+    "cameraProjectionMatrix",
+    "mat4"
+  );
 
-    return {
-      bCameraProjectionMatrix,
-      bCameraViewMatrix,
-    };
-  }, []);
+  const bCameraViewMatrix = useTargetBindingView(
+    targetId,
+    "cameraViewMatrix",
+    "mat4"
+  );
 
   useEffect(() => {
     bCameraProjectionMatrix.update(projectionMatrix.elements);
@@ -105,19 +103,6 @@ export default function Camera({
   useEffect(() => {
     bCameraViewMatrix.update(transform.leafMatrix.clone().invert().elements);
   }, [transform.leafMatrix]);
-
-  useEffect(() => {
-    renderCtx.createRenderTargetBinding(
-      targetId,
-      "cameraProjectionMatrix",
-      bCameraProjectionMatrix.resource
-    );
-    renderCtx.createRenderTargetBinding(
-      targetId,
-      "cameraViewMatrix",
-      bCameraViewMatrix.resource
-    );
-  }, []);
 
   return null;
 }

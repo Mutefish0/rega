@@ -1,15 +1,10 @@
 export default function createGPUBindGroup(
   device: GPUDevice,
   gpuBindGroupLayout: GPUBindGroupLayout,
-  resources: GPUBindingResource[]
+  resources: Array<{ binding: number; resource: GPUBindingResource }>
 ) {
-  const entriesGPU = resources.map((resource, index) => ({
-    binding: index,
-    resource,
-  }));
-
   return device.createBindGroup({
     layout: gpuBindGroupLayout,
-    entries: entriesGPU,
+    entries: resources,
   });
 }

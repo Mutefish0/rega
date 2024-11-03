@@ -17,6 +17,7 @@ export default function RenderGroup({ targetId, children }: Props) {
       targetIds: uniq([...parent.targetIds, targetId]),
     };
   }, [parent]);
+
   return (
     <RenderGroupContext.Provider value={ctx}>
       {children}

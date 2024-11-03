@@ -1,9 +1,35 @@
+export interface TransferBinding {
+  binding: number;
+  resource: TransferResource;
+}
+
 export interface TransferObject {
   id: string;
   material: MaterialJSON;
+
   bindings: TransferBinding[];
+
+  bindingsLayout: Array<{
+    type: ResourceType;
+    binding: number;
+  }>;
+
   input: TransferInput;
-  viewport: [number, number, number, number];
+
+  renderTargetbindingsLayout: Array<{
+    type: ResourceType;
+    binding: number;
+  }>;
+}
+
+export interface TransferRenderTarget {
+  id: string;
+  viewport: SharedArrayBuffer;
+  bindings: TransferBinding[];
+  bindingsLayout: Array<{
+    type: ResourceType;
+    binding: number;
+  }>;
 }
 
 export interface TransferInput {
@@ -14,6 +40,8 @@ export interface TransferInput {
     indexCount: number;
   };
 }
+
+export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
 
 export type TransferResource =
   | {
@@ -27,10 +55,6 @@ export type TransferResource =
       width: number;
       height: number;
     };
-export interface TransferBinding {
-  groupIndex: number;
-  resources: TransferResource[];
-}
 
 export interface BindingHandle {
   transferBindings: TransferBinding[];
@@ -95,12 +119,16 @@ export interface BindGroupInfo {
 
 export interface MaterialJSON {
   vertexShader: string;
+
   fragmentShader: string;
+
   attributes: Array<{
     name: string;
     type: "vec3" | "vec2" | "float";
   }>;
-  bindings: Array<BindGroupInfo>;
+
+  // bindings: Array<BindGroupInfo>;
+
   blend: GPUBlendState;
   format: GPUTextureFormat;
 

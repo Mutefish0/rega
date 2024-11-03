@@ -11,6 +11,7 @@ import {
   Sprite2D,
   RenderGroup,
   RenderTarget,
+  Camera,
 } from "rega";
 // import Level from "./scenes/Level";
 // import TitleScreen from "./scenes/TitleScreen";
@@ -79,6 +80,7 @@ export default function App() {
   const appElement = (
     <>
       <RenderTarget main />
+      <Camera type="orthographic" width={2} height={2} />
       <RenderGroup targetId="___main___">
         <Sprite2D
           size={[0.1, 0.1]}

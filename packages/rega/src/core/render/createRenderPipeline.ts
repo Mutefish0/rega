@@ -1,17 +1,17 @@
 import { MaterialJSON } from "./types";
-import { createBindingsLayout } from "./utils";
+import { createBindGroupLayout } from "./utils";
+import { ResourceType } from "./types";
 
 export default function createRenderPipeline(
   device: GPUDevice,
-  materialJSON: MaterialJSON
+  materialJSON: MaterialJSON,
+  objectBindGroupLayout: Array<{ type: ResourceType; binding: number }>,
+  targetBindGroupLayout: Array<{ type: ResourceType; binding: number }>
 ) {
-  const bindGroupLayoutMap = new Map<string, GPUBindGroupLayout>();
-
   const {
     fragmentShader,
     vertexShader,
     blend,
-    bindings,
     attributes,
     format,
     frontFace,
@@ -26,14 +26,12 @@ export default function createRenderPipeline(
     code: fragmentShader,
   });
 
-  const bindGroupLayouts = [];
-
-  // bindings
-  for (const group of bindings) {
-    const layout = createBindingsLayout(device, group);
-    bindGroupLayouts.push(layout);
-    bindGroupLayoutMap.set(group.name, layout);
-  }
+  const bindGroupLayouts = [
+    createBindGroupLayout(device, objectBindGroupLayout), // object
+    createBindGroupLayout(device, targetBindGroupLayout), // target
+    createBindGroupLayout(device, []), // frame
+    createBindGroupLayout(device, []), // global
+  ];
 
   const gpuVeterxBufferLayouts: Array<GPUVertexBufferLayout> = [];
 
@@ -93,5 +91,5 @@ export default function createRenderPipeline(
     },
   });
 
-  return { pipeline, bindGroupLayoutMap };
+  return { pipeline, bindGroupLayouts };
 }

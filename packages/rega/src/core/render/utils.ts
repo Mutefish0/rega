@@ -1,19 +1,16 @@
-import { BindGroupInfo, MaterialJSON } from "./types";
+import { ResourceType } from "./types";
 
-export function createBindingsLayout(
+export function createBindGroupLayout(
   device: GPUDevice,
-  bindGroup: BindGroupInfo
+  bindings: Array<{ type: ResourceType; binding: number }>
 ) {
   const entries: GPUBindGroupLayoutEntry[] = [];
 
-  let index = 0;
-
-  for (const binding of bindGroup.bindings) {
+  for (const binding of bindings) {
     const bindingGPU: GPUBindGroupLayoutEntry = {
-      binding: index++,
-      visibility: binding.visibility,
+      binding: binding.binding,
+      visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
     };
-
     if (binding.type === "uniformBuffer") {
       const buffer: GPUBufferBindingLayout = {}; // GPUBufferBindingLayout
       bindingGPU.buffer = buffer;

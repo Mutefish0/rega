@@ -1,5 +1,4 @@
 import React, { useEffect, useContext, useMemo } from "react";
-import SceneContext from "./SceneContext";
 import ThreeContext from "./ThreeContext";
 import TransformContext from "./TransformContext";
 import OrderContext from "./OrderContext";
@@ -13,7 +12,7 @@ interface Props {
 
 export default React.memo(function Mesh({ geometry, material, order }: Props) {
   const ctx = useContext(ThreeContext);
-  const scene = useContext(SceneContext);
+
   const orderCtx = useContext(OrderContext);
 
   const transform = useContext(TransformContext);
@@ -45,23 +44,23 @@ export default React.memo(function Mesh({ geometry, material, order }: Props) {
     mesh.material = material;
   }, [material]);
 
-  useEffect(() => {
-    if (scene === "world") {
-      ctx.scene.add(mesh);
-    } else if (scene === "gui") {
-      ctx.guiScene.add(mesh);
-    }
-    mesh.frustumCulled = false;
-    return () => {
-      if (scene === "world") {
-        ctx.scene.remove(mesh);
-      } else if (scene === "gui") {
-        ctx.guiScene.remove(mesh);
-      }
-      mesh.material.dispose();
-      mesh.geometry.dispose();
-    };
-  }, []);
+  // useEffect(() => {
+  //   if (scene === "world") {
+  //     ctx.scene.add(mesh);
+  //   } else if (scene === "gui") {
+  //     ctx.guiScene.add(mesh);
+  //   }
+  //   mesh.frustumCulled = false;
+  //   return () => {
+  //     if (scene === "world") {
+  //       ctx.scene.remove(mesh);
+  //     } else if (scene === "gui") {
+  //       ctx.guiScene.remove(mesh);
+  //     }
+  //     mesh.material.dispose();
+  //     mesh.geometry.dispose();
+  //   };
+  // }, []);
 
   return null;
 });

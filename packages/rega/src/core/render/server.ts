@@ -1,4 +1,4 @@
-import { TransferObject } from "./types";
+import { TransferObject, TransferRenderTarget } from "./types";
 
 class RenderServer {
   private worker: Worker;
@@ -42,11 +42,11 @@ class RenderServer {
     });
   }
 
-  createRenderTarget(id: string, sab: SharedArrayBuffer) {
+  createRenderTarget(id: string, target: TransferRenderTarget) {
     this.worker.postMessage({
       type: "createRenderTarget",
       id,
-      sab,
+      target,
     });
   }
 

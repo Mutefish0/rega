@@ -1,7 +1,7 @@
 import {
   MaterialJSON,
   TransferObject,
-  TransferBinding,
+  TransferRenderTarget,
   TransferInput,
   TransferResource,
 } from "./types";
@@ -18,6 +18,8 @@ import {
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
 
+import { createBindGroupLayout } from "./utils";
+
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
 
@@ -25,7 +27,7 @@ const pipelineMap = new Map<
   string,
   {
     pipeline: GPURenderPipeline;
-    bindGroupLayoutMap: Map<string, GPUBindGroupLayout>;
+    bindGroupLayouts: GPUBindGroupLayout[];
   }
 >();
 
@@ -39,14 +41,14 @@ const renderObjectMap = new Map<
     // check-every-frame
     // check-every-scene
     // check-every-object
-    slotMap: Map<number, number>;
-    currentSlot: 0;
-    resources: TransferResource[];
+    bindings: Array<{
+      binding: number;
+      resource: TransferResource;
+    }>;
+
     bindGroup: GPUBindGroup;
 
     input: TransferInput;
-
-    referenceCount: number;
   }
 >();
 
@@ -60,38 +62,32 @@ const renderTargets = new Map<
 
     viewportView: Float32Array;
 
-    slotMap: Map<number, number>;
-    currentSlot: 0;
-    resources: TransferResource[];
+    bindings: Array<{
+      binding: number;
+      resource: TransferResource;
+    }>;
+
     bindGroup: GPUBindGroup;
   }
 >();
 
 // index 1
 // check-every-frame
-const frameBindGroup: {
-  slotMap: Map<number, number>;
-  currentSlot: number;
-  bindGroup: GPUBindGroup;
-  resources: TransferResource[];
-} = {
-  slotMap: new Map(),
-  currentSlot: 0,
-  resources: [],
+const frameBindGroup = {
+  bindings: [] as Array<{
+    binding: number;
+    resource: TransferResource;
+  }>,
   bindGroup: null as any as GPUBindGroup,
 };
 
 // index 0
 // check on signal
-const globalBindGroup: {
-  slotMap: Map<number, number>;
-  currentSlot: number;
-  bindGroup: GPUBindGroup | null;
-  resources: TransferResource[];
-} = {
-  slotMap: new Map(),
-  currentSlot: 0,
-  resources: [],
+const globalBindGroup = {
+  bindings: [] as Array<{
+    binding: number;
+    resource: TransferResource;
+  }>,
   bindGroup: null as any as GPUBindGroup,
 };
 
@@ -124,19 +120,54 @@ self.addEventListener("message", async (event) => {
     self.postMessage({ type: "ready" });
     start();
   } else if (event.data.type === "createRenderTarget") {
-    const { id, sab } = event.data.type;
-    const viewportView = new Float32Array(sab);
+    const { id, viewport, bindings } = event.data as TransferRenderTarget;
+    const viewportView = new Float32Array(viewport);
+    const bindGroupLayout = createBindGroupLayout(
+      device,
+      bindings.map(({ binding, resource }) => ({
+        binding,
+        type: resource.type,
+      }))
+    );
+    const gpuResources = bindings.map(({ resource, binding }) => {
+      if (resource.type === "uniformBuffer") {
+        const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+        const gpuBuffer = addObjectGPUBuffer(device, resource.buffer, usage);
+        return {
+          binding,
+          resource: { buffer: gpuBuffer } as GPUBufferBinding,
+        };
+      } else if (resource.type === "sampledTexture") {
+        const usage =
+          GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+        const texture = addObjectGPUTexture(device, resource.buffer, {
+          width: resource.width,
+          height: resource.height,
+          usage,
+        });
+        return {
+          binding,
+          resource: texture.createView(),
+        };
+      } else if (resource.type === "sampler") {
+        return {
+          binding,
+          resource: addObjectGPUSampler(device, {}),
+        };
+      } else {
+        throw new Error("not supported uniform type");
+      }
+    });
+    const gpuBindGroup = createGPUBindGroup(
+      device,
+      bindGroupLayout,
+      gpuResources
+    );
     renderTargets.set(id, {
       objects: new Set(),
       viewportView,
-      slotMap: new Map(),
-      currentSlot: 0,
-      resources: [],
-      bindGroup: createGPUBindGroup(
-        device,
-        device.createBindGroupLayout({ entries: [] }),
-        []
-      ),
+      bindGroup: gpuBindGroup,
+      bindings,
     });
   } else if (event.data.type === "removeRenderTarget") {
   } else if (event.data.type === "addObjectToTarget") {
@@ -152,44 +183,64 @@ self.addEventListener("message", async (event) => {
       target.objects.delete(objectId);
     }
   } else if (event.data.type === "createObject") {
-    const { id, material, bindings, input, viewport } = event.data
-      .object as TransferObject;
+    const {
+      id,
+      material,
+      bindings,
+      bindingsLayout,
+      input,
+      renderTargetbindingsLayout,
+    } = event.data.object as TransferObject;
+
     const pipelineKey = JSON.stringify(material);
 
     if (!pipelineMap.has(pipelineKey)) {
-      pipelineMap.set(pipelineKey, createRenderPipeline(device, material));
+      const pipeline = createRenderPipeline(
+        device,
+        material,
+        bindingsLayout,
+        renderTargetbindingsLayout
+      );
+      pipelineMap.set(pipelineKey, pipeline);
     }
 
     const pl = pipelineMap.get(pipelineKey)!;
 
-    const gpuBindGroups: GPUBindGroup[] = [];
-
-    bindings.forEach(({ resources }, index) => {
-      const bg = material.bindings[index];
-      const gpuResources = resources.map((res) => {
-        if (res.type === "uniformBuffer") {
-          const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-          const gpuBuffer = addObjectGPUBuffer(device, res.buffer, usage);
-          return { buffer: gpuBuffer } as GPUBufferBinding;
-        } else if (res.type === "sampledTexture") {
-          const usage =
-            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-          const texture = addObjectGPUTexture(device, res.buffer, {
-            width: res.width,
-            height: res.height,
-            usage,
-          });
-          return texture.createView();
-        } else if (res.type === "sampler") {
-          return addObjectGPUSampler(device, {});
-        } else {
-          throw new Error("not supported uniform type: " + (res as any).type);
-        }
-      });
-
-      const layout = pl.bindGroupLayoutMap.get(bg.name)!;
-      gpuBindGroups.push(createGPUBindGroup(device, layout, bg, gpuResources));
+    const gpuResources = bindings.map(({ resource, binding }) => {
+      if (resource.type === "uniformBuffer") {
+        const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+        const gpuBuffer = addObjectGPUBuffer(device, resource.buffer, usage);
+        return {
+          binding,
+          resource: { buffer: gpuBuffer } as GPUBufferBinding,
+        };
+      } else if (resource.type === "sampledTexture") {
+        const usage =
+          GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+        const texture = addObjectGPUTexture(device, resource.buffer, {
+          width: resource.width,
+          height: resource.height,
+          usage,
+        });
+        return {
+          binding,
+          resource: texture.createView(),
+        };
+      } else if (resource.type === "sampler") {
+        return {
+          binding,
+          resource: addObjectGPUSampler(device, {}),
+        };
+      } else {
+        throw new Error("not supported uniform type");
+      }
     });
+
+    const gpuBindGroup = createGPUBindGroup(
+      device,
+      pl.bindGroupLayouts[0],
+      gpuResources
+    );
 
     input.vertexBuffers.forEach((buffer) => {
       addObjectGPUBuffer(
@@ -208,30 +259,25 @@ self.addEventListener("message", async (event) => {
     }
     renderObjectMap.set(id, {
       pipelineKey,
-      bindings,
       input,
       material,
-      gpuBindGroups,
-      viewport: [...viewport, 0, 1],
+      bindGroup: gpuBindGroup,
+      bindings,
     });
   } else if (event.data.type === "removeObject") {
     const object = renderObjectMap.get(event.data.objectID);
     if (object) {
       const { bindings, input } = object;
-      bindings.forEach(({ resources }) => {
-        resources.forEach((res) => {
-          if (res.type === "uniformBuffer") {
-            removeObjectGPUBuffer(res.buffer);
-          } else if (res.type === "sampledTexture") {
-            removeObjectGPUTexture(res.buffer);
-          } else if (res.type === "sampler") {
-            // do nothing
-          } else {
-            throw new Error(
-              "RemoveObject: not supported uniform type: " + (res as any).type
-            );
-          }
-        });
+      bindings.forEach(({ resource }) => {
+        if (resource.type === "uniformBuffer") {
+          removeObjectGPUBuffer(resource.buffer);
+        } else if (resource.type === "sampledTexture") {
+          removeObjectGPUTexture(resource.buffer);
+        } else if (resource.type === "sampler") {
+          // do nothing
+        } else {
+          throw new Error("RemoveObject: not supported uniform type");
+        }
       });
       input.vertexBuffers.forEach((buffer) => {
         removeObjectGPUBuffer(buffer);
@@ -263,44 +309,66 @@ async function start() {
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
-    renderObjectMap.forEach(
-      ({ pipelineKey, bindings, input, gpuBindGroups, viewport }) => {
-        const pipeline = pipelineMap.get(pipelineKey)!.pipeline;
-        passEncoder.setPipeline(pipeline);
-        passEncoder.setViewport(...viewport);
-        bindings.forEach((binding) => {
-          binding.resources.forEach((res) => {
-            if (res.type === "uniformBuffer") {
-              updateGPUBuffer(device, res.buffer);
-            } else if (res.type === "sampledTexture") {
-              updateGPUTexture(device, res.buffer);
-            } else if (res.type === "sampler") {
+    renderTargets.forEach((target) => {
+      passEncoder.setViewport(
+        target.viewportView[0],
+        target.viewportView[1],
+        target.viewportView[2],
+        target.viewportView[3],
+        0,
+        1
+      );
+      // check target bindings
+      target.bindings.forEach(({ resource }) => {
+        if (resource.type === "uniformBuffer") {
+          updateGPUBuffer(device, resource.buffer);
+        } else if (resource.type === "sampledTexture") {
+          updateGPUTexture(device, resource.buffer);
+        } else if (resource.type === "sampler") {
+          // do nothing
+        } else {
+          throw new Error("update: not supported uniform type");
+        }
+      });
+      passEncoder.setBindGroup(1, target.bindGroup);
+
+      target.objects.forEach((objectId) => {
+        const object = renderObjectMap.get(objectId);
+        if (object) {
+          const pipeline = pipelineMap.get(object.pipelineKey)!.pipeline;
+          passEncoder.setPipeline(pipeline);
+          // check object bindings
+          object.bindings.forEach(({ resource }) => {
+            if (resource.type === "uniformBuffer") {
+              updateGPUBuffer(device, resource.buffer);
+            } else if (resource.type === "sampledTexture") {
+              updateGPUTexture(device, resource.buffer);
+            } else if (resource.type === "sampler") {
               // do nothing
             } else {
-              throw new Error(
-                "update: not supported uniform type: " + (res as any).type
-              );
+              throw new Error("update: not supported uniform type");
             }
           });
-          passEncoder.setBindGroup(
-            binding.groupIndex,
-            gpuBindGroups[binding.groupIndex]
-          );
-        });
-        input.vertexBuffers.forEach((buffer, index) => {
-          const gpuBuffer = updateGPUBuffer(device, buffer);
-          passEncoder.setVertexBuffer(index, gpuBuffer);
-        });
-        if (input.index) {
-          const { indexBuffer, indexCount } = input.index;
-          const gpuBuffer = updateGPUBuffer(device, indexBuffer);
-          passEncoder.setIndexBuffer(gpuBuffer, "uint16");
-          passEncoder.drawIndexed(indexCount);
-        } else {
-          passEncoder.draw(input.vertexCount);
+          passEncoder.setBindGroup(0, object.bindGroup);
+
+          // check vertex buffers
+          object.input.vertexBuffers.forEach((buffer, index) => {
+            const gpuBuffer = updateGPUBuffer(device, buffer);
+            passEncoder.setVertexBuffer(index, gpuBuffer);
+          });
+
+          // draw
+          if (object.input.index) {
+            const { indexBuffer, indexCount } = object.input.index;
+            const gpuBuffer = updateGPUBuffer(device, indexBuffer);
+            passEncoder.setIndexBuffer(gpuBuffer, "uint16");
+            passEncoder.drawIndexed(indexCount);
+          } else {
+            passEncoder.draw(object.input.vertexCount);
+          }
         }
-      }
-    );
+      });
+    });
 
     passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);

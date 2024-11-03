@@ -1,5 +1,5 @@
 import type { WGSLValueType } from "pure3";
-import { TransferResource } from "./types";
+import { TransferResource, ResourceType } from "./types";
 import { HEADER_SIZE } from "./sharedBufferLayout";
 import createSharedBuffer, {
   createVersionView,
@@ -52,6 +52,16 @@ const wgslValueTypeToByteLengthToViewType = {
 //   ? 16
 //   : never;
 
+// export function createBinding(resourceType: ResourceType) {
+//   if (resourceType === "uniformBuffer") {
+//     //
+//   } else if (resourceType === "sampledTexture") {
+//     //
+//   } else {
+//     throw new Error("createBinding: Invalid resource type");
+//   }
+// }
+
 export function createUniformBinding<T extends WGSLValueType>(type: T) {
   const byteLength = wgslValueTypeToByteLength[type];
   const sab = createSharedBuffer(byteLength);
@@ -60,6 +70,7 @@ export function createUniformBinding<T extends WGSLValueType>(type: T) {
     sab,
     HEADER_SIZE
   );
+
   const versionView = createVersionView(sab);
 
   const resource: TransferResource = {
@@ -74,6 +85,32 @@ export function createUniformBinding<T extends WGSLValueType>(type: T) {
 
   return {
     resource,
+    update,
+  };
+}
+
+export function createUniformBindingView<T extends WGSLValueType>(
+  sab: SharedArrayBuffer,
+  type: T
+) {
+  const dataView = new wgslValueTypeToByteLengthToViewType[type](
+    sab,
+    HEADER_SIZE
+  );
+
+  const versionView = createVersionView(sab);
+
+  function get(index: number) {
+    return dataView[index];
+  }
+
+  function update(values: number[]) {
+    dataView.set(values);
+    updateVersion(versionView);
+  }
+
+  return {
+    get,
     update,
   };
 }
