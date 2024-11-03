@@ -120,7 +120,8 @@ self.addEventListener("message", async (event) => {
     self.postMessage({ type: "ready" });
     start();
   } else if (event.data.type === "createRenderTarget") {
-    const { id, viewport, bindings } = event.data as TransferRenderTarget;
+    const { id, viewport, bindings } = event.data
+      .target as TransferRenderTarget;
     const viewportView = new Float32Array(viewport);
     const bindGroupLayout = createBindGroupLayout(
       device,
@@ -175,6 +176,8 @@ self.addEventListener("message", async (event) => {
     const target = renderTargets.get(targetId);
     if (target) {
       target.objects.add(objectId);
+
+      console.log('addObjectToTarget:', target);
     }
   } else if (event.data.type === "removeObjectFromTarget") {
     const { targetId, objectId } = event.data;
@@ -183,22 +186,17 @@ self.addEventListener("message", async (event) => {
       target.objects.delete(objectId);
     }
   } else if (event.data.type === "createObject") {
-    const {
-      id,
-      material,
-      bindings,
-      bindingsLayout,
-      input,
-      renderTargetbindingsLayout,
-    } = event.data.object as TransferObject;
-
+    const { id, material, bindings, input, renderTargetbindingsLayout } = event
+      .data.object as TransferObject;
     const pipelineKey = JSON.stringify(material);
-
     if (!pipelineMap.has(pipelineKey)) {
       const pipeline = createRenderPipeline(
         device,
         material,
-        bindingsLayout,
+        bindings.map(({ binding, resource }) => ({
+          binding,
+          type: resource.type,
+        })),
         renderTargetbindingsLayout
       );
       pipelineMap.set(pipelineKey, pipeline);
@@ -318,6 +316,7 @@ async function start() {
         0,
         1
       );
+
       // check target bindings
       target.bindings.forEach(({ resource }) => {
         if (resource.type === "uniformBuffer") {
@@ -373,11 +372,11 @@ async function start() {
     passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);
 
-    requestAnimationFrame(render);
+    //requestAnimationFrame(render);
 
-    // if (frame < 200) {
-    //   requestAnimationFrame(render);
-    // }
+    if (frame < 200) {
+      requestAnimationFrame(render);
+    }
   }
 
   render();

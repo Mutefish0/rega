@@ -66,6 +66,7 @@ export interface BoxNode<T extends WGSLValueType> {
     node: Node<B>
   ): Mul<T, B> extends NodeValueType ? Node<Mul<T, B>> : unknown;
   nodeType: T;
+  uuid: string;
 }
 
 export type Node<T extends NodeValueType> = T extends "lit_float"

@@ -3,12 +3,13 @@ import ThreeContext from "./ThreeContext";
 import RenderContext from "./RenderContext";
 import YogaNode from "../components/YogaFlex/YogaNode";
 import { FlexStyle } from "../components/YogaFlex/FlexStyle";
-import { TransferResource } from "../render";
+import { TransferResource, TransferBinding } from "../render";
 import {
   createUniformBinding,
   createUniformBindingView,
 } from "../../core/render/binding";
 import { WGSLValueType } from "pure3";
+import { getOrcreateSlot } from "../render/slot";
 
 interface CommomProps {
   children?: React.ReactNode;
@@ -43,13 +44,13 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
         ? {
             ...style,
             width: ctx.size[0] / ctx.pixelRatio,
-            height: ctx.size[1] / ctx.pixelRatio,
+            height: ctx.size[1] /  ctx.pixelRatio,
           }
         : style,
     [style]
   );
 
-  useEffect(() => {
+  const allBindings = useMemo(() => {
     // "cameraProjectionMatrix",
     const bCameraProjectionMatrix = createUniformBinding("mat4");
     // "cameraViewMatrix"
@@ -66,11 +67,29 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
     });
 
     for (let name in allBindings) {
-      const bind = allBindings[name];
-      renderCtx.renderTargetBindGroupLayout[name] = bind.type;
+      renderCtx.renderTargetBindGroupLayout[name] = allBindings[name].type;
     }
 
-    renderCtx.server.createRenderTarget(targetId, sab, allBindings);
+    return allBindings;
+  }, []);
+
+  useEffect(() => {
+    const binds: TransferBinding[] = [];
+
+    for (let name in allBindings) {
+      const index = getOrcreateSlot("target", name);
+      binds.push({
+        binding: index,
+        resource: allBindings[name],
+      });
+      renderCtx.renderTargetBindGroupLayout[name] = allBindings[name].type;
+    }
+
+    renderCtx.server.createRenderTarget({
+      id: targetId,
+      viewport: sab,
+      bindings: binds,
+    });
 
     return () => {
       renderCtx.server.removeRenderTarget(targetId);
@@ -83,10 +102,10 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
       onLayout={(node) => {
         const layout = node.getComputedLayout();
         view.set([
-          layout.left,
-          ctx.size[1] / ctx.pixelRatio - layout.height - layout.top,
-          layout.width,
-          layout.height,
+          layout.left * ctx.pixelRatio,
+          layout.top * ctx.pixelRatio,
+          layout.width * ctx.pixelRatio,
+          layout.height * ctx.pixelRatio,
         ]);
       }}
     >

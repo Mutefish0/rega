@@ -79,16 +79,20 @@ export default function App() {
 
   const appElement = (
     <>
-      <RenderTarget main />
-      <Camera type="orthographic" width={2} height={2} />
-      <RenderGroup targetId="___main___">
-        <Sprite2D
-          size={[0.1, 0.1]}
+      <RenderTarget main style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <RenderTarget targetId="test" style={{ height: 50, width: 50 }}></RenderTarget>
+      </RenderTarget>
+    
+      <Camera type="orthographic" width={100} height={100} near={0.1} far={1000} />
+      <RenderGroup targetId="___main___" >
+        {/* <Sprite2D
+          size={[20, 20]}
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}
+          color="rgba(100,0,0,0.8)"
           //flipY={true}
-        />
-        <Box2D size={[2, 2]} color="rgba(100,0,0,0.3)" />
+        /> */}
+        <Box2D size={[50, 50]} color="rgba(100,0,0,0.8)" /> 
       </RenderGroup>
     </>
   );

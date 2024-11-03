@@ -42,10 +42,9 @@ class RenderServer {
     });
   }
 
-  createRenderTarget(id: string, target: TransferRenderTarget) {
+  createRenderTarget(target: TransferRenderTarget) {
     this.worker.postMessage({
       type: "createRenderTarget",
-      id,
       target,
     });
   }
@@ -59,7 +58,7 @@ class RenderServer {
 
   addObjectToTarget(targetId: string, objectId: string) {
     this.worker.postMessage({
-      type: "addObjectToScene",
+      type: "addObjectToTarget",
       targetId,
       objectId,
     });

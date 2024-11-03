@@ -2,19 +2,33 @@ import { useContext, useEffect, useMemo, useRef } from "react";
 import TransformContext from "./TransformContext";
 import RenderContext from "./RenderContext";
 import { RenderGroupContext } from "./RenderGroup";
-import { MaterialJSON, TransferInput } from "../render";
+import { TransferBinding, TransferResource, BindingLayout } from "../render";
 import { BindingContext } from "./BindingContext";
-
 import { createUniformBinding } from "../../core/render/binding";
-
+import { getOrcreateSlot } from "../render/slot";
 import { differenceBy } from "lodash";
+import createVertexHandle from "../render/createVertexHandle";
+import createMaterial from "../render/createMaterial";
+import { Node } from "pure3";
 
 interface Props {
-  material: MaterialJSON;
-  input: TransferInput;
+  vertexNode: Node<"vec4">;
+  fragmentNode: Node<"vec4">;
+  input: {
+    vertexCount: number;
+    attributes: Record<string, number[]>;
+    index: {
+      indexBuffer: SharedArrayBuffer;
+      indexCount: number;
+    };
+  };
 }
 
-export default function RenderObject({ material, input }: Props) {
+export default function RenderObject({
+  vertexNode,
+  fragmentNode,
+  input,
+}: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const rgCtx = useContext(RenderGroupContext);
   const renderCtx = useContext(RenderContext);
@@ -23,8 +37,42 @@ export default function RenderObject({ material, input }: Props) {
   const refTargets = useRef({
     targetIds: [] as string[],
   });
+  const refLastAttributes = useRef<Record<string, number[]>>({});
 
   const bModelWorldMatrix = useMemo(() => createUniformBinding("mat4"), []);
+
+  function getBindingLayout(name: string) {
+    if (renderCtx.renderTargetBindGroupLayout[name]) {
+      return {
+        group: 1,
+        binding: getOrcreateSlot("target", name),
+      };
+    } else {
+      return {
+        group: 0,
+        binding: getOrcreateSlot("object", name),
+      };
+    }
+  }
+
+  const material = useMemo(
+    () => createMaterial(vertexNode, fragmentNode, getBindingLayout),
+    [vertexNode, fragmentNode]
+  );
+
+  const vertexHandle = useMemo(
+    () => createVertexHandle(material, input.vertexCount),
+    []
+  );
+
+  useEffect(() => {
+    for (const key in input.attributes) {
+      if (refLastAttributes.current[key] !== input.attributes[key]) {
+        vertexHandle.update(key, input.attributes[key]);
+        refLastAttributes.current[key] = input.attributes[key];
+      }
+    }
+  }, [input.attributes]);
 
   useEffect(() => {
     const mat = transform.leafMatrix;
@@ -32,15 +80,41 @@ export default function RenderObject({ material, input }: Props) {
   }, [transform]);
 
   useEffect(() => {
+    const allBindings = {
+      ...bindingCtx,
+      modelWorldMatrix: bModelWorldMatrix.resource,
+    } as Record<string, TransferResource>;
+
+    const binds: TransferBinding[] = [];
+
+    for (let name in allBindings) {
+      const index = getOrcreateSlot("object", name);
+      binds.push({
+        binding: index,
+        resource: allBindings[name],
+      });
+    }
+
+    const targetLayout: BindingLayout[] = [];
+
+    for (let name in renderCtx.renderTargetBindGroupLayout) {
+      const index = getOrcreateSlot("target", name);
+      targetLayout.push({
+        binding: index,
+        type: renderCtx.renderTargetBindGroupLayout[name],
+      });
+    }
+
     renderCtx.server.createObject({
       id,
       material,
-      bindings: {
-        ...bindingCtx,
-        modelWorldMatrix: bModelWorldMatrix.resource,
+      bindings: binds,
+      renderTargetbindingsLayout: targetLayout,
+      input: {
+        vertexBuffers: vertexHandle.buffers,
+        vertexCount: input.vertexCount,
+        index: input.index,
       },
-      renderTargetBindGroupLayout: renderCtx.renderTargetBindGroupLayout,
-      input,
     });
     return () => {
       renderCtx.server.removeObject(id);

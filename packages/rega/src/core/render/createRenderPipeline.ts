@@ -29,8 +29,8 @@ export default function createRenderPipeline(
   const bindGroupLayouts = [
     createBindGroupLayout(device, objectBindGroupLayout), // object
     createBindGroupLayout(device, targetBindGroupLayout), // target
-    createBindGroupLayout(device, []), // frame
-    createBindGroupLayout(device, []), // global
+    // createBindGroupLayout(device, []), // frame
+    // createBindGroupLayout(device, []), // global
   ];
 
   const gpuVeterxBufferLayouts: Array<GPUVertexBufferLayout> = [];

@@ -66,14 +66,23 @@ interface Options {
   cullMode?: GPUCullMode;
 }
 
+const cahce = new Map<string, MaterialJSON>();
+
 export default function createMaterial(
   vertexNode: Node<"vec4">,
   fragmentNode: Node<"vec4">,
+  getBindingLayout: (name: string) => { group: number; binding: number },
   options: Options = {
     frontFace: "ccw",
     cullMode: "none",
   }
 ) {
+  const key = [vertexNode.uuid, fragmentNode.uuid].join(",");
+
+  if (cahce.has(key)) {
+    return cahce.get(key)!;
+  }
+
   const material = new NodeMaterial();
 
   material.vertexNode = vertexNode;
@@ -84,6 +93,7 @@ export default function createMaterial(
   const builder = new WGSLNodeBuilder(
     { geometry, material },
     {
+      getBindingLayout,
       getRenderTarget: () => null,
       nodes: {
         library: {
@@ -97,59 +107,18 @@ export default function createMaterial(
 
   builder.build();
 
-  const bindingGroups: BindGroupInfo[] = [];
-
-  builder.getBindings().forEach((bg: any) => {
-    const { index, name } = bg;
-
-    const bindings: BindInfo[] = [];
-
-    for (const b of bg.bindings) {
-      if (b.isUniformBuffer) {
-        const { byteLength, offsets } = calcBindingBufferLayout(b.uniforms);
-        const us = b.uniforms.map((u: any, i: number) => ({
-          name: u.name,
-          offset: offsets[i],
-        }));
-        bindings.push({
-          type: "uniformBuffer",
-          visibility: b.visibility,
-          byteLength,
-          uniforms: us,
-        });
-      } else if (b.isSampler) {
-        bindings.push({
-          type: "sampler",
-          visibility: b.visibility,
-        });
-      } else if (b.isSampledTexture) {
-        bindings.push({
-          type: "sampledTexture",
-          visibility: b.visibility,
-          name: b.name,
-        });
-      }
-    }
-
-    bindingGroups.push({
-      index,
-      name,
-      bindings,
-    });
-  });
-
   const mat: MaterialJSON = {
     vertexShader: builder.vertexShader,
     fragmentShader: builder.fragmentShader,
     attributes: builder.attributes,
-
-    //bindings: sortBy(bindingGroups, "index"),
 
     blend,
     format: "bgra8unorm",
     frontFace: options.frontFace || "ccw",
     cullMode: options.cullMode || "back",
   };
+
+  cahce.set(key, mat);
 
   return mat;
 }

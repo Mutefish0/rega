@@ -22,18 +22,7 @@ const slotMap = {
   },
 };
 
-function getSlot(
-  group: "object" | "target" | "frame" | "global",
-  name: string
-) {
-  const slot = slotMap[group].map[name];
-  if (typeof slot === "undefined") {
-    throw new Error(`Slot ${name} not found in group ${group}`);
-  }
-  return slot;
-}
-
-function createSlot(
+export function getOrcreateSlot(
   group: "object" | "target" | "frame" | "global",
   name: string
 ) {

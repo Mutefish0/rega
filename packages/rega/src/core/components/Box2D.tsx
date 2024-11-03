@@ -11,6 +11,9 @@ import createMaterial from "../render/createMaterial";
 import createVertexHandle from "../render/createVertexHandle";
 import createIndexHandle from "../render/createIndexHandle";
 import createBindingHandle from "../render/createBindingHandle";
+import { createUniformBinding } from "../../core/render/binding";
+
+import { BindingContextProvider } from "../primitives/BindingContext";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -29,23 +32,32 @@ interface Props {
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 
-// const material = createMaterial(
-//   cameraProjectionMatrix
+// const vertexNode = cameraProjectionMatrix
 //     .mul(cameraViewMatrix)
 //     .mul(modelWorldMatrix)
-//     .mul(positionGeometry),
+const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
+
+const fragmentNode = vec4(color, opacity);
+
+// // const material = createMaterial(
+// //   cameraProjectionMatrix
+// //     .mul(cameraViewMatrix)
+// //     .mul(modelWorldMatrix)
+// //     .mul(positionGeometry),
+// //   vec4(color, opacity)
+// // );
+
+// const material = createMaterial(
+//   modelWorldMatrix.mul(vec4(positionGeometry, 1)),
 //   vec4(color, opacity)
 // );
 
-const material = createMaterial(
-  modelWorldMatrix.mul(vec4(positionGeometry, 1)),
-  vec4(color, opacity)
-);
+ const { vertices, vertexCount, indices } = createPlaneGeometry();
 
-const { vertices, vertexCount, indices } = createPlaneGeometry();
+ console.log('vertices', vertices); 
 
-const vertexHandle = createVertexHandle(material, vertexCount);
-vertexHandle.update("position", vertices);
+// const vertexHandle = createVertexHandle(material, vertexCount);
+// vertexHandle.update("position", vertices);
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
@@ -55,13 +67,16 @@ export default React.memo(function Box2D({
   anchor = "center",
   color = "white",
 }: Props) {
-  const bindingHandle = useMemo(() => createBindingHandle(material), []);
+
+  const bOpacity = useMemo(() => createUniformBinding("float"), []);
+  const bColor = useMemo(() => createUniformBinding("vec3"), []);
 
   useEffect(() => {
-    const { opacity, array } = parseColor(color);
-    bindingHandle.update("opacity", [opacity]);
-    bindingHandle.update("color", array);
-  }, [color]);
+    const { opacity, array } = parseColor(color || "#fff");
+    bOpacity.update([opacity]);
+    bColor.update(array);
+  }, [color, opacity]);
+  
 
   const anchorMatrix = useAnchor(anchor, size);
 
@@ -72,20 +87,32 @@ export default React.memo(function Box2D({
     return mat;
   }, [anchorMatrix, size.join(",")]);
 
+  const bindings = useMemo(
+    () => ({
+      color: bColor.resource,
+      opacity: bOpacity.resource,
+    }),
+    []
+  );
+
   return (
     <Relative matrix={matrix}>
+      <BindingContextProvider value={bindings}>
       <RenderObject
-        material={material}
+        vertexNode={vertexNode}
+        fragmentNode={fragmentNode}
         input={{
-          vertexBuffers: vertexHandle.buffers,
+          attributes: {
+            position: vertices,
+          },
           vertexCount,
           index: {
             indexBuffer: indexHandle.buffer,
             indexCount: indices.length,
           },
         }}
-        bindingHandle={bindingHandle}
       />
+      </BindingContextProvider>
     </Relative>
   );
 });

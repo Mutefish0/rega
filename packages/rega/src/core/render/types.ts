@@ -3,33 +3,26 @@ export interface TransferBinding {
   resource: TransferResource;
 }
 
+export interface BindingLayout {
+  type: ResourceType;
+  binding: number;
+}
+
 export interface TransferObject {
   id: string;
   material: MaterialJSON;
 
   bindings: TransferBinding[];
 
-  bindingsLayout: Array<{
-    type: ResourceType;
-    binding: number;
-  }>;
-
   input: TransferInput;
 
-  renderTargetbindingsLayout: Array<{
-    type: ResourceType;
-    binding: number;
-  }>;
+  renderTargetbindingsLayout: BindingLayout[];
 }
 
 export interface TransferRenderTarget {
   id: string;
   viewport: SharedArrayBuffer;
   bindings: TransferBinding[];
-  bindingsLayout: Array<{
-    type: ResourceType;
-    binding: number;
-  }>;
 }
 
 export interface TransferInput {
@@ -126,8 +119,6 @@ export interface MaterialJSON {
     name: string;
     type: "vec3" | "vec2" | "float";
   }>;
-
-  // bindings: Array<BindGroupInfo>;
 
   blend: GPUBlendState;
   format: GPUTextureFormat;
