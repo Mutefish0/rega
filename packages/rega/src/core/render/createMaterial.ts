@@ -2,7 +2,7 @@ import WGSLNodeBuilder from "three/src/renderers/webgpu/nodes/WGSLNodeBuilder.js
 import NodeMaterial from "three/src/materials/nodes/NodeMaterial.js";
 import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipelineUtils.js";
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
-import { BindGroupInfo, BindInfo, MaterialJSON } from "./types";
+import { BindGroupInfo, BindInfo, MaterialJSON,NamedBindingLayout } from "./types";
 import { Node } from "pure3";
 
 import { hasFeature } from "./features";
@@ -107,11 +107,35 @@ export default function createMaterial(
 
   builder.build();
 
+  const bindings = builder.getBindings();
+
+  const bindGroups: NamedBindingLayout[][] = [[],[],[],[]];
+
+  for (const g of bindings) {
+    const index = g.index;
+    for (const b of g.bindings) {
+      const layout = getBindingLayout(b.name);
+      if (layout.group !== index) {
+        throw new Error("Unmatched group: " + b.name);
+      }
+      if (b.isSampler) {
+        bindGroups[index].push({ name:  b.name, type: "sampler", binding: layout.binding });
+      } else if (b.isSampledTexture) {
+        bindGroups[index].push({ name:  b.name, type: "sampledTexture", binding: layout.binding });
+      } else if (b.isUniformBuffer) {
+        bindGroups[index].push({ name:  b.name, type: "uniformBuffer", binding: layout.binding });
+      } else {
+        throw new Error("Unknown binding type");
+      }
+    }
+  }
+
+
   const mat: MaterialJSON = {
     vertexShader: builder.vertexShader,
     fragmentShader: builder.fragmentShader,
     attributes: builder.attributes,
-
+    bindGroups,
     blend,
     format: "bgra8unorm",
     frontFace: options.frontFace || "ccw",

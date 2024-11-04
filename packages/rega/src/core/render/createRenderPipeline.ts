@@ -1,12 +1,9 @@
 import { MaterialJSON } from "./types";
 import { createBindGroupLayout } from "./utils";
-import { ResourceType } from "./types";
 
 export default function createRenderPipeline(
   device: GPUDevice,
-  materialJSON: MaterialJSON,
-  objectBindGroupLayout: Array<{ type: ResourceType; binding: number }>,
-  targetBindGroupLayout: Array<{ type: ResourceType; binding: number }>
+  materialJSON: MaterialJSON
 ) {
   const {
     fragmentShader,
@@ -26,12 +23,9 @@ export default function createRenderPipeline(
     code: fragmentShader,
   });
 
-  const bindGroupLayouts = [
-    createBindGroupLayout(device, objectBindGroupLayout), // object
-    createBindGroupLayout(device, targetBindGroupLayout), // target
-    // createBindGroupLayout(device, []), // frame
-    // createBindGroupLayout(device, []), // global
-  ];
+  const bindGroupLayouts = materialJSON.bindGroups.map((layout) =>
+    createBindGroupLayout(device, layout)
+  );
 
   const gpuVeterxBufferLayouts: Array<GPUVertexBufferLayout> = [];
 

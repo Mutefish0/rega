@@ -1,6 +1,14 @@
+import { WGSLValueType } from "pure3";
+
 export interface TransferBinding {
   binding: number;
   resource: TransferResource;
+}
+
+export interface NamedBindingLayout {
+  type: ResourceType;
+  name: string;
+  binding: number;
 }
 
 export interface BindingLayout {
@@ -11,12 +19,8 @@ export interface BindingLayout {
 export interface TransferObject {
   id: string;
   material: MaterialJSON;
-
   bindings: TransferBinding[];
-
   input: TransferInput;
-
-  renderTargetbindingsLayout: BindingLayout[];
 }
 
 export interface TransferRenderTarget {
@@ -35,6 +39,8 @@ export interface TransferInput {
 }
 
 export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
+
+export type UniformType = WGSLValueType | "texture_2d" | "sampler";
 
 export type TransferResource =
   | {
@@ -119,6 +125,8 @@ export interface MaterialJSON {
     name: string;
     type: "vec3" | "vec2" | "float";
   }>;
+
+  bindGroups: Array<NamedBindingLayout[]>;
 
   blend: GPUBlendState;
   format: GPUTextureFormat;

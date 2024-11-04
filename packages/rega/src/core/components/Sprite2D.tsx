@@ -13,15 +13,14 @@ import {
 
 import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
+import {
+  BindingContextProvider,
+  useBinding,
+} from "../primitives/BindingContext";
 
 import { createPlaneGeometry } from "../tools/geometry";
 
-import createVertexHandle from "../render/createVertexHandle";
 import createIndexHandle from "../render/createIndexHandle";
-
-import { BindingContextProvider } from "../primitives/BindingContext";
-
-import { createUniformBinding } from "../../core/render/binding";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -54,16 +53,15 @@ const tex = texture("tex");
 
 const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
 
+// const fragmentNode = vec4(color, opacity);
+const fragmentNode = tex.mul(vec4(color, opacity));
 
-const fragmentNode = vec4(color, opacity);
-//const fragmentNode = tex.mul(vec4(color, opacity));
-
-const { vertices, vertexCount, indices } = createPlaneGeometry();
+const { vertices, vertexCount, uvs, indices } = createPlaneGeometry();
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
 
-// 不支持更换 Texture，但是支持编辑
+// TODO 支持复用 Vertex
 export default React.memo(function Sprite2D({
   textureId,
   clip,
@@ -82,8 +80,9 @@ export default React.memo(function Sprite2D({
     return TextureManager.get(textureId)!;
   }, [textureId]);
 
-  const bOpacity = useMemo(() => createUniformBinding("float"), []);
-  const bColor = useMemo(() => createUniformBinding("vec3"), []);
+  const bOpacity = useBinding("float");
+  const bColor = useBinding("vec3");
+  const bTex = useBinding("texture_2d", texture);
 
   useEffect(() => {
     const { opacity: opacity1, array } = parseColor(color || "#fff");
@@ -131,82 +130,36 @@ export default React.memo(function Sprite2D({
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
-
-    const matRX = new Matrix4();
-    const matRY = new Matrix4();
-    const matRZ = new Matrix4();
-    const matT = new Matrix4();
-
-    matRX.makeRotationX(Math.PI - 0.00001);
-
-    //matRY.makeRotationY(Math.PI);
-
-    //matRZ.makeRotationZ(Math.PI / 3);
-
-    // if (rotation) {
-    //   matRX.makeRotationX(rotation.x);
-    //   matRY.makeRotationY(rotation.y);
-    //   matRZ.makeRotationZ(rotation.z);
-    // }
-
-    // if (flipY) {
-    //   mat.makeRotationX(Math.PI);
-    // }
-    // if (flipX) {
-    //   mat.makeRotationY(Math.PI);
-    // }
-
-    //mat.makeRotationX(Math.PI / 3);
-
     mat.makeScale(scale[0], scale[1], 1);
-
-    // mat
-    //   //.premultiply(anchorMatrix)
-    //   .multiply(matRZ)
-    //   .multiply(matRY)
-    //   .multiply(matRX);
-    //return mat.multiply(matRX);
-
-    //matRX
-
-    return mat.premultiply(anchorMatrix).multiply(matRX);
-
-    //return matRX.multiply(anchorMatrix).multiply(mat);
+    mat.premultiply(anchorMatrix);
+    return mat;
   }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
-  const bindings = useMemo(
-    () => ({
-      tex: {
-        type: "sampledTexture" as const,
-        buffer: texture.sab,
-        width: texture.width,
-        height: texture.height,
-      },
-      tex_sampler: {
-        type: "sampler" as const
-      },
-      color: bColor.resource,
-      opacity: bOpacity.resource,
-    }),
-    []
-  );
-
-  const attributes = useMemo(() => {
-    return {
-      position: vertices,
-      uvs,
-    };
-  }, [uvs]);
+  // const attributes = useMemo(() => {
+  //   return {
+  //     position: vertices,
+  //     uvs,
+  //   };
+  // }, [uvs]);
 
   return (
     <Relative matrix={matrix}>
-      <BindingContextProvider value={bindings}>
+      <BindingContextProvider
+        value={{
+          color: bColor.resource,
+          opacity: bOpacity.resource,
+          tex: bTex.resource,
+        }}
+      >
         <RenderObject
           vertexNode={vertexNode}
           fragmentNode={fragmentNode}
           input={{
             vertexCount,
-            attributes,
+            attributes: {
+              position: vertices,
+              uvs,
+            },
             index: {
               indexBuffer: indexHandle.buffer,
               indexCount: indices.length,
@@ -216,100 +169,4 @@ export default React.memo(function Sprite2D({
       </BindingContextProvider>
     </Relative>
   );
-
-  // const ctx = useContext(ThreeContext);
-  // const bindingHandle = useMemo(() => {
-  //   const t = TextureManager.get(textureId)!;
-  //   return createBindingHandle(material, {
-  //     textures: {
-  //       tex: {
-  //         buffer: t.sab,
-  //         width: t.width,
-  //         height: t.height,
-  //       },
-  //     },
-  //   });
-  // }, []);
-  // useEffect(() => {
-  //   const { opacity: opacity1, array } = parseColor(color || "#fff");
-  //   bindingHandle.update("opacity", [opacity ?? opacity1]);
-  //   bindingHandle.update("color", array);
-  // }, [color, opacity]);
-  // const scale = useMemo(() => {
-  //   if (size) {
-  //     return size;
-  //   }
-  //   const cWidth = clip[2] / ctx.assetsPixelRatio;
-  //   const cHeight = clip[3] / ctx.assetsPixelRatio;
-  //   return [cWidth, cHeight, 1] as [number, number, number];
-  // }, [size, ctx.assetsPixelRatio]);
-  // // const { geometry, material } = useMemo(() => {
-  // //   const geometry = new PlaneGeometry(scale[0], scale[1]);
-  // //   const material = new MeshBasicMaterial({
-  // //     color: 0xffffff,
-  // //     transparent: true,
-  // //     side: DoubleSide,
-  // //   });
-  // //   return {
-  // //     geometry,
-  // //     material,
-  // //   };
-  // // }, []);
-  // const { texture, width, height } = useMemo(() => {
-  //   const texture = TextureManager.get(textureId)!;
-  //   const { width, height } = texture;
-  //   return { texture, width, height };
-  // }, [textureId]);
-  // const anchorMatrix = useAnchor(anchor, [scale[0], scale[1]]);
-  // const matrix = useMemo(() => {
-  //   const mat = new Matrix4();
-  //   // if (flipY) {
-  //   //   mat.makeRotationX(Math.PI);
-  //   // }
-  //   // if (flipX) {
-  //   //   mat.makeRotationY(Math.PI);
-  //   // }
-  //   mat.makeScale(...scale);
-  //   mat.premultiply(anchorMatrix);
-  //   return mat;
-  // }, [anchorMatrix, scale.join(","), flipX, flipY]);
-  // // useEffect(() => {
-  // //   material.map = texture;
-  // //   if (alphaTextureId) {
-  // //     material.alphaMap = TextureManager.get(alphaTextureId)!;
-  // //   }
-  // // }, [texture, alphaTextureId]);
-  // // useEffect(() => {
-  // //   const cWidth = (clip[2] - 2 * padding) / width;
-  // //   const cHeight = (clip[3] - 2 * padding) / height;
-  // //   const cLeftTop = [
-  // //     (clip[0] + padding) / width,
-  // //     1 - (clip[1] + padding) / height,
-  // //   ];
-  // //   geometry.attributes.uv.setXY(0, cLeftTop[0], cLeftTop[1]);
-  // //   geometry.attributes.uv.setXY(1, cLeftTop[0] + cWidth, cLeftTop[1]);
-  // //   geometry.attributes.uv.setXY(2, cLeftTop[0], cLeftTop[1] - cHeight);
-  // //   geometry.attributes.uv.setXY(
-  // //     3,
-  // //     cLeftTop[0] + cWidth,
-  // //     cLeftTop[1] - cHeight
-  // //   );
-  // //   geometry.attributes.uv.needsUpdate = true;
-  // // }, [clip.join(","), width, height]);
-  // return (
-  //   <Relative matrix={matrix}>
-  //     <RenderObject
-  //       material={material}
-  //       input={{
-  //         vertexBuffers: vertexHandle.buffers,
-  //         vertexCount,
-  //         index: {
-  //           indexBuffer: indexHandle.buffer,
-  //           indexCount: indices.length,
-  //         },
-  //       }}
-  //       bindingHandle={bindingHandle}
-  //     />
-  //   </Relative>
-  // );
 });

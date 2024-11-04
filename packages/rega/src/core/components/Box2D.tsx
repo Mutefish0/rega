@@ -7,13 +7,12 @@ import {
   Matrix4,
 } from "pure3";
 
-import createMaterial from "../render/createMaterial";
-import createVertexHandle from "../render/createVertexHandle";
 import createIndexHandle from "../render/createIndexHandle";
-import createBindingHandle from "../render/createBindingHandle";
-import { createUniformBinding } from "../../core/render/binding";
 
-import { BindingContextProvider } from "../primitives/BindingContext";
+import {
+  BindingContextProvider,
+  useBinding,
+} from "../primitives/BindingContext";
 
 import RenderObject from "../primitives/RenderObject";
 
@@ -52,9 +51,7 @@ const fragmentNode = vec4(color, opacity);
 //   vec4(color, opacity)
 // );
 
- const { vertices, vertexCount, indices } = createPlaneGeometry();
-
- console.log('vertices', vertices); 
+const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 // const vertexHandle = createVertexHandle(material, vertexCount);
 // vertexHandle.update("position", vertices);
@@ -67,16 +64,14 @@ export default React.memo(function Box2D({
   anchor = "center",
   color = "white",
 }: Props) {
-
-  const bOpacity = useMemo(() => createUniformBinding("float"), []);
-  const bColor = useMemo(() => createUniformBinding("vec3"), []);
+  const bOpacity = useBinding("float");
+  const bColor = useBinding("vec3");
 
   useEffect(() => {
     const { opacity, array } = parseColor(color || "#fff");
     bOpacity.update([opacity]);
     bColor.update(array);
   }, [color, opacity]);
-  
 
   const anchorMatrix = useAnchor(anchor, size);
 
@@ -98,20 +93,20 @@ export default React.memo(function Box2D({
   return (
     <Relative matrix={matrix}>
       <BindingContextProvider value={bindings}>
-      <RenderObject
-        vertexNode={vertexNode}
-        fragmentNode={fragmentNode}
-        input={{
-          attributes: {
-            position: vertices,
-          },
-          vertexCount,
-          index: {
-            indexBuffer: indexHandle.buffer,
-            indexCount: indices.length,
-          },
-        }}
-      />
+        <RenderObject
+          vertexNode={vertexNode}
+          fragmentNode={fragmentNode}
+          input={{
+            attributes: {
+              position: vertices,
+            },
+            vertexCount,
+            index: {
+              indexBuffer: indexHandle.buffer,
+              indexCount: indices.length,
+            },
+          }}
+        />
       </BindingContextProvider>
     </Relative>
   );

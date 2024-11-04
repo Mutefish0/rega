@@ -1,8 +1,8 @@
-import { ResourceType } from "./types";
+import { BindingLayout } from "./types";
 
 export function createBindGroupLayout(
   device: GPUDevice,
-  bindings: Array<{ type: ResourceType; binding: number }>
+  bindings: BindingLayout[]
 ) {
   const entries: GPUBindGroupLayoutEntry[] = [];
 

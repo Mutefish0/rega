@@ -111,6 +111,7 @@ self.addEventListener("message", async (event) => {
       device.createBindGroupLayout({ entries: [] }),
       []
     );
+
     frameBindGroup.bindGroup = createGPUBindGroup(
       device,
       device.createBindGroupLayout({ entries: [] }),
@@ -123,6 +124,7 @@ self.addEventListener("message", async (event) => {
     const { id, viewport, bindings } = event.data
       .target as TransferRenderTarget;
     const viewportView = new Float32Array(viewport);
+
     const bindGroupLayout = createBindGroupLayout(
       device,
       bindings.map(({ binding, resource }) => ({
@@ -130,6 +132,9 @@ self.addEventListener("message", async (event) => {
         type: resource.type,
       }))
     );
+
+    console.log("target bindGroupLayout: ", bindings);
+
     const gpuResources = bindings.map(({ resource, binding }) => {
       if (resource.type === "uniformBuffer") {
         const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
@@ -176,8 +181,6 @@ self.addEventListener("message", async (event) => {
     const target = renderTargets.get(targetId);
     if (target) {
       target.objects.add(objectId);
-
-      console.log('addObjectToTarget:', target);
     }
   } else if (event.data.type === "removeObjectFromTarget") {
     const { targetId, objectId } = event.data;
@@ -186,19 +189,11 @@ self.addEventListener("message", async (event) => {
       target.objects.delete(objectId);
     }
   } else if (event.data.type === "createObject") {
-    const { id, material, bindings, input, renderTargetbindingsLayout } = event
-      .data.object as TransferObject;
+    const { id, material, bindings, input } = event.data
+      .object as TransferObject;
     const pipelineKey = JSON.stringify(material);
     if (!pipelineMap.has(pipelineKey)) {
-      const pipeline = createRenderPipeline(
-        device,
-        material,
-        bindings.map(({ binding, resource }) => ({
-          binding,
-          type: resource.type,
-        })),
-        renderTargetbindingsLayout
-      );
+      const pipeline = createRenderPipeline(device, material);
       pipelineMap.set(pipelineKey, pipeline);
     }
 
@@ -234,6 +229,11 @@ self.addEventListener("message", async (event) => {
       }
     });
 
+    console.log("obj-bindings: ", bindings);
+
+    console.log("vertex: ", material.vertexShader);
+    console.log("fragment: ", material.fragmentShader);
+
     const gpuBindGroup = createGPUBindGroup(
       device,
       pl.bindGroupLayouts[0],
@@ -255,6 +255,7 @@ self.addEventListener("message", async (event) => {
         GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
       );
     }
+
     renderObjectMap.set(id, {
       pipelineKey,
       input,
@@ -306,6 +307,9 @@ async function start() {
     };
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+
+    passEncoder.setBindGroup(3, globalBindGroup.bindGroup);
+    passEncoder.setBindGroup(2, frameBindGroup.bindGroup);
 
     renderTargets.forEach((target) => {
       passEncoder.setViewport(

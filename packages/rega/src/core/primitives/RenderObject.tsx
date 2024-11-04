@@ -2,7 +2,11 @@ import { useContext, useEffect, useMemo, useRef } from "react";
 import TransformContext from "./TransformContext";
 import RenderContext from "./RenderContext";
 import { RenderGroupContext } from "./RenderGroup";
-import { TransferBinding, TransferResource, BindingLayout } from "../render";
+import {
+  NamedBindingLayout,
+  TransferBinding,
+  TransferResource,
+} from "../render";
 import { BindingContext } from "./BindingContext";
 import { createUniformBinding } from "../../core/render/binding";
 import { getOrcreateSlot } from "../render/slot";
@@ -85,31 +89,47 @@ export default function RenderObject({
       modelWorldMatrix: bModelWorldMatrix.resource,
     } as Record<string, TransferResource>;
 
-    const binds: TransferBinding[] = [];
+    const objectBindings: TransferBinding[] = [];
 
-    for (let name in allBindings) {
-      const index = getOrcreateSlot("object", name);
-      binds.push({
-        binding: index,
-        resource: allBindings[name],
-      });
+    for (const layout of material.bindGroups[0]) {
+      const name = layout.name;
+      const resource = allBindings[name];
+      if (resource) {
+        objectBindings.push({
+          binding: layout.binding,
+          resource,
+        });
+      } else {
+        if (layout.type === "sampler") {
+          objectBindings.push({
+            binding: layout.binding,
+            resource: {
+              type: "sampler",
+            },
+          });
+        } else {
+          throw new Error(`Missing binding ${name}`);
+        }
+      }
     }
 
-    const targetLayout: BindingLayout[] = [];
+    const targetBindingLayouts: NamedBindingLayout[] = [];
 
-    for (let name in renderCtx.renderTargetBindGroupLayout) {
-      const index = getOrcreateSlot("target", name);
-      targetLayout.push({
-        binding: index,
+    for (const name in renderCtx.renderTargetBindGroupLayout) {
+      targetBindingLayouts.push({
+        name,
         type: renderCtx.renderTargetBindGroupLayout[name],
+        binding: getOrcreateSlot("target", name),
       });
     }
 
     renderCtx.server.createObject({
       id,
-      material,
-      bindings: binds,
-      renderTargetbindingsLayout: targetLayout,
+      material: {
+        ...material,
+        bindGroups: [material.bindGroups[0], targetBindingLayouts, [], []],
+      },
+      bindings: objectBindings,
       input: {
         vertexBuffers: vertexHandle.buffers,
         vertexCount: input.vertexCount,

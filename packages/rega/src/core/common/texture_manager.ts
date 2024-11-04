@@ -11,10 +11,8 @@ import createSharedBuffer, {
 } from "../render/createSharedBuffer";
 
 interface Texture {
-  texture3: Texture3;
-  sab: SharedArrayBuffer;
-  data: Uint8Array;
-  versionView: DataView;
+  type: "sampledTexture";
+  buffer: SharedArrayBuffer;
   width: number;
   height: number;
 }
@@ -50,12 +48,10 @@ export default class TextureManager {
         updateVersion(versionView);
 
         const texture = {
-          texture3,
           height: image.height,
           width: image.width,
-          data: dataView,
-          sab,
-          versionView,
+          buffer: sab,
+          type: "sampledTexture" as const,
         };
 
         TextureManager.textures.set(url, texture);
