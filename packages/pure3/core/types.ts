@@ -29,8 +29,7 @@ type Mul<A extends WGSLValueType, B extends NodeValueType> =
       : B extends "vec4"
       ? "vec4"
       : unknown
-    : // 矩阵规则：矩阵可以左乘标量或同维度矩阵
-    A extends "mat2"
+    : A extends "mat2"
     ? B extends "float" | "lit_float"
       ? "mat2"
       : B extends "vec2"
@@ -54,20 +53,41 @@ type Mul<A extends WGSLValueType, B extends NodeValueType> =
       : B extends "mat4"
       ? "mat4"
       : unknown
-    : // 标量乘法仅限标量类型本身
-    A extends "float"
+    : A extends "float"
     ? B extends "float" | "lit_float"
       ? "float"
       : unknown
     : unknown;
 
-export interface BoxNode<T extends WGSLValueType> {
-  mul<B extends NodeValueType>(
-    node: Node<B>
-  ): Mul<T, B> extends NodeValueType ? Node<Mul<T, B>> : unknown;
+type RemoveVoid<T> = {
+  [K in keyof T as T[K] extends void ? never : K]: T[K];
+};
+
+export interface _BoxNode<T extends WGSLValueType> {
+  mul<
+    N extends Node<NodeValueType> | number,
+    P = N extends Node<infer U> ? Mul<T, U> : void
+  >(
+    node: N
+  ): N extends number
+    ? Node<Mul<T, "lit_float">>
+    : P extends NodeValueType
+    ? Node<P>
+    : void;
+
   nodeType: T;
   uuid: string;
+
+  x: T extends "vec2" | "vec3" | "vec4" ? Node<"float"> : void;
+  y: T extends "vec2" | "vec3" | "vec4" ? Node<"float"> : void;
+  z: T extends "vec3" | "vec4" ? Node<"float"> : void;
+  w: T extends "vec4" ? Node<"float"> : void;
+
+  xy: T extends "vec3" | "vec4" ? Node<"vec2"> : void;
+  xyz: T extends "vec4" ? Node<"vec3"> : void;
 }
+
+export type BoxNode<T extends WGSLValueType> = RemoveVoid<_BoxNode<T>>;
 
 export type Node<T extends NodeValueType> = T extends "lit_float"
   ? number

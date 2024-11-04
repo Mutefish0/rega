@@ -133,12 +133,15 @@ self.addEventListener("message", async (event) => {
       }))
     );
 
-    console.log("target bindGroupLayout: ", bindings);
-
-    const gpuResources = bindings.map(({ resource, binding }) => {
+    const gpuResources = bindings.map(({ resource, binding, name }) => {
       if (resource.type === "uniformBuffer") {
         const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-        const gpuBuffer = addObjectGPUBuffer(device, resource.buffer, usage);
+        const gpuBuffer = addObjectGPUBuffer(
+          device,
+          name,
+          resource.buffer,
+          usage
+        );
         return {
           binding,
           resource: { buffer: gpuBuffer } as GPUBufferBinding,
@@ -146,7 +149,7 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampledTexture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-        const texture = addObjectGPUTexture(device, resource.buffer, {
+        const texture = addObjectGPUTexture(device, name, resource.buffer, {
           width: resource.width,
           height: resource.height,
           usage,
@@ -199,10 +202,15 @@ self.addEventListener("message", async (event) => {
 
     const pl = pipelineMap.get(pipelineKey)!;
 
-    const gpuResources = bindings.map(({ resource, binding }) => {
+    const gpuResources = bindings.map(({ resource, binding, name }) => {
       if (resource.type === "uniformBuffer") {
         const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-        const gpuBuffer = addObjectGPUBuffer(device, resource.buffer, usage);
+        const gpuBuffer = addObjectGPUBuffer(
+          device,
+          name,
+          resource.buffer,
+          usage
+        );
         return {
           binding,
           resource: { buffer: gpuBuffer } as GPUBufferBinding,
@@ -210,7 +218,7 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampledTexture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-        const texture = addObjectGPUTexture(device, resource.buffer, {
+        const texture = addObjectGPUTexture(device, name, resource.buffer, {
           width: resource.width,
           height: resource.height,
           usage,
@@ -229,20 +237,17 @@ self.addEventListener("message", async (event) => {
       }
     });
 
-    console.log("obj-bindings: ", bindings);
-
-    console.log("vertex: ", material.vertexShader);
-    console.log("fragment: ", material.fragmentShader);
-
     const gpuBindGroup = createGPUBindGroup(
       device,
       pl.bindGroupLayouts[0],
       gpuResources
     );
 
-    input.vertexBuffers.forEach((buffer) => {
+    input.vertexBuffers.forEach((buffer, index) => {
+      const attribute = material.attributes[index];
       addObjectGPUBuffer(
         device,
+        attribute.name,
         buffer,
         GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
       );
@@ -251,6 +256,7 @@ self.addEventListener("message", async (event) => {
       const { indexBuffer } = input.index;
       addObjectGPUBuffer(
         device,
+        "index_buffer",
         indexBuffer,
         GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
       );

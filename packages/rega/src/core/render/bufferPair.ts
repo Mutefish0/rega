@@ -62,6 +62,7 @@ function usageToString(type: "buffer" | "texture", usage: GPUBufferUsageFlags) {
 
 export function addObjectGPUBuffer(
   device: GPUDevice,
+  label: string,
   sab: SharedArrayBuffer,
   usage: GPUBufferUsageFlags
 ) {
@@ -70,6 +71,7 @@ export function addObjectGPUBuffer(
   const size = sab.byteLength - HEADER_SIZE;
   if (!record) {
     const gpuBuffer = device.createBuffer({
+      label,
       size,
       usage,
       mappedAtCreation: true,
@@ -121,6 +123,7 @@ export function removeObjectGPUBuffer(sab: SharedArrayBuffer) {
 
 export function addObjectGPUTexture(
   device: GPUDevice,
+  label: string,
   sab: SharedArrayBuffer,
   opts: {
     usage: GPUTextureUsageFlags;
@@ -134,6 +137,7 @@ export function addObjectGPUTexture(
   const size = sab.byteLength - HEADER_SIZE;
   if (!record) {
     const gpuTexture = device.createTexture({
+      label,
       size: {
         width: opts.width,
         height: opts.height,
@@ -237,6 +241,8 @@ export function updateGPUTexture(device: GPUDevice, sab: SharedArrayBuffer) {
       { bytesPerRow: record.bytesPerRow },
       [record.width, record.height, 1]
     );
+
+    console.log('write texture', record.cpuUint8Array);
 
     console.debug(
       `[buffer ${uuid}] write, <${usageToString("texture", record.usage)}>`,

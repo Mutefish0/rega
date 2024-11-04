@@ -90,14 +90,17 @@ export default function App() {
       /> */}
 
       <RenderGroup targetId="___main___">
-        <Sprite2D
+        {/* <Sprite2D
           size={[1, 1]}
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}
-          color="rgba(0,100,0,0.8)"
+          //color="rgba(0,100,0,0.8)"
           //flipY={true}
-        />
-        {/* <Box2D size={[1, 1]} color="rgba(100,0,0,0.8)" /> */}
+        /> */}
+        <Box2D size={[1, 1]} color="rgba(100,0,0,0.8)" />
+        <Relative translation={{ x: 0.25, y: 0.25 }}>
+          <Box2D size={[1, 1]} color="rgba(100,0,0,0.8)" />
+        </Relative>
       </RenderGroup>
     </>
   );

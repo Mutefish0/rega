@@ -35,7 +35,6 @@ const opacity = uniform("float", "opacity");
 //     .mul(cameraViewMatrix)
 //     .mul(modelWorldMatrix)
 const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
-
 const fragmentNode = vec4(color, opacity);
 
 // // const material = createMaterial(
@@ -53,8 +52,10 @@ const fragmentNode = vec4(color, opacity);
 
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
-// const vertexHandle = createVertexHandle(material, vertexCount);
-// vertexHandle.update("position", vertices);
+const attributes = {
+  position: vertices,
+};
+const sharedVertexKey = crypto.randomUUID();
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
@@ -97,9 +98,8 @@ export default React.memo(function Box2D({
           vertexNode={vertexNode}
           fragmentNode={fragmentNode}
           input={{
-            attributes: {
-              position: vertices,
-            },
+            sharedVertexKey,
+            attributes,
             vertexCount,
             index: {
               indexBuffer: indexHandle.buffer,

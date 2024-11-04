@@ -38,6 +38,21 @@ export function vec4(
   d: FloatLitOrNode
 ): Node<"vec4">;
 export function vec4(a: Node<"vec2">, b: Node<"vec2">): Node<"vec4">;
+export function vec4(
+  a: Node<"vec2">,
+  b: FloatLitOrNode,
+  c: FloatLitOrNode
+): Node<"vec4">;
+export function vec4(
+  a: FloatLitOrNode,
+  b: FloatLitOrNode,
+  c: Node<"vec2">
+): Node<"vec4">;
+export function vec4(
+  a: FloatLitOrNode,
+  b: Node<"vec2">,
+  c: FloatLitOrNode
+): Node<"vec4">;
 export function vec4(a: Node<"vec3">, d: FloatLitOrNode): Node<"vec4">;
 export function vec4(a: FloatLitOrNode, b: Node<"vec3">): Node<"vec4">;
 export function vec4(a: Node<"vec4">): Node<"vec4">;

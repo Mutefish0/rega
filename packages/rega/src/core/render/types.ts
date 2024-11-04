@@ -1,6 +1,7 @@
 import { WGSLValueType } from "pure3";
 
 export interface TransferBinding {
+  name: string;
   binding: number;
   resource: TransferResource;
 }

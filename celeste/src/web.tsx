@@ -6,5 +6,4 @@ import "./index.css";
 Engine(<App />, {
   width: 512,
   height: 512,
-  outputColorSpace: "srgb-linear",
 });

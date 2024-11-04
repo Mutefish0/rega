@@ -6,6 +6,8 @@ import type { Node, WGSLValueType } from "./core/types";
 export type { Node, WGSLValueType };
 
 import {
+  varying,
+  uv as _uv,
   positionGeometry as _positionGeometry,
   cameraProjectionMatrix as _cameraProjectionMatrix,
   cameraViewMatrix as _cameraViewMatrix,
@@ -18,6 +20,10 @@ const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
 export { positionGeometry, cameraProjectionMatrix, cameraViewMatrix };
 
 export { float, vec2, vec3, vec4 } from "./core/conv";
+
+const uv = _uv as () => Node<"vec2">;
+
+export { uv, varying };
 
 export {
   Vector2,

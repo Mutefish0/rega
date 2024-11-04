@@ -11,15 +11,19 @@ import { BindingContext } from "./BindingContext";
 import { createUniformBinding } from "../../core/render/binding";
 import { getOrcreateSlot } from "../render/slot";
 import { differenceBy } from "lodash";
+import { VertexHandle } from "../render/types";
 import createVertexHandle from "../render/createVertexHandle";
 import createMaterial from "../render/createMaterial";
 import { Node } from "pure3";
+
+const _cache: Record<string, VertexHandle> = {};
 
 interface Props {
   vertexNode: Node<"vec4">;
   fragmentNode: Node<"vec4">;
   input: {
     vertexCount: number;
+    sharedVertexKey?: string;
     attributes: Record<string, number[]>;
     index: {
       indexBuffer: SharedArrayBuffer;
@@ -64,16 +68,40 @@ export default function RenderObject({
     [vertexNode, fragmentNode]
   );
 
-  const vertexHandle = useMemo(
-    () => createVertexHandle(material, input.vertexCount),
-    []
-  );
+  const vertexHandle = useMemo(() => {
+    if (input.sharedVertexKey) {
+      let handle = _cache[input.sharedVertexKey];
+      if (!handle) {
+        handle = createVertexHandle(material, input.vertexCount);
+        for (const attr of material.attributes) {
+          const attributeName = attr.name;
+          const value = input.attributes[attributeName];
+          if (typeof value === "undefined") {
+            throw new Error(`Missing attribute ${attributeName}`);
+          }
+          handle.update(attributeName, input.attributes[attributeName]);
+        }
+        _cache[input.sharedVertexKey] = handle;
+      }
+      return handle;
+    } else {
+      return createVertexHandle(material, input.vertexCount);
+    }
+  }, []);
 
   useEffect(() => {
-    for (const key in input.attributes) {
-      if (refLastAttributes.current[key] !== input.attributes[key]) {
-        vertexHandle.update(key, input.attributes[key]);
-        refLastAttributes.current[key] = input.attributes[key];
+    if (input.sharedVertexKey) {
+      return;
+    }
+    for (const attr of material.attributes) {
+      const attributeName = attr.name;
+      const value = input.attributes[attributeName];
+      if (typeof value === "undefined") {
+        throw new Error(`Missing attribute ${attributeName}`);
+      }
+      if (refLastAttributes.current[attributeName] !== value) {
+        vertexHandle.update(attributeName, value);
+        refLastAttributes.current[attributeName] = value;
       }
     }
   }, [input.attributes]);
@@ -96,12 +124,14 @@ export default function RenderObject({
       const resource = allBindings[name];
       if (resource) {
         objectBindings.push({
+          name,
           binding: layout.binding,
           resource,
         });
       } else {
         if (layout.type === "sampler") {
           objectBindings.push({
+            name,
             binding: layout.binding,
             resource: {
               type: "sampler",
