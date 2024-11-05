@@ -4,11 +4,6 @@ import {
   Texture as Texture3,
 } from "three/webgpu";
 import Image from "../io/image";
-import createSharedBuffer, {
-  createUint8Array,
-  createVersionView,
-  updateVersion,
-} from "../render/createSharedBuffer";
 
 interface Texture {
   type: "sampledTexture";
@@ -31,21 +26,14 @@ export default class TextureManager {
     await new Promise<Texture>((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
-        const texture3 = new Texture3(image);
+        //const texture3 = new Texture3(image);
         // texture.magFilter = NearestFilter;
         // texture.minFilter = NearestFilter;
         // texture.wrapS = ClampToEdgeWrapping;
         // texture.wrapT = ClampToEdgeWrapping;
         //texture.needsUpdate = true;
-
-        const sab = createSharedBuffer(image.data.byteLength);
-        const dataView = createUint8Array(sab);
-
-        dataView.set(image.data);
-
-        const versionView = createVersionView(sab);
-
-        updateVersion(versionView);
+        const sab = new SharedArrayBuffer(image.data.byteLength);
+        new Uint8Array(sab).set(image.data);
 
         const texture = {
           height: image.height,

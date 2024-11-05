@@ -6,6 +6,7 @@ import {
   NamedBindingLayout,
   TransferBinding,
   TransferResource,
+  TransferTextureResource,
 } from "../render";
 import { BindingContext } from "./BindingContext";
 import { createUniformBinding } from "../../core/render/binding";
@@ -14,6 +15,7 @@ import { differenceBy } from "lodash";
 import { VertexHandle } from "../render/types";
 import createVertexHandle from "../render/createVertexHandle";
 import createMaterial from "../render/createMaterial";
+import TextureManager from "../common/texture_manager";
 import { Node } from "pure3";
 
 const _cache: Record<string, VertexHandle> = {};
@@ -153,6 +155,22 @@ export default function RenderObject({
       });
     }
 
+    const textures: Record<
+      string,
+      { width: number; height: number; buffer: SharedArrayBuffer }
+    > = {};
+
+    for (const b of material.bindGroups[0]) {
+      if (b.type === "sampledTexture") {
+        const res = allBindings[b.name] as TransferTextureResource;
+        const texture = TextureManager.get(res.textureId);
+        if (!texture) {
+          throw new Error(`Missing texture ${res.textureId}`);
+        }
+        textures[b.name] = texture;
+      }
+    }
+
     renderCtx.server.createObject({
       id,
       material: {
@@ -165,6 +183,7 @@ export default function RenderObject({
         vertexCount: input.vertexCount,
         index: input.index,
       },
+      textures,
     });
     return () => {
       renderCtx.server.removeObject(id);

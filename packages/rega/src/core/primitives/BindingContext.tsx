@@ -1,6 +1,10 @@
 import { createContext, useMemo } from "react";
 import { TransferResource, UniformType } from "../render";
-import { createUniformBinding } from "../render/binding";
+import {
+  createUniformBinding,
+  BindingHandle,
+  BindingUpdater,
+} from "../render/binding";
 import { WGSLValueType } from "pure3";
 
 export const BindingContext = createContext(
@@ -9,56 +13,59 @@ export const BindingContext = createContext(
 
 export const BindingContextProvider = BindingContext.Provider;
 
-type UpdateArgs<T extends UniformType> = T extends WGSLValueType
-  ? number[]
-  : any;
-
-type Result<T extends UniformType> = {
-  update: (values: UpdateArgs<T>) => void;
-  resource: TransferResource;
-};
-
-export function useBinding(
-  type: WGSLValueType,
-  opts?: never
-): Result<WGSLValueType>;
-export function useBinding(
-  type: "texture_2d",
-  opts: { width: number; height: number; buffer: SharedArrayBuffer }
-): Result<"texture_2d">;
-export function useBinding(type: "sampler"): Result<"sampler">;
-export function useBinding<T extends UniformType>(
+export function useBinding<T extends WGSLValueType | "sampler">(
+  type: T
+): BindingHandle<T>;
+export function useBinding<T extends "texture_2d">(
   type: T,
-  opts?: any
-): {
-  resource: TransferResource;
-  update: (values: UpdateArgs<T>) => void;
-} {
-  const binding = useMemo(() => {
-    if (type === "sampler") {
-      return {
-        update: ((v: {}) => {}) as UpdateArgs<"sampler">,
-        resource: { type: "sampler" as const },
-      };
-    } else if (type === "texture_2d") {
-      return {
-        update: ((v: {}) => {}) as UpdateArgs<"texture_2d">,
-        resource: {
-          width: opts.width,
-          height: opts.height,
-          buffer: opts.buffer,
-          type: "sampledTexture" as const,
-        },
-      };
-    } else {
-      return createUniformBinding(type);
-    }
-  }, []);
-
+  textureId: string
+): BindingHandle<T>;
+export function useBinding<T extends UniformType>(type: T, textureId?: string) {
+  const binding = useMemo(
+    () => createUniformBinding(type as any, textureId as any),
+    []
+  );
   return binding;
 }
 
-export function useBindings() {}
+export function useBindings<
+  T extends Record<
+    string,
+    WGSLValueType | { type: "texture_2d"; textureId?: string }
+  >
+>(
+  obj: T
+): {
+  resources: Record<string, TransferResource>;
+  updates: {
+    [K in keyof T]: T[K] extends WGSLValueType
+      ? BindingUpdater<WGSLValueType>
+      : T[K] extends { type: "texture_2d"; textureId: string }
+      ? BindingUpdater<"texture_2d">
+      : never;
+  };
+} {
+  return useMemo(() => {
+    const resources = {} as Record<string, TransferResource>;
+    const updates: Record<string, any> = {};
+    for (const name in obj) {
+      const type = obj[name];
+      if (typeof type === "string") {
+        const h = createUniformBinding(type as WGSLValueType);
+        resources[name] = h.resource;
+        updates[name] = h.update;
+      } else if (type.type === "texture_2d") {
+        const h = createUniformBinding("texture_2d", type.textureId || "");
+        resources[name] = h.resource;
+        updates[name] = h.update;
+      }
+    }
+    return {
+      resources,
+      updates,
+    } as any;
+  }, []);
+}
 
 // function Test<T extends Record<string, any>>(
 //   obj: T

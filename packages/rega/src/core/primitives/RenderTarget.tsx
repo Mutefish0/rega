@@ -3,12 +3,13 @@ import ThreeContext from "./ThreeContext";
 import RenderContext from "./RenderContext";
 import YogaNode from "../components/YogaFlex/YogaNode";
 import { FlexStyle } from "../components/YogaFlex/FlexStyle";
-import { TransferResource, TransferBinding } from "../render";
+import { TransferResource, TransferBinding, UniformType } from "../render";
+import TextureManager from "../common/texture_manager";
 import {
   createUniformBinding,
   createUniformBindingView,
 } from "../../core/render/binding";
-import { WGSLValueType } from "pure3";
+
 import { getOrcreateSlot } from "../render/slot";
 
 interface CommomProps {
@@ -74,21 +75,35 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
   }, []);
 
   useEffect(() => {
+    const textures: Record<
+      string,
+      { width: number; height: number; buffer: SharedArrayBuffer }
+    > = {};
+
     const binds: TransferBinding[] = [];
     for (let name in allBindings) {
       const index = getOrcreateSlot("target", name);
+      const resource = allBindings[name];
       binds.push({
         name,
         binding: index,
-        resource: allBindings[name],
+        resource,
       });
       renderCtx.renderTargetBindGroupLayout[name] = allBindings[name].type;
+      if (resource.type === "sampledTexture") {
+        const texture = TextureManager.get(resource.textureId);
+        if (!texture) {
+          throw new Error(`Missing texture ${resource.textureId}`);
+        }
+        textures[name] = texture;
+      }
     }
 
     renderCtx.server.createRenderTarget({
       id: targetId,
       viewport: sab,
       bindings: binds,
+      textures,
     });
 
     return () => {
@@ -117,20 +132,14 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
 export function useTargetBindingView(
   targetId: string,
   name: string,
-  type: WGSLValueType
+  type: UniformType
 ) {
   const renderCtx = useContext(RenderContext);
 
   const view = useMemo(() => {
     const target = renderCtx.renderTargets.get(targetId)!;
     const bind = target.bindings[name];
-    if (bind.type === "uniformBuffer") {
-      return createUniformBindingView(bind.buffer, type);
-    } else {
-      throw new Error(
-        "useTargetBindingView: not supported uniform type: " + bind.type
-      );
-    }
+    return createUniformBindingView(bind, type);
   }, [name, type]);
 
   return view;

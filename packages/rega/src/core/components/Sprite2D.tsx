@@ -15,7 +15,7 @@ import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
 import {
   BindingContextProvider,
-  useBinding,
+  useBindings,
 } from "../primitives/BindingContext";
 
 import { createPlaneGeometry } from "../tools/geometry";
@@ -54,7 +54,7 @@ const vertexNode = cameraProjectionMatrix
 
 const fragmentNode = tex.mul(vec4(color, opacity));
 
-const fragmentNodeWithAlpha = texAlpha.a.mul(fragmentNode);
+const fragmentNodeWithAlpha = tex.mul(vec4(color, opacity.mul(texAlpha.a)));
 
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
@@ -80,14 +80,23 @@ export default React.memo(function Sprite2D({
     return TextureManager.get(textureId)!;
   }, [textureId]);
 
-  const bOpacity = useBinding("float");
-  const bColor = useBinding("vec3");
-  const bTex = useBinding("texture_2d", texture);
+  const bindings = useBindings({
+    opacity: "float",
+    color: "vec3",
+    tex: {
+      type: "texture_2d",
+      textureId,
+    },
+    texAlpha: {
+      type: "texture_2d",
+      textureId: alphaTextureId,
+    },
+  });
 
   useEffect(() => {
     const { opacity: opacity1, array } = parseColor(color || "#fff");
-    bOpacity.update([opacity ?? opacity1]);
-    bColor.update(array);
+    bindings.updates.opacity([opacity ?? opacity1]);
+    bindings.updates.color(array);
   }, [color, opacity]);
 
   const uvs = useMemo(() => {
@@ -155,16 +164,10 @@ export default React.memo(function Sprite2D({
 
   return (
     <Relative matrix={matrix}>
-      <BindingContextProvider
-        value={{
-          color: bColor.resource,
-          opacity: bOpacity.resource,
-          tex: bTex.resource,
-        }}
-      >
+      <BindingContextProvider value={bindings.resources}>
         <RenderObject
           vertexNode={vertexNode}
-          fragmentNode={fragmentNode}
+          fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
           input={{
             vertexCount,
             attributes,

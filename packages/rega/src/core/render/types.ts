@@ -22,12 +22,20 @@ export interface TransferObject {
   material: MaterialJSON;
   bindings: TransferBinding[];
   input: TransferInput;
+  textures: Record<
+    string,
+    { width: number; height: number; buffer: SharedArrayBuffer }
+  >;
 }
 
 export interface TransferRenderTarget {
   id: string;
   viewport: SharedArrayBuffer;
   bindings: TransferBinding[];
+  textures: Record<
+    string,
+    { width: number; height: number; buffer: SharedArrayBuffer }
+  >;
 }
 
 export interface TransferInput {
@@ -43,18 +51,22 @@ export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
 
 export type UniformType = WGSLValueType | "texture_2d" | "sampler";
 
+export type TransferTextureResource = {
+  type: "sampledTexture";
+  textureId: string;
+};
+export type TransferSamplerResource = {
+  type: "sampler";
+};
+export type TransferUniformBufferResource = {
+  type: "uniformBuffer";
+  buffer: SharedArrayBuffer;
+};
+
 export type TransferResource =
-  | {
-      type: "uniformBuffer";
-      buffer: SharedArrayBuffer;
-    }
-  | { type: "sampler" }
-  | {
-      type: "sampledTexture";
-      buffer: SharedArrayBuffer;
-      width: number;
-      height: number;
-    };
+  | TransferUniformBufferResource
+  | TransferSamplerResource
+  | TransferTextureResource;
 
 export interface BindingHandle {
   transferBindings: TransferBinding[];

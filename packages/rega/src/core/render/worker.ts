@@ -13,7 +13,6 @@ import {
   removeObjectGPUTexture,
   addObjectGPUSampler,
   updateGPUBuffer,
-  updateGPUTexture,
 } from "./bufferPair";
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
@@ -121,7 +120,7 @@ self.addEventListener("message", async (event) => {
     self.postMessage({ type: "ready" });
     start();
   } else if (event.data.type === "createRenderTarget") {
-    const { id, viewport, bindings } = event.data
+    const { id, viewport, bindings, textures } = event.data
       .target as TransferRenderTarget;
     const viewportView = new Float32Array(viewport);
 
@@ -149,11 +148,18 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampledTexture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-        const texture = addObjectGPUTexture(device, name, resource.buffer, {
-          width: resource.width,
-          height: resource.height,
-          usage,
-        });
+        const t = textures[name];
+        const texture = addObjectGPUTexture(
+          device,
+          name,
+          resource.textureId,
+          t.buffer,
+          {
+            width: t.width,
+            height: t.height,
+            usage,
+          }
+        );
         return {
           binding,
           resource: texture.createView(),
@@ -192,7 +198,7 @@ self.addEventListener("message", async (event) => {
       target.objects.delete(objectId);
     }
   } else if (event.data.type === "createObject") {
-    const { id, material, bindings, input } = event.data
+    const { id, material, bindings, input, textures } = event.data
       .object as TransferObject;
     const pipelineKey = JSON.stringify(material);
     if (!pipelineMap.has(pipelineKey)) {
@@ -218,11 +224,18 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampledTexture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-        const texture = addObjectGPUTexture(device, name, resource.buffer, {
-          width: resource.width,
-          height: resource.height,
-          usage,
-        });
+        const t = textures[name];
+        const texture = addObjectGPUTexture(
+          device,
+          name,
+          resource.textureId,
+          t.buffer,
+          {
+            width: t.width,
+            height: t.height,
+            usage,
+          }
+        );
         return {
           binding,
           resource: texture.createView(),
@@ -277,7 +290,7 @@ self.addEventListener("message", async (event) => {
         if (resource.type === "uniformBuffer") {
           removeObjectGPUBuffer(resource.buffer);
         } else if (resource.type === "sampledTexture") {
-          removeObjectGPUTexture(resource.buffer);
+          removeObjectGPUTexture(resource.textureId);
         } else if (resource.type === "sampler") {
           // do nothing
         } else {
@@ -332,7 +345,7 @@ async function start() {
         if (resource.type === "uniformBuffer") {
           updateGPUBuffer(device, resource.buffer);
         } else if (resource.type === "sampledTexture") {
-          updateGPUTexture(device, resource.buffer);
+          // do nothing
         } else if (resource.type === "sampler") {
           // do nothing
         } else {
@@ -351,7 +364,7 @@ async function start() {
             if (resource.type === "uniformBuffer") {
               updateGPUBuffer(device, resource.buffer);
             } else if (resource.type === "sampledTexture") {
-              updateGPUTexture(device, resource.buffer);
+              // do nothing
             } else if (resource.type === "sampler") {
               // do nothing
             } else {

@@ -15,18 +15,13 @@ const buffersMap = new Map<
   }
 >();
 
+// textureId -> texture
 const texturesMap = new Map<
   string,
   {
-    version: number;
     gpuTexture: GPUTexture;
-    cpuUint8Array: Uint8Array;
-    versionView: DataView;
     referenceCount: number;
     usage: GPUTextureUsageFlags;
-    width: number;
-    height: number;
-    bytesPerRow: number;
   }
 >();
 
@@ -124,6 +119,7 @@ export function removeObjectGPUBuffer(sab: SharedArrayBuffer) {
 export function addObjectGPUTexture(
   device: GPUDevice,
   label: string,
+  textureId: string,
   sab: SharedArrayBuffer,
   opts: {
     usage: GPUTextureUsageFlags;
@@ -131,10 +127,9 @@ export function addObjectGPUTexture(
     height: number;
   }
 ) {
-  const uuid = getUUID(sab);
   const format = "rgba8unorm";
-  let record = texturesMap.get(uuid);
-  const size = sab.byteLength - HEADER_SIZE;
+  let record = texturesMap.get(textureId);
+  const size = sab.byteLength;
   if (!record) {
     const gpuTexture = device.createTexture({
       label,
@@ -147,32 +142,32 @@ export function addObjectGPUTexture(
       usage: opts.usage,
     });
 
+    const data = new Uint8Array(sab);
+    const bytesPerTexel = getBytesPerTexel(format);
+    let bytesPerRow = opts.width * bytesPerTexel;
+    bytesPerRow = Math.ceil(bytesPerRow / 256) * 256; // Align to 256 bytes
+
+    device.queue.writeTexture(
+      { texture: gpuTexture },
+      data, // 提前准备的数据
+      { bytesPerRow },
+      [opts.width, opts.height, 1]
+    );
+
+    record = {
+      gpuTexture,
+      referenceCount: 1,
+      usage: opts.usage,
+    };
+
+    texturesMap.set(textureId, record);
+
     console.debug(
-      `[buffer ${uuid}] create, <${usageToString(
+      `[textre ${textureId}] create, <${usageToString(
         "texture",
         opts.usage
       )}>, ${size}`
     );
-
-    const cpuUint8Array = new Uint8Array(sab, HEADER_SIZE);
-
-    const bytesPerTexel = getBytesPerTexel(format);
-
-    let bytesPerRow = opts.width * bytesPerTexel;
-    bytesPerRow = Math.ceil(bytesPerRow / 256) * 256; // Align to 256 bytes
-
-    record = {
-      version: 0,
-      gpuTexture,
-      cpuUint8Array: cpuUint8Array,
-      versionView: createVersionView(sab),
-      referenceCount: 1,
-      usage: opts.usage,
-      width: opts.width,
-      height: opts.height,
-      bytesPerRow,
-    };
-    texturesMap.set(uuid, record);
 
     return gpuTexture;
   } else {
@@ -191,17 +186,18 @@ export function addObjectGPUSampler(device: GPUDevice, opts: {}) {
   return sampler;
 }
 
-export function removeObjectGPUTexture(sab: SharedArrayBuffer) {
-  const uuid = getUUID(sab);
-  const record = texturesMap.get(uuid);
+export function removeObjectGPUTexture(textureId: string) {
+  const record = texturesMap.get(textureId);
   if (record) {
     record.referenceCount--;
     if (record.referenceCount === 0) {
       record.gpuTexture.destroy();
-      texturesMap.delete(uuid);
-      idsMap.delete(sab);
+      texturesMap.delete(textureId);
       console.debug(
-        `[buffer ${uuid}] destroy, <${usageToString("texture", record.usage)}>`
+        `[texture ${textureId}] destroy, <${usageToString(
+          "texture",
+          record.usage
+        )}>`
       );
     }
   }
@@ -224,32 +220,6 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
   }
 
   return record.gpuBuffer;
-}
-
-export function updateGPUTexture(device: GPUDevice, sab: SharedArrayBuffer) {
-  const uuid = getUUID(sab);
-  const record = texturesMap.get(uuid)!;
-
-  const version = getVersion(record.versionView);
-
-  if (record.version < version) {
-    record.version = version;
-
-    device.queue.writeTexture(
-      { texture: record.gpuTexture },
-      record.cpuUint8Array, // 提前准备的数据
-      { bytesPerRow: record.bytesPerRow },
-      [record.width, record.height, 1]
-    );
-
-    console.debug(
-      `[buffer ${uuid}] write, <${usageToString("texture", record.usage)}>`,
-      "version: ",
-      version
-    );
-  }
-
-  return record.gpuTexture;
 }
 
 function getBytesPerTexel(format: GPUTextureFormat) {

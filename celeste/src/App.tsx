@@ -88,7 +88,6 @@ export default function App() {
           targetId="gui"
         />
       </RenderTarget>
-
       <RenderGroup targetId="gui">
         <GUIView>
           <Text style={{ fontSize: 20, fontFamily: "celeste" }}>HELLO</Text>

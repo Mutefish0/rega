@@ -1,5 +1,5 @@
 import type { WGSLValueType } from "pure3";
-import { TransferResource, ResourceType } from "./types";
+import { TransferResource, ResourceType, UniformType } from "./types";
 import { HEADER_SIZE } from "./sharedBufferLayout";
 import createSharedBuffer, {
   createVersionView,
@@ -26,73 +26,52 @@ const wgslValueTypeToByteLengthToViewType = {
   mat4: Float32Array,
 };
 
-// type _Length<X extends any[]> = X["length"] extends infer U
-//   ? U extends number
-//     ? U
-//     : 0
-//   : 0;
-// type NNumberArray<
-//   N extends number,
-//   R extends number[] = []
-// > = R["length"] extends N ? R : NNumberArray<N, [number, ...R]>;
+export interface BindingHandle<T extends UniformType> {
+  resource: TransferResource;
+  update: BindingUpdater<T>;
+}
 
-// type ElementLenght<T extends WGSLValueType> = T extends "float"
-//   ? 1
-//   : T extends "vec2"
-//   ? 2
-//   : T extends "vec3"
-//   ? 3
-//   : T extends "vec4"
-//   ? 4
-//   : T extends "mat2"
-//   ? 4
-//   : T extends "mat3"
-//   ? 9
-//   : T extends "mat4"
-//   ? 16
-//   : never;
+interface BindingView<T extends UniformType> {
+  update: BindingUpdater<T>;
+  get: Viewer<T>;
+}
 
-// export function createBinding(resourceType: ResourceType) {
-//   if (resourceType === "uniformBuffer") {
-//     //
-//   } else if (resourceType === "sampledTexture") {
-//     //
-//   } else {
-//     throw new Error("createBinding: Invalid resource type");
-//   }
-// }
+export type BindingUpdater<
+  T extends UniformType,
+  A = T extends WGSLValueType
+    ? number[]
+    : T extends "texture_2d"
+    ? string
+    : void
+> = (values: A) => void;
 
-export function createUniformBinding<T extends WGSLValueType>(type: T) {
+type Viewer<T extends UniformType> = T extends WGSLValueType
+  ? (index: number) => number
+  : T extends "texture_2d"
+  ? () => string
+  : () => void;
+
+function createUniformValueBinding<T extends WGSLValueType>(
+  type: T
+): BindingHandle<WGSLValueType> {
   const byteLength = wgslValueTypeToByteLength[type];
   const sab = createSharedBuffer(byteLength);
-
-  const dataView = new wgslValueTypeToByteLengthToViewType[type](
-    sab,
-    HEADER_SIZE
-  );
-
-  const versionView = createVersionView(sab);
+  const v = createUniformValueBindingView(sab, type);
 
   const resource: TransferResource = {
     type: "uniformBuffer",
     buffer: sab,
   };
 
-  function update(values: number[]) {
-    dataView.set(values);
-    updateVersion(versionView);
-  }
-
   return {
     resource,
-    update,
+    update: v.update,
   };
 }
-
-export function createUniformBindingView<T extends WGSLValueType>(
+function createUniformValueBindingView<T extends WGSLValueType>(
   sab: SharedArrayBuffer,
   type: T
-) {
+): BindingView<WGSLValueType> {
   const dataView = new wgslValueTypeToByteLengthToViewType[type](
     sab,
     HEADER_SIZE
@@ -113,4 +92,62 @@ export function createUniformBindingView<T extends WGSLValueType>(
     get,
     update,
   };
+}
+
+export function createUniformBinding<T extends WGSLValueType | "sampler">(
+  type: T
+): BindingHandle<T>;
+export function createUniformBinding<T extends "texture_2d">(
+  type: T,
+  textureId: string
+): BindingHandle<"texture_2d">;
+export function createUniformBinding<T extends UniformType>(
+  type: T,
+  textureId?: string
+): BindingHandle<T> {
+  if (type === "texture_2d") {
+    const resource: TransferResource = {
+      type: "sampledTexture" as const,
+      textureId: textureId!,
+    };
+    return {
+      resource,
+      update: (id: string) => {
+        resource.textureId = id;
+      },
+    } as BindingHandle<T>;
+  } else if (type === "sampler") {
+    return {
+      resource: { type: "sampler" as const },
+      update: () => {},
+    };
+  } else {
+    return createUniformValueBinding(type) as BindingHandle<T>;
+  }
+}
+
+export function createUniformBindingView<T extends UniformType>(
+  res: TransferResource,
+  type: T
+): BindingView<T> {
+  if (res.type === "sampledTexture") {
+    return {
+      update: ((id: string) => {
+        res.textureId = id;
+      }) as any,
+      get: (() => res.textureId) as any,
+    };
+  } else if (res.type === "sampler") {
+    return {
+      update: () => {},
+      get: (() => {}) as any,
+    };
+  } else if (res.type === "uniformBuffer") {
+    return createUniformValueBindingView(
+      res.buffer,
+      type as any
+    ) as BindingView<T>;
+  } else {
+    throw new Error("Invalid resource type");
+  }
 }
