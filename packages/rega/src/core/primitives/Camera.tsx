@@ -1,9 +1,11 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import TransformContext from "./TransformContext";
 import { useTargetBindingView } from "./RenderTarget";
+import { RenderGroupContext } from "./RenderGroup";
 import { WebGPUCoordinateSystem } from "three/src/constants.js";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
-import { mainTarget } from "./RenderTarget";
+
+import { AnchorType } from "../hooks/useAnchor";
 
 import { Matrix4 } from "pure3";
 
@@ -17,24 +19,28 @@ interface PerspectiveProps {
   aspect?: number;
   near?: number;
   far?: number;
+
   width?: never;
   height?: never;
+  anchor?: never;
 }
 
 interface OrthographicProps {
   type: "orthographic";
-  fov?: never;
-  aspect?: never;
   width: number;
   height: number;
   near?: number;
   far?: number;
+  anchor?: AnchorType;
+
+  fov?: never;
+  aspect?: never;
 }
 
 type Props = (PerspectiveProps | OrthographicProps) & CommonProps;
 
 export default function Camera({
-  targetId = mainTarget,
+  targetId: _targetId,
   type,
   width,
   height,
@@ -43,7 +49,10 @@ export default function Camera({
   aspect = 1,
   near = 0.1,
   far = 2000,
+
+  anchor = "center",
 }: Props) {
+  const renderGroup = useContext(RenderGroupContext);
   const transform = useContext(TransformContext);
 
   const projectionMatrix = useMemo(() => {
@@ -63,12 +72,40 @@ export default function Camera({
         WebGPUCoordinateSystem
       );
     } else if (type === "orthographic") {
+      let left = 0,
+        right = 0,
+        top = 0,
+        bottom = 0;
+
       const half = width / 2;
-      const left = -half;
-      const right = half;
       const halfH = height / 2;
-      const top = halfH;
-      const bottom = -halfH;
+
+      if (anchor === "center") {
+        left = -half;
+        right = half;
+        top = halfH;
+        bottom = -halfH;
+      } else if (anchor === "top-left") {
+        left = 0;
+        right = width;
+        top = 0;
+        bottom = -height;
+      } else if (anchor === "top") {
+        left = -half;
+        right = half;
+        top = 0;
+        bottom = -height;
+      } else if (anchor === "bottom") {
+        left = -half;
+        right = half;
+        top = height;
+        bottom = 0;
+      } else if (anchor === "bottom-left") {
+        left = 0;
+        right = width;
+        top = height;
+        bottom = 0;
+      }
 
       return new Matrix4().makeOrthographic(
         left,
@@ -82,7 +119,9 @@ export default function Camera({
     } else {
       throw new Error(`Invalid camera type: ${type}`);
     }
-  }, [type, fov, aspect, near, far, width, height]);
+  }, [type, fov, aspect, near, far, width, height, anchor]);
+
+  const targetId = _targetId ?? renderGroup.targetId;
 
   const bCameraProjectionMatrix = useTargetBindingView(
     targetId,

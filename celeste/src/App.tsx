@@ -12,6 +12,9 @@ import {
   RenderGroup,
   RenderTarget,
   Camera,
+  Text,
+  GUIView,
+  GUICamera,
 } from "rega";
 // import Level from "./scenes/Level";
 // import TitleScreen from "./scenes/TitleScreen";
@@ -79,28 +82,17 @@ export default function App() {
 
   const appElement = (
     <>
-      <RenderTarget main />
+      <RenderTarget main>
+        <RenderTarget
+          style={{ width: "100%", height: "100%" }}
+          targetId="gui"
+        />
+      </RenderTarget>
 
-      {/* <Camera
-        type="orthographic"
-        width={100}
-        height={100}
-        near={0.1}
-        far={1000}
-      /> */}
-
-      <RenderGroup targetId="___main___">
-        {/* <Sprite2D
-          size={[1, 1]}
-          textureId="/images/atlas.png"
-          clip={[8, 0, 8, 8]}
-          //color="rgba(0,100,0,0.8)"
-          //flipY={true}
-        /> */}
-        <Box2D size={[1, 1]} color="rgba(100,0,0,0.8)" />
-        <Relative translation={{ x: 0.25, y: 0.25 }}>
-          <Box2D size={[1, 1]} color="rgba(100,0,0,0.8)" />
-        </Relative>
+      <RenderGroup targetId="gui">
+        <GUIView>
+          <Text style={{ fontSize: 20, fontFamily: "celeste" }}>HELLO</Text>
+        </GUIView>
       </RenderGroup>
     </>
   );

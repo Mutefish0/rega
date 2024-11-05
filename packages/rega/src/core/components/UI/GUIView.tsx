@@ -1,21 +1,25 @@
 import React, { useContext } from "react";
+import GUICamera from "./GUICamera";
+import ThreeContext from "../../primitives/ThreeContext";
 import View from "./View";
-import useWindowInfo from "../../hooks/useWindowInfo";
-import TransformContext from "../../primitives/TransformContext";
 
 interface GUIViewProps {
   children: React.ReactNode;
 }
 
 export default function GUIView({ children }: GUIViewProps) {
-  const ctx = useContext(TransformContext);
-  const { clientWidth, clientHeight } = useWindowInfo();
-
+  const ctx = useContext(ThreeContext);
   return (
-    <TransformContext.Provider value={ctx}>
-      <View style={{ width: clientWidth, height: clientHeight }}>
+    <>
+      <GUICamera />
+      <View
+        style={{
+          width: ctx.size[0] / ctx.pixelRatio,
+          height: ctx.size[1] / ctx.pixelRatio,
+        }}
+      >
         {children}
       </View>
-    </TransformContext.Provider>
+    </>
   );
 }

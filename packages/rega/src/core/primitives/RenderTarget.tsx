@@ -44,7 +44,7 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
         ? {
             ...style,
             width: ctx.size[0] / ctx.pixelRatio,
-            height: ctx.size[1] /  ctx.pixelRatio,
+            height: ctx.size[1] / ctx.pixelRatio,
           }
         : style,
     [style]
@@ -75,10 +75,10 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
 
   useEffect(() => {
     const binds: TransferBinding[] = [];
-
     for (let name in allBindings) {
       const index = getOrcreateSlot("target", name);
       binds.push({
+        name,
         binding: index,
         resource: allBindings[name],
       });

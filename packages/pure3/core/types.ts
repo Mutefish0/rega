@@ -85,6 +85,12 @@ export interface _BoxNode<T extends WGSLValueType> {
 
   xy: T extends "vec3" | "vec4" ? Node<"vec2"> : void;
   xyz: T extends "vec4" ? Node<"vec3"> : void;
+
+  r: T extends "vec4" ? Node<"float"> : void;
+  g: T extends "vec4" ? Node<"float"> : void;
+  b: T extends "vec4" ? Node<"float"> : void;
+  a: T extends "vec4" ? Node<"float"> : void;
+  rgb: T extends "vec4" ? Node<"vec3"> : void;
 }
 
 export type BoxNode<T extends WGSLValueType> = RemoveVoid<_BoxNode<T>>;

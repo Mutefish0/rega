@@ -242,8 +242,6 @@ export function updateGPUTexture(device: GPUDevice, sab: SharedArrayBuffer) {
       [record.width, record.height, 1]
     );
 
-    console.log('write texture', record.cpuUint8Array);
-
     console.debug(
       `[buffer ${uuid}] write, <${usageToString("texture", record.usage)}>`,
       "version: ",

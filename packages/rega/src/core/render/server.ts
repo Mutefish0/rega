@@ -28,6 +28,8 @@ class RenderServer {
     });
   }
 
+  uploadTexture(id: string) {}
+
   createObject(object: TransferObject) {
     this.worker.postMessage({
       type: "createObject",

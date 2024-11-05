@@ -5,6 +5,8 @@ import {
   uniform,
   modelWorldMatrix,
   Matrix4,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
 } from "pure3";
 
 import createIndexHandle from "../render/createIndexHandle";
@@ -31,10 +33,13 @@ interface Props {
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 
-// const vertexNode = cameraProjectionMatrix
-//     .mul(cameraViewMatrix)
-//     .mul(modelWorldMatrix)
-const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
+
+//const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
+
 const fragmentNode = vec4(color, opacity);
 
 // // const material = createMaterial(

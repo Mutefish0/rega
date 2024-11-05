@@ -57,3 +57,25 @@ export function useBinding<T extends UniformType>(
 
   return binding;
 }
+
+export function useBindings() {}
+
+// function Test<T extends Record<string, any>>(
+//   obj: T
+// ): {
+//   [K in keyof T]: T[K] extends string ? "s" : T[K] extends number ? "n" : "o";
+// } {
+//   const typeObj = {} as {
+//     [K in keyof T]: T[K] extends string ? "s" : T[K] extends number ? "n" : "o";
+//   };
+//   for (const key in obj) {
+//     if (typeof obj[key] === "string") {
+//       typeObj[key] = "s" as any;
+//     } else if (typeof obj[key] === "number") {
+//       typeObj[key] = "n" as any;
+//     } else {
+//       typeObj[key] = "o" as any;
+//     }
+//   }
+//   return typeObj;
+// }

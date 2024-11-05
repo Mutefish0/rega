@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useContext } from "react";
 
 import {
-  varying,
-  float,
-  uv,
   vec4,
   texture,
   positionGeometry,
@@ -47,22 +44,19 @@ interface Props {
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 
-const uvNode = uv();
-
 const tex = texture("tex");
+const texAlpha = texture("texAlpha");
 
-// const vertexNode = cameraProjectionMatrix
-//   .mul(cameraViewMatrix)
-//   .mul(modelWorldMatrix)
-//   .mul(vec4(positionGeometry, 1));
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
 
-const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
-
-// const fragmentNode = vec4(color, opacity);
-// const fragmentNode = vec4(color.xy, uvNode.y, opacity);
 const fragmentNode = tex.mul(vec4(color, opacity));
 
-const { vertices, vertexCount, uvs, indices } = createPlaneGeometry();
+const fragmentNodeWithAlpha = texAlpha.a.mul(fragmentNode);
+
+const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 const indexHandle = createIndexHandle(indices.length);
 indexHandle.update(indices);
@@ -136,8 +130,19 @@ export default React.memo(function Sprite2D({
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
+
+    const matRX = new Matrix4();
+    const matRY = new Matrix4();
+
+    if (flipY) {
+      matRX.makeRotationX(Math.PI);
+    }
+    if (flipX) {
+      matRY.makeRotationY(Math.PI);
+    }
+
     mat.makeScale(scale[0], scale[1], 1);
-    mat.premultiply(anchorMatrix);
+    mat.premultiply(anchorMatrix).multiply(matRY).multiply(matRX);
     return mat;
   }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
