@@ -11,6 +11,7 @@ import {
 } from "../../core/render/binding";
 
 import { getOrcreateSlot } from "../render/slot";
+import { Matrix4 } from "pure3";
 
 interface CommomProps {
   children?: React.ReactNode;
@@ -25,6 +26,8 @@ type Props<T extends PType> = T extends "main"
   : CommomProps & { main?: never; targetId: string };
 
 export const mainTarget = "___main___";
+
+const emptyMatrix = new Matrix4();
 
 export default function RenderTarget<T extends PType>(props: Props<T>) {
   const { main, targetId = mainTarget, children, style, bindings = {} } = props;
@@ -56,6 +59,9 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
     const bCameraProjectionMatrix = createUniformBinding("mat4");
     // "cameraViewMatrix"
     const bCameraViewMatrix = createUniformBinding("mat4");
+
+    bCameraProjectionMatrix.update(emptyMatrix.elements);
+    bCameraViewMatrix.update(emptyMatrix.elements);
 
     const allBindings = {
       cameraProjectionMatrix: bCameraProjectionMatrix.resource,

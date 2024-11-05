@@ -7,6 +7,7 @@ const _texture = nodeProxy(TextureNode);
 function texture(label?: string) {
   const t = _texture({
     isTexture: true,
+    uuid: crypto.randomUUID(),
   });
   if (label) {
     t.label(label);

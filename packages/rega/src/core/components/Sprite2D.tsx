@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useContext } from "react";
 
 import {
+  luminance,
   vec4,
   texture,
   positionGeometry,
@@ -54,7 +55,9 @@ const vertexNode = cameraProjectionMatrix
 
 const fragmentNode = tex.mul(vec4(color, opacity));
 
-const fragmentNodeWithAlpha = tex.mul(vec4(color, opacity.mul(texAlpha.a)));
+const fragmentNodeWithAlpha = tex.mul(
+  vec4(color, opacity.mul(luminance(texAlpha.rgb)))
+);
 
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
