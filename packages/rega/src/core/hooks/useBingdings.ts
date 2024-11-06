@@ -63,6 +63,7 @@ export default function useBindings<
       const h = createUniformBinding(t);
       resources[name] = h.resource;
       updates[name] = h.update;
+
       if (type === "texture_2d") {
         checkInits.push(name);
       }

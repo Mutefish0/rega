@@ -49,7 +49,12 @@ export interface TransferInput {
 
 export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
 
-export type UniformType = WGSLValueType | "texture_2d" | "sampler";
+export type UniformType =
+  | WGSLValueType
+  | "texture_2d"
+  | "sampler"
+  | "data_texture_2d:rgba8unorm"
+  | "data_texture_2d:rgba8uint";
 
 export type TransferTextureResource = {
   type: "sampledTexture";

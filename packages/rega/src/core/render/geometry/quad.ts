@@ -62,10 +62,11 @@ export function createPlaneGeometry(width = 1, height = 1) {
   };
 }
 
-const { vertexCount, vertices, uvs, indices } = createPlaneGeometry();
+const { vertexCount, vertices, uvs, indices, normals } = createPlaneGeometry();
 
 const position = createVertexBinding("vec3", vertexCount).update(vertices);
 const uv = createVertexBinding("vec2", vertexCount).update(uvs);
+const normal = createVertexBinding("vec3", vertexCount).update(normals);
 
 const index = {
   indexBuffer: createIndexBinding(indices.length).update(indices),
@@ -75,6 +76,7 @@ const index = {
 const vertex = {
   position,
   uv,
+  normal,
 };
 
 export default {

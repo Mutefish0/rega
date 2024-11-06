@@ -14,7 +14,6 @@ import {
 
 import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
-import { BindingContextProvider } from "../primitives/BindingContext";
 
 import RenderObject from "../primitives/RenderObject";
 import useAnchor, { AnchorType } from "../hooks/useAnchor";
@@ -149,15 +148,14 @@ export default React.memo(function Sprite2D({
 
   return (
     <Relative matrix={matrix}>
-      <BindingContextProvider value={bindings.resources}>
-        <RenderObject
-          vertexNode={vertexNode}
-          fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
-          vertexCount={quad.vertexCount}
-          vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
-          index={quad.index}
-        />
-      </BindingContextProvider>
+      <RenderObject
+        vertexNode={vertexNode}
+        fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
+        bindings={bindings.resources}
+        vertexCount={quad.vertexCount}
+        vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
+        index={quad.index}
+      />
     </Relative>
   );
 });

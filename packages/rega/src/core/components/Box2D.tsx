@@ -11,7 +11,6 @@ import {
 
 import quad from "../render/geometry/quad";
 
-import { BindingContextProvider } from "../primitives/BindingContext";
 import useBindings from "../hooks/useBingdings";
 
 import RenderObject from "../primitives/RenderObject";
@@ -63,15 +62,14 @@ export default React.memo(function Box2D({
 
   return (
     <Relative matrix={matrix}>
-      <BindingContextProvider value={bindings.resources}>
-        <RenderObject
-          vertexNode={vertexNode}
-          fragmentNode={fragmentNode}
-          vertexCount={quad.vertexCount}
-          vertex={quad.vertex}
-          index={quad.index}
-        />
-      </BindingContextProvider>
+      <RenderObject
+        vertexNode={vertexNode}
+        fragmentNode={fragmentNode}
+        vertexCount={quad.vertexCount}
+        vertex={quad.vertex}
+        index={quad.index}
+        bindings={bindings.resources}
+      />
     </Relative>
   );
 });

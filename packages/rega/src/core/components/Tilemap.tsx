@@ -1,21 +1,15 @@
 import React, { useMemo, useEffect } from "react";
-import useUniforms from "../hooks/useUniforms";
 import RenderObject from "../primitives/RenderObject";
-import { PlaneGeometry, DataTexture, Vector2, Vector4 } from "three/webgpu";
+
 import {
-  MeshBasicNodeMaterial,
   uv,
   varying,
-  texture as texture2D,
-  mod,
   int,
   round,
   tslFn,
   If,
   Discard,
-} from "three/webgpu";
-
-import {
+  mod,
   texture,
   uniform,
   float,
@@ -27,10 +21,12 @@ import {
   Matrix4,
   cameraProjectionMatrix,
   cameraViewMatrix,
+  dataTexture,
 } from "pure3";
 
 import TextureManager from "../common/texture_manager";
 import quad from "../render/geometry/quad";
+import useBindings from "../hooks/useBingdings";
 
 import Mesh from "../primitives/Mesh";
 import { parseColor } from "../tools/color";
@@ -49,7 +45,7 @@ interface Props {
 const gridSize = uniform("vec2", "gridSize");
 const tex = texture("tex");
 const texSize = uniform("vec2", "texSize");
-const dataTex = texture("dataTex");
+const dataTex = dataTexture("rgba8unorm", "dataTex");
 const pixelPerTile = uniform("float", "pixelPerTile");
 const color = uniform("vec4", "color");
 
@@ -58,7 +54,44 @@ const vertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry.xy.mul(gridSize), positionGeometry.z, 1));
 
-const fragmentNode = tex.mul(color);
+const fragmentNode = (function () {
+  const vUv = varying(uv());
+  // uniforms.dataTexture.uvNode = vUv;
+  const offsetX = float(mod(vUv.x.mul(float(gridSize.x)), 1.0));
+  const offsetY = float(mod(vUv.y.mul(float(gridSize.y)), 1.0));
+  const tx1 = int(round(dataTex.r.mul(255.0)));
+  const tx2 = int(round(dataTex.g.mul(255.0)));
+  const ty1 = int(round(dataTex.b.mul(255.0)));
+  const ty2 = int(round(dataTex.a.mul(255.0)));
+  const tx = int(tx1.mul(int(256)).add(tx2)).toVar();
+  const ty = int(ty1.mul(int(256)).add(ty2)).toVar();
+  const px = float(
+    float(tx)
+      .add(offsetX.mul(float(pixelPerTile)))
+      .div(float(texSize.x))
+  );
+  const py = float(
+    float(ty)
+      .add(offsetY.mul(float(pixelPerTile)))
+      .div(float(texSize.y))
+  );
+
+  const tuv = vec2(px, py);
+
+  tex.uvNode = tuv;
+
+  const cnode = tslFn(() => {
+    const cNode = vec4(1, 1, 1, 1).toVar();
+    If(tx.lessThan(texSize.x).and(ty.lessThan(texSize.y)), () => {
+      cNode.assign(tex, 1);
+    }).else(() => {
+      Discard(true);
+    });
+    return cNode.mul(color);
+  });
+
+  return cnode();
+})();
 
 export default React.memo(function Tilemap({
   textureId,
@@ -69,6 +102,26 @@ export default React.memo(function Tilemap({
   color,
 }: Props) {
   const texture = useMemo(() => TextureManager.get(textureId)!, [textureId]);
+  //   const gridSize = uniform("vec2", "gridSize");
+  // const tex = texture("tex");
+  // const texSize = uniform("vec2", "texSize");
+  // const dataTex = texture("dataTex");
+  // const pixelPerTile = uniform("float", "pixelPerTile");
+  // const color = uniform("vec4", "color");
+  const bindings = useBindings(
+    {
+      gridSize: "vec2",
+      texSize: "vec2",
+      pixelPerTile: "float",
+      color: "vec4",
+      tex: "texture_2d",
+      dataTex: "data_texture_2d:rgba8unorm",
+    },
+    (init) => {
+      init.tex(textureId);
+      init.texSize([texture.width, texture.height]);
+    }
+  );
 
   const rects = useMemo(
     () => coords.map(([x, y]) => [x, texture!.height - y - pixelPerTile]),
@@ -120,22 +173,14 @@ export default React.memo(function Tilemap({
   //   [tiles, rects]
   // );
 
-  // useUniforms(
-  //   uniforms,
-  //   () => {
-  //     if (color) {
-  //       const { opacity, array } = parseColor(color || "#ffffff");
-  //       return {
-  //         color: new Vector4(...array, opacity),
-  //       };
-  //     } else {
-  //       return {
-  //         color: new Vector4(1, 1, 1, 1),
-  //       };
-  //     }
-  //   },
-  //   [color]
-  // );
+  useEffect(() => {
+    if (color) {
+      const { opacity, array } = parseColor(color || "#ffffff");
+      bindings.updates.color([...array, opacity]);
+    } else {
+      bindings.updates.color([1, 1, 1, 1]);
+    }
+  }, [color]);
 
   // const { geometry, material } = useMemo(() => {
   //   const geometry = new PlaneGeometry(tileSize, tileSize);
@@ -205,8 +250,13 @@ export default React.memo(function Tilemap({
 
   return (
     <RenderObject
+      bindings={bindings.resources}
       vertexNode={vertexNode}
       fragmentNode={fragmentNode}
+      vertex={{
+        position: quad.vertex.position,
+        uv: quad.vertex.uv,
+      }}
       vertexCount={quad.vertexCount}
       index={quad.index}
     />

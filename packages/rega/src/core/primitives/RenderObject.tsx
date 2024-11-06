@@ -17,6 +17,8 @@ import TextureManager from "../common/texture_manager";
 import { Node } from "pure3";
 
 interface Props {
+  bindings?: Record<string, TransferResource>;
+
   vertexNode: Node<"vec4">;
   fragmentNode: Node<"vec4">;
 
@@ -35,6 +37,7 @@ export default function RenderObject({
   vertex,
   vertexCount,
   index,
+  bindings = {},
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const rgCtx = useContext(RenderGroupContext);
@@ -74,6 +77,7 @@ export default function RenderObject({
   useEffect(() => {
     const allBindings = {
       ...bindingCtx,
+      ...bindings,
       modelWorldMatrix: bModelWorldMatrix.resource,
     } as Record<string, TransferResource>;
 
