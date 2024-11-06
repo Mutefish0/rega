@@ -14,20 +14,16 @@ import {
 
 import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
-import {
-  BindingContextProvider,
-  useBindings,
-} from "../primitives/BindingContext";
-
-import { createPlaneGeometry } from "../tools/geometry";
-
-import createIndexHandle from "../render/createIndexHandle";
+import { BindingContextProvider } from "../primitives/BindingContext";
 
 import RenderObject from "../primitives/RenderObject";
-
 import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
+
+import quad from "../render/geometry/quad";
+import useBindings from "../hooks/useBingdings";
+import useVertexBinding from "../hooks/useVertexBinding";
 
 interface Props {
   textureId: string;
@@ -57,11 +53,6 @@ const fragmentNode = tex.mul(vec4(color, opacity));
 const fragmentNodeWithAlpha = tex.mul(
   vec4(color, opacity.mul(luminance(texAlpha.rgb)))
 );
-
-const { vertices, vertexCount, indices } = createPlaneGeometry();
-
-const indexHandle = createIndexHandle(indices.length);
-indexHandle.update(indices);
 
 // TODO 支持复用 Vertex
 export default React.memo(function Sprite2D({
@@ -95,22 +86,22 @@ export default React.memo(function Sprite2D({
     }
   );
 
+  const bUv = useVertexBinding("vec2", quad.vertexCount);
+
   useEffect(() => {
     const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
     bindings.updates.opacity([opacityValue ?? opacity1]);
     bindings.updates.color(array);
   }, [color, opacity]);
 
-  const uvs = useMemo(() => {
+  useEffect(() => {
     const { width, height } = texture;
-
     const cWidth = (clip[2] - 2 * padding) / width;
     const cHeight = (clip[3] - 2 * padding) / height;
     const cLeftTop = [
       (clip[0] + padding) / width,
       (clip[1] + padding) / height,
     ];
-
     const uvs = [
       cLeftTop[0],
       cLeftTop[1],
@@ -124,8 +115,7 @@ export default React.memo(function Sprite2D({
       cLeftTop[0] + cWidth,
       cLeftTop[1] + cHeight,
     ];
-
-    return uvs;
+    bUv.update(uvs);
   }, [clip.join(","), texture]);
 
   const anchorMatrix = useAnchor(anchor, size);
@@ -157,27 +147,15 @@ export default React.memo(function Sprite2D({
     return mat;
   }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
-  const attributes = useMemo(() => {
-    return {
-      position: vertices,
-      uv: uvs,
-    };
-  }, [uvs]);
-
   return (
     <Relative matrix={matrix}>
       <BindingContextProvider value={bindings.resources}>
         <RenderObject
           vertexNode={vertexNode}
           fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
-          input={{
-            vertexCount,
-            attributes,
-            index: {
-              indexBuffer: indexHandle.buffer,
-              indexCount: indices.length,
-            },
-          }}
+          vertexCount={quad.vertexCount}
+          vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
+          index={quad.index}
         />
       </BindingContextProvider>
     </Relative>

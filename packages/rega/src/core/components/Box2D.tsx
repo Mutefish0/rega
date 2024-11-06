@@ -9,16 +9,12 @@ import {
   cameraViewMatrix,
 } from "pure3";
 
-import createIndexHandle from "../render/createIndexHandle";
+import quad from "../render/geometry/quad";
 
-import {
-  BindingContextProvider,
-  useBindings,
-} from "../primitives/BindingContext";
+import { BindingContextProvider } from "../primitives/BindingContext";
+import useBindings from "../hooks/useBingdings";
 
 import RenderObject from "../primitives/RenderObject";
-
-import { createPlaneGeometry } from "../tools/geometry";
 
 import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import Relative from "../primitives/Relative";
@@ -39,17 +35,6 @@ const vertexNode = cameraProjectionMatrix
   .mul(vec4(positionGeometry, 1));
 
 const fragmentNode = vec4(color, opacity);
-
-const { vertices, vertexCount, indices } = createPlaneGeometry();
-
-const attributes = {
-  position: vertices,
-};
-
-const sharedVertexKey = crypto.randomUUID();
-
-const indexHandle = createIndexHandle(indices.length);
-indexHandle.update(indices);
 
 export default React.memo(function Box2D({
   size,
@@ -82,15 +67,9 @@ export default React.memo(function Box2D({
         <RenderObject
           vertexNode={vertexNode}
           fragmentNode={fragmentNode}
-          input={{
-            sharedVertexKey,
-            attributes,
-            vertexCount,
-            index: {
-              indexBuffer: indexHandle.buffer,
-              indexCount: indices.length,
-            },
-          }}
+          vertexCount={quad.vertexCount}
+          vertex={quad.vertex}
+          index={quad.index}
         />
       </BindingContextProvider>
     </Relative>

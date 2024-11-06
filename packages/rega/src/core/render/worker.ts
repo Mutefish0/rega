@@ -265,6 +265,7 @@ self.addEventListener("message", async (event) => {
         GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
       );
     });
+
     if (input.index) {
       const { indexBuffer } = input.index;
       addObjectGPUBuffer(

@@ -105,6 +105,8 @@ export default function App() {
     </>
   );
 
+  return appElement;
+
   // const appElement = (
   //   <>
   //     <FPS
@@ -128,13 +130,13 @@ export default function App() {
   //   </>
   // );
 
-  if (import.meta.env.DEV) {
-    return (
-      <Editor showIteractiveCamera={false} showPhysicDebuger={false}>
-        {appElement}
-      </Editor>
-    );
-  } else {
-    return appElement;
-  }
+  // if (import.meta.env.DEV) {
+  //   return (
+  //     <Editor showIteractiveCamera={false} showPhysicDebuger={false}>
+  //       {appElement}
+  //     </Editor>
+  //   );
+  // } else {
+  //   return appElement;
+  // }
 }
