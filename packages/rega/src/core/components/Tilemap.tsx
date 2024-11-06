@@ -1,24 +1,22 @@
 import React, { useMemo, useEffect } from "react";
 import useUniforms from "../hooks/useUniforms";
+import RenderObject from "../primitives/RenderObject";
 import { PlaneGeometry, DataTexture, Vector2, Vector4 } from "three/webgpu";
 import {
-  uniform,
-  float,
-  positionGeometry,
   MeshBasicNodeMaterial,
   uv,
   varying,
-  vec3,
   texture as texture2D,
   mod,
   int,
   round,
-  vec2,
   tslFn,
   If,
   Discard,
-  vec4,
 } from "three/webgpu";
+
+import { uniform, float, positionGeometry, vec2, vec3, vec4 } from "pure3";
+
 import TextureManager from "../common/texture_manager";
 import Mesh from "../primitives/Mesh";
 import { parseColor } from "../tools/color";
@@ -34,6 +32,8 @@ interface Props {
   color?: string;
 }
 
+const gridSize = uniform();
+
 export default React.memo(function Tilemap({
   textureId,
   pixelPerTile,
@@ -45,8 +45,8 @@ export default React.memo(function Tilemap({
   const texture = useMemo(() => TextureManager.get(textureId)!, [textureId]);
 
   const rects = useMemo(
-    () => coords.map(([x, y]) => [x, texture!.image.height - y - pixelPerTile]),
-    [coords, pixelPerTile, texture!.image.height]
+    () => coords.map(([x, y]) => [x, texture!.height - y - pixelPerTile]),
+    [coords, pixelPerTile, texture!.height]
   );
 
   const uniforms = useUniforms(
@@ -66,7 +66,7 @@ export default React.memo(function Tilemap({
     uniforms,
     () => ({
       tex: texture,
-      textureSize: new Vector2(texture.image.width, texture.image.height),
+      textureSize: new Vector2(texture.width, texture.height),
     }),
     [texture]
   );

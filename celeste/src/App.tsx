@@ -90,6 +90,7 @@ export default function App() {
       </RenderTarget>
       <RenderGroup targetId="gui">
         <GUIView>
+          {/* <Box2D size={[150, 50]} color="skyblue" anchor="top-left" /> */}
           <Text
             style={{
               fontSize: 20,

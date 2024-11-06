@@ -44,7 +44,6 @@ interface Props {
 
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
-
 const tex = texture("tex");
 const texAlpha = texture("texAlpha");
 
@@ -71,9 +70,9 @@ export default React.memo(function Sprite2D({
   anchor = "center",
   flipX = false,
   flipY = false,
-  opacity,
+  opacity: opacityValue,
   padding = 0,
-  color,
+  color: colorValue,
   size = [1, 1],
   alphaTextureId,
 }: Props) {
@@ -83,22 +82,22 @@ export default React.memo(function Sprite2D({
     return TextureManager.get(textureId)!;
   }, [textureId]);
 
-  const bindings = useBindings({
-    opacity: "float",
-    color: "vec3",
-    tex: {
-      type: "texture_2d",
-      textureId,
+  const bindings = useBindings(
+    {
+      opacity,
+      color,
+      tex: "texture_2d",
+      texAlpha: "texture_2d",
     },
-    texAlpha: {
-      type: "texture_2d",
-      textureId: alphaTextureId,
-    },
-  });
+    (init) => {
+      init.tex(textureId);
+      init.texAlpha(alphaTextureId || textureId);
+    }
+  );
 
   useEffect(() => {
-    const { opacity: opacity1, array } = parseColor(color || "#fff");
-    bindings.updates.opacity([opacity ?? opacity1]);
+    const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
+    bindings.updates.opacity([opacityValue ?? opacity1]);
     bindings.updates.color(array);
   }, [color, opacity]);
 

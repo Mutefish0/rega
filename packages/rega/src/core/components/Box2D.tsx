@@ -13,7 +13,7 @@ import createIndexHandle from "../render/createIndexHandle";
 
 import {
   BindingContextProvider,
-  useBinding,
+  useBindings,
 } from "../primitives/BindingContext";
 
 import RenderObject from "../primitives/RenderObject";
@@ -38,28 +38,14 @@ const vertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
-//const vertexNode = modelWorldMatrix.mul(vec4(positionGeometry, 1));
-
 const fragmentNode = vec4(color, opacity);
-
-// // const material = createMaterial(
-// //   cameraProjectionMatrix
-// //     .mul(cameraViewMatrix)
-// //     .mul(modelWorldMatrix)
-// //     .mul(positionGeometry),
-// //   vec4(color, opacity)
-// // );
-
-// const material = createMaterial(
-//   modelWorldMatrix.mul(vec4(positionGeometry, 1)),
-//   vec4(color, opacity)
-// );
 
 const { vertices, vertexCount, indices } = createPlaneGeometry();
 
 const attributes = {
   position: vertices,
 };
+
 const sharedVertexKey = crypto.randomUUID();
 
 const indexHandle = createIndexHandle(indices.length);
@@ -70,13 +56,15 @@ export default React.memo(function Box2D({
   anchor = "center",
   color = "white",
 }: Props) {
-  const bOpacity = useBinding("float");
-  const bColor = useBinding("vec3");
+  const bindings = useBindings({
+    opacity: "float",
+    color: "vec3",
+  });
 
   useEffect(() => {
     const { opacity, array } = parseColor(color || "#fff");
-    bOpacity.update([opacity]);
-    bColor.update(array);
+    bindings.updates.opacity([opacity]);
+    bindings.updates.color(array);
   }, [color, opacity]);
 
   const anchorMatrix = useAnchor(anchor, size);
@@ -88,17 +76,9 @@ export default React.memo(function Box2D({
     return mat;
   }, [anchorMatrix, size.join(",")]);
 
-  const bindings = useMemo(
-    () => ({
-      color: bColor.resource,
-      opacity: bOpacity.resource,
-    }),
-    []
-  );
-
   return (
     <Relative matrix={matrix}>
-      <BindingContextProvider value={bindings}>
+      <BindingContextProvider value={bindings.resources}>
         <RenderObject
           vertexNode={vertexNode}
           fragmentNode={fragmentNode}

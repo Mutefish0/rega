@@ -32,7 +32,8 @@ export function getVersion(view: DataView) {
   return view.getUint32(0);
 }
 
+const MAX_VERSION = 0xffffffff;
 export function updateVersion(view: DataView) {
-  const version = view.getUint32(0) + 1;
-  view.setUint32(0, version);
+  const version = view.getUint32(0);
+  view.setUint32(0, version >= MAX_VERSION ? 0 : version + 1);
 }

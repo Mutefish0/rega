@@ -1,5 +1,5 @@
 import type { WGSLValueType } from "pure3";
-import { TransferResource, ResourceType, UniformType } from "./types";
+import { TransferResource, UniformType } from "./types";
 import { HEADER_SIZE } from "./sharedBufferLayout";
 import createSharedBuffer, {
   createVersionView,
@@ -94,21 +94,13 @@ function createUniformValueBindingView<T extends WGSLValueType>(
   };
 }
 
-export function createUniformBinding<T extends WGSLValueType | "sampler">(
-  type: T
-): BindingHandle<T>;
-export function createUniformBinding<T extends "texture_2d">(
-  type: T,
-  textureId: string
-): BindingHandle<"texture_2d">;
 export function createUniformBinding<T extends UniformType>(
-  type: T,
-  textureId?: string
+  type: T
 ): BindingHandle<T> {
   if (type === "texture_2d") {
     const resource: TransferResource = {
       type: "sampledTexture" as const,
-      textureId: textureId!,
+      textureId: "",
     };
     return {
       resource,

@@ -395,11 +395,11 @@ async function start() {
     passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);
 
-    //requestAnimationFrame(render);
+    requestAnimationFrame(render);
 
-    if (frame < 200) {
-      requestAnimationFrame(render);
-    }
+    // if (frame < 200) {
+    //   requestAnimationFrame(render);
+    // }
   }
 
   render();

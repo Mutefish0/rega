@@ -213,7 +213,7 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
     record.version = version;
     device.queue.writeBuffer(record.gpuBuffer, 0, record.cpuUint8Array, 0);
     console.debug(
-      `[buffer ${uuid}] write, <${usageToString("buffer", record.usage)}>`,
+      `[buffer ${uuid}] <${record.gpuBuffer.label}> write,`,
       "version: ",
       version
     );
