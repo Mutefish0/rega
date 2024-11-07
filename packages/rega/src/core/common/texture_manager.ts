@@ -13,6 +13,7 @@ export interface Texture {
   width: number;
   height: number;
   format: GPUTextureFormat;
+  immutable: boolean;
 }
 
 export default class TextureManager {
@@ -60,6 +61,7 @@ export default class TextureManager {
           buffer: sab,
           type: "sampledTexture" as const,
           format,
+          immutable: true,
         };
 
         TextureManager.textures.set(url, texture);

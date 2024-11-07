@@ -1,4 +1,5 @@
-import { WGSLValueType } from "pure3";
+import TextureManager from "../common/texture_manager";
+import { texture, WGSLValueType } from "pure3";
 import createSharedBuffer, {
   createUint16Array,
   createFloat32Array,
@@ -90,7 +91,19 @@ export function createDataTextureBinding(
     updateVersion(versionView);
   }
 
+  const id = crypto.randomUUID();
+
+  TextureManager.setTexture(id, {
+    type: "sampledTexture",
+    buffer: sab,
+    format,
+    width,
+    height,
+    immutable: false,
+  });
+
   return {
+    textureId: id,
     update,
   };
 }

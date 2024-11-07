@@ -29,6 +29,7 @@ export interface TransferObject {
       height: number;
       buffer: SharedArrayBuffer;
       format: GPUTextureFormat;
+      immutable: boolean;
     }
   >;
 }
@@ -44,6 +45,7 @@ export interface TransferRenderTarget {
       height: number;
       buffer: SharedArrayBuffer;
       format: GPUTextureFormat;
+      immutable: boolean;
     }
   >;
 }
