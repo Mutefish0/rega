@@ -90,9 +90,9 @@ export default function App() {
       </RenderTarget>
       <RenderGroup targetId="gui">
         <Sprite2D
-          textureId="/images/test.png"
+          textureId="/images/atlas.png"
           size={[1, 1]}
-          clip={[0, 0, 266, 150]}
+          clip={[0, 0, 128, 88]}
         />
         {/* <GUIView>
           <Box2D size={[150, 50]} color="skyblue" anchor="top-left" />

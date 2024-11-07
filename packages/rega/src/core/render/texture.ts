@@ -33,17 +33,25 @@ export function createDataTextureBinding(
   height: number
 ) {
   const bytesPerTexel = getBytesPerTexel(format);
+  let bytesPerRow = width * bytesPerTexel;
+  bytesPerRow = Math.ceil(bytesPerRow / 256) * 256; // Align to 256 bytes
 
-  // bytesPerRow = Math.ceil(bytesPerRow / 256) * 256; // Align to 256 bytes
-
-  const byteLength = width * height * bytesPerTexel;
+  const byteLength = 16 + bytesPerRow * height;
 
   const sab = createSharedBuffer(byteLength);
 
   const versionView = createVersionView(sab);
 
-  const areaView = new Uint16Array(sab, HEADER_SIZE, 4);
-  const dataHeaderView = new Uint32Array(sab, HEADER_SIZE + 8, 2);
+  // dest
+  // origin   x, y  // 2 + 2
+  // === data-layout
+  // offset, bytesPerRow  // 4 + 4
+  // === size
+  // pixelWidth, pixelHeight //  2 + 2
+
+  const destOriginView = new Uint16Array(sab, HEADER_SIZE, 3); // x, y, z
+  const dataLayoutView = new Uint32Array(sab, HEADER_SIZE + 4, 2); // offset, bytesPerRow
+  const sizeView = new Uint16Array(sab, HEADER_SIZE + 12, 3); // x, y, z
 
   const v = (viewerMap as any)[format];
 
@@ -53,49 +61,38 @@ export function createDataTextureBinding(
 
   const [viewer, channel] = v;
 
-  const dataView = new viewer(sab, HEADER_SIZE + 16);
-
-  // 16bytes header
-  // u16,u16,u16,u16 - u32,u32
-  // x, y, width, height. data-bytes-offset,data-bytes-per-row
-
-  const origin = [20, 20];
-  const size = [100, 100];
-  const dataOffset = [];
-
+  // 1d, 2d
   function update(
-    [x, y, width, height]: [number, number, number, number],
+    origin: [number, number], // x, y
+    size: [number, number],
     cb: (x: number, y: number) => number[]
   ) {
-    const offset = y * width * bytesPerTexel + x * bytesPerTexel;
+    let destStartOffset = bytesPerRow * origin[1] + origin[0] * bytesPerTexel;
 
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
+    destOriginView.set(origin);
+    sizeView.set(size);
+
+    dataLayoutView.set([HEADER_SIZE + 16 + destStartOffset, bytesPerRow]);
+
+    for (let i = 0; i < size[1]; i++) {
+      const view = new viewer(
+        sab,
+        HEADER_SIZE + 16 + destStartOffset + i * bytesPerRow
+      );
+      for (let j = 0; j < size[0]; j++) {
         const values = cb(j, i);
         for (let k = 0; k < channel; k++) {
-          // dataView[offset + i * width * bytesPerTexel + j * bytesPerTexel + k] =
-          //   values[k];
+          view[j * channel + k] = values[k];
         }
-
-        // const offset = (y + i) * width + x + j;
-        // const data = cb(j, i);
-        // dataOffset[offset] = data;
       }
     }
-    //
+
+    updateVersion(versionView);
   }
 
-  //const v = createUniformValueBindingView(sab, type);
-
-  // const resource: TransferResource = {
-  //   type: "uniformBuffer",
-  //   buffer: sab,
-  // };
-
-  // return {
-  //   resource,
-  //   update: v.update,
-  // };
+  return {
+    update,
+  };
 }
 
 export function getBytesPerTexel(format: GPUTextureFormat) {
