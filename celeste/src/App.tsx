@@ -26,7 +26,7 @@ export default function App() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png"];
+    const textures: string[] = ["/images/atlas.png", "/images/test.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
 
     const sounds: string[] = [
@@ -89,8 +89,13 @@ export default function App() {
         />
       </RenderTarget>
       <RenderGroup targetId="gui">
-        <GUIView>
-          {/* <Box2D size={[150, 50]} color="skyblue" anchor="top-left" /> */}
+        <Sprite2D
+          textureId="/images/test.png"
+          size={[1, 1]}
+          clip={[0, 0, 266, 150]}
+        />
+        {/* <GUIView>
+          <Box2D size={[150, 50]} color="skyblue" anchor="top-left" />
           <Text
             style={{
               fontSize: 20,
@@ -100,7 +105,7 @@ export default function App() {
           >
             HELLO
           </Text>
-        </GUIView>
+        </GUIView> */}
       </RenderGroup>
     </>
   );

@@ -115,7 +115,7 @@ export default React.memo(function Tilemap({
       pixelPerTile: "float",
       color: "vec4",
       tex: "texture_2d",
-      dataTex: "data_texture_2d:rgba8unorm",
+      dataTex: "texture_2d",
     },
     (init) => {
       init.tex(textureId);

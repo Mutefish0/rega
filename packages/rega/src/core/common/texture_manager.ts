@@ -3,13 +3,15 @@ import {
   ClampToEdgeWrapping,
   Texture as Texture3,
 } from "three/webgpu";
+
 import Image from "../io/image";
 
-interface Texture {
+export interface Texture {
   type: "sampledTexture";
   buffer: SharedArrayBuffer;
   width: number;
   height: number;
+  format: GPUTextureFormat;
 }
 
 export default class TextureManager {
@@ -40,6 +42,7 @@ export default class TextureManager {
           width: image.width,
           buffer: sab,
           type: "sampledTexture" as const,
+          format: "rgba8unorm" as const,
         };
 
         TextureManager.textures.set(url, texture);

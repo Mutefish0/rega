@@ -24,7 +24,12 @@ export interface TransferObject {
   input: TransferInput;
   textures: Record<
     string,
-    { width: number; height: number; buffer: SharedArrayBuffer }
+    {
+      width: number;
+      height: number;
+      buffer: SharedArrayBuffer;
+      format: GPUTextureFormat;
+    }
   >;
 }
 
@@ -34,7 +39,12 @@ export interface TransferRenderTarget {
   bindings: TransferBinding[];
   textures: Record<
     string,
-    { width: number; height: number; buffer: SharedArrayBuffer }
+    {
+      width: number;
+      height: number;
+      buffer: SharedArrayBuffer;
+      format: GPUTextureFormat;
+    }
   >;
 }
 
@@ -49,20 +59,17 @@ export interface TransferInput {
 
 export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
 
-export type UniformType =
-  | WGSLValueType
-  | "texture_2d"
-  | "sampler"
-  | "data_texture_2d:rgba8unorm"
-  | "data_texture_2d:rgba8uint";
+export type UniformType = WGSLValueType | "texture_2d" | "sampler";
 
 export type TransferTextureResource = {
   type: "sampledTexture";
   textureId: string;
 };
+
 export type TransferSamplerResource = {
   type: "sampler";
 };
+
 export type TransferUniformBufferResource = {
   type: "uniformBuffer";
   buffer: SharedArrayBuffer;
@@ -108,25 +115,6 @@ export type BindInfo =
   | UniformBindInfo
   | SamplerBindInfo
   | SampledTextureBindInfo;
-
-// export interface BindInfo {
-//   byteLength: number;
-//   bytesPerElement: number;
-//   name: string;
-//   isBuffer: boolean;
-//   isNodeUniformsGroup: boolean;
-//   isUniformBuffer: boolean;
-//   isUniformsGroup: boolean;
-//   isStorageBuffer: boolean;
-//   isSampler: boolean;
-//   visibility: number;
-//   access: any;
-
-//   uniforms: Array<{
-//     offset: number;
-//     name: string;
-//   }>;
-// }
 
 export interface BindGroupInfo {
   index: number;

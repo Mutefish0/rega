@@ -1,5 +1,6 @@
 import { parseUUID, HEADER_SIZE } from "./sharedBufferLayout";
 import { createVersionView, getVersion } from "./createSharedBuffer";
+import { getBytesPerTexel } from "./texture";
 
 const idsMap = new Map<SharedArrayBuffer, string>();
 
@@ -22,6 +23,20 @@ const texturesMap = new Map<
     gpuTexture: GPUTexture;
     referenceCount: number;
     usage: GPUTextureUsageFlags;
+  }
+>();
+
+const mutableTexturesMap = new Map<
+  string,
+  {
+    version: number;
+    gpuTexture: GPUTexture;
+    cpuBuffer: SharedArrayBuffer;
+    usage: GPUTextureUsageFlags;
+    format: GPUTextureFormat;
+    width: number;
+    height: number;
+    referenceCount: number;
   }
 >();
 
@@ -122,12 +137,12 @@ export function addObjectGPUTexture(
   textureId: string,
   sab: SharedArrayBuffer,
   opts: {
+    format: GPUTextureFormat;
     usage: GPUTextureUsageFlags;
     width: number;
     height: number;
   }
 ) {
-  const format = "rgba8unorm";
   let record = texturesMap.get(textureId);
   const size = sab.byteLength;
   if (!record) {
@@ -138,12 +153,12 @@ export function addObjectGPUTexture(
         height: opts.height,
         depthOrArrayLayers: 1,
       },
-      format,
+      format: opts.format,
       usage: opts.usage,
     });
 
     const data = new Uint8Array(sab);
-    const bytesPerTexel = getBytesPerTexel(format);
+    const bytesPerTexel = getBytesPerTexel(opts.format);
     let bytesPerRow = opts.width * bytesPerTexel;
     bytesPerRow = Math.ceil(bytesPerRow / 256) * 256; // Align to 256 bytes
 
@@ -213,82 +228,10 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
     record.version = version;
     device.queue.writeBuffer(record.gpuBuffer, 0, record.cpuUint8Array, 0);
     console.debug(
-      `[buffer ${uuid}] <${record.gpuBuffer.label}> write,`,
-      "version: ",
-      version
+      `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
+      `v${version}`
     );
   }
 
   return record.gpuBuffer;
-}
-
-function getBytesPerTexel(format: GPUTextureFormat) {
-  // 8-bit formats
-  if (
-    format === "r8unorm" ||
-    format === "r8snorm" ||
-    format === "r8uint" ||
-    format === "r8sint"
-  )
-    return 1;
-
-  // 16-bit formats
-  if (
-    format === "r16uint" ||
-    format === "r16sint" ||
-    format === "r16float" ||
-    format === "rg8unorm" ||
-    format === "rg8snorm" ||
-    format === "rg8uint" ||
-    format === "rg8sint"
-  )
-    return 2;
-
-  // 32-bit formats
-  if (
-    format === "r32uint" ||
-    format === "r32sint" ||
-    format === "r32float" ||
-    format === "rg16uint" ||
-    format === "rg16sint" ||
-    format === "rg16float" ||
-    format === "rgba8unorm" ||
-    format === "rgba8unorm-srgb" ||
-    format === "rgba8snorm" ||
-    format === "rgba8uint" ||
-    format === "rgba8sint" ||
-    format === "bgra8unorm" ||
-    format === "bgra8unorm-srgb" ||
-    // Packed 32-bit formats
-    format === "rgb9e5ufloat" ||
-    format === "rgb10a2unorm" ||
-    format === "rg11b10ufloat" ||
-    format === "depth32float" ||
-    format === "depth24plus" ||
-    format === "depth24plus-stencil8" ||
-    format === "depth32float-stencil8"
-  )
-    return 4;
-
-  // 64-bit formats
-  if (
-    format === "rg32uint" ||
-    format === "rg32sint" ||
-    format === "rg32float" ||
-    format === "rgba16uint" ||
-    format === "rgba16sint" ||
-    format === "rgba16float"
-  )
-    return 8;
-
-  // 128-bit formats
-  if (
-    format === "rgba32uint" ||
-    format === "rgba32sint" ||
-    format === "rgba32float"
-  )
-    return 16;
-
-  // Return undefined or handle unsupported format
-  throw new Error(`Unsupported GPUTextureFormat: ${format}`);
 }

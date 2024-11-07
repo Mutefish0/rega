@@ -1,5 +1,7 @@
 import { UUID_BYTES, VERSION_BYTES, HEADER_SIZE } from "./sharedBufferLayout";
 
+export { HEADER_SIZE };
+
 export default function createSharedBuffer(size: number) {
   const id = crypto.randomUUID();
 

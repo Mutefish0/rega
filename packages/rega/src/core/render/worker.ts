@@ -158,6 +158,7 @@ self.addEventListener("message", async (event) => {
             width: t.width,
             height: t.height,
             usage,
+            format: t.format,
           }
         );
         return {
@@ -234,6 +235,7 @@ self.addEventListener("message", async (event) => {
             width: t.width,
             height: t.height,
             usage,
+            format: t.format,
           }
         );
         return {

@@ -4,7 +4,7 @@ import RenderContext from "./RenderContext";
 import YogaNode from "../components/YogaFlex/YogaNode";
 import { FlexStyle } from "../components/YogaFlex/FlexStyle";
 import { TransferResource, TransferBinding, UniformType } from "../render";
-import TextureManager from "../common/texture_manager";
+import TextureManager, { Texture } from "../common/texture_manager";
 import {
   createUniformBinding,
   createUniformBindingView,
@@ -81,10 +81,7 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
   }, []);
 
   useEffect(() => {
-    const textures: Record<
-      string,
-      { width: number; height: number; buffer: SharedArrayBuffer }
-    > = {};
+    const textures: Record<string, Texture> = {};
 
     const binds: TransferBinding[] = [];
     for (let name in allBindings) {

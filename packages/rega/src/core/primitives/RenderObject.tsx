@@ -13,7 +13,7 @@ import { createUniformBinding } from "../../core/render/binding";
 import { getOrcreateSlot } from "../render/slot";
 import { differenceBy } from "lodash";
 import createMaterial from "../render/createMaterial";
-import TextureManager from "../common/texture_manager";
+import TextureManager, { Texture } from "../common/texture_manager";
 import { Node } from "pure3";
 
 interface Props {
@@ -117,10 +117,7 @@ export default function RenderObject({
       });
     }
 
-    const textures: Record<
-      string,
-      { width: number; height: number; buffer: SharedArrayBuffer }
-    > = {};
+    const textures: Record<string, Texture> = {};
 
     for (const b of material.bindGroups[0]) {
       if (b.type === "sampledTexture") {
