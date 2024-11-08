@@ -6,6 +6,14 @@ export type WGSLValueType =
   | "mat2"
   | "mat3"
   | "mat4";
+// | "sint"
+// | "uint"
+// | "vec2uint"
+// | "vec3uint"
+// | "vec4uint"
+// | "vec2sint"
+// | "vec3sint"
+// | "vec4sint";
 
 export type NodeValueType = "lit_float" | WGSLValueType;
 

@@ -9,7 +9,7 @@ const buffersMap = new Map<
   {
     version: number;
     gpuBuffer: GPUBuffer;
-    cpuUint8Array: Uint8Array;
+    dataView: Uint8Array;
     versionView: DataView;
     referenceCount: number;
     usage: GPUBufferUsageFlags;
@@ -31,7 +31,13 @@ const mutableTexturesMap = new Map<
   {
     version: number;
     gpuTexture: GPUTexture;
-    cpuBuffer: SharedArrayBuffer;
+    versionView: DataView;
+
+    originView: Uint16Array;
+    dataLayoutView: Uint32Array;
+    sizeView: Uint16Array;
+    dataView: Uint8Array;
+
     usage: GPUTextureUsageFlags;
     format: GPUTextureFormat;
     width: number;
@@ -90,16 +96,16 @@ export function addObjectGPUBuffer(
       `[buffer ${uuid}] create, <${usageToString("buffer", usage)}>, ${size}`
     );
 
-    const cpuUint8Array = new Uint8Array(sab, HEADER_SIZE);
+    const dataView = new Uint8Array(sab, HEADER_SIZE);
 
     const mappedRange = gpuBuffer.getMappedRange();
-    new Uint8Array(mappedRange).set(cpuUint8Array);
+    new Uint8Array(mappedRange).set(dataView);
     gpuBuffer.unmap();
 
     record = {
       version: 0,
       gpuBuffer,
-      cpuUint8Array: cpuUint8Array,
+      dataView: dataView,
       versionView: createVersionView(sab),
       referenceCount: 1,
       usage,
@@ -133,6 +139,7 @@ export function removeObjectGPUBuffer(sab: SharedArrayBuffer) {
 
 export function addObjectGPUTexture(
   device: GPUDevice,
+  immutable: boolean,
   label: string,
   textureId: string,
   sab: SharedArrayBuffer,
@@ -143,9 +150,13 @@ export function addObjectGPUTexture(
     height: number;
   }
 ) {
+  if (!immutable) {
+    return addObjectMutableGPUTexture(device, label, textureId, sab, opts);
+  }
+
   let record = texturesMap.get(textureId);
-  const size = sab.byteLength;
   if (!record) {
+    const size = sab.byteLength;
     const gpuTexture = device.createTexture({
       label,
       size: {
@@ -191,6 +202,106 @@ export function addObjectGPUTexture(
   }
 }
 
+export function addObjectMutableGPUTexture(
+  device: GPUDevice,
+  label: string,
+  textureId: string,
+  sab: SharedArrayBuffer,
+  opts: {
+    format: GPUTextureFormat;
+    usage: GPUTextureUsageFlags;
+    width: number;
+    height: number;
+  }
+) {
+  let record = mutableTexturesMap.get(textureId);
+  if (!record) {
+    const versionView = createVersionView(sab);
+    const originView = new Uint16Array(sab, HEADER_SIZE, 2); // x, y,
+    const dataLayoutView = new Uint32Array(sab, HEADER_SIZE + 4, 2); // offset, bytesPerRow
+    const sizeView = new Uint16Array(sab, HEADER_SIZE + 12, 2); // x, y
+    const dataView = new Uint8Array(sab, HEADER_SIZE + 16);
+
+    record = {
+      version: 0,
+
+      gpuTexture: device.createTexture({
+        label,
+        size: {
+          width: opts.width,
+          height: opts.height,
+          depthOrArrayLayers: 1,
+        },
+        format: opts.format,
+        usage: opts.usage,
+      }),
+
+      versionView,
+      originView,
+      dataLayoutView,
+      sizeView,
+      dataView,
+
+      usage: opts.usage,
+      format: opts.format,
+      width: opts.width,
+      height: opts.height,
+      referenceCount: 1,
+    };
+
+    mutableTexturesMap.set(textureId, record);
+
+    console.debug(
+      `[mutable_texture ${textureId}] create, <${usageToString(
+        "texture",
+        opts.usage
+      )}>`
+    );
+
+    return record.gpuTexture;
+  } else {
+    record.referenceCount++;
+    return record.gpuTexture;
+  }
+}
+
+export function updateGPUTexture(device: GPUDevice, textreId: string) {
+  // only update mutable texture
+  const record = mutableTexturesMap.get(textreId);
+  if (record) {
+    const version = getVersion(record.versionView);
+    if (record.version < version) {
+      const { originView, dataLayoutView, sizeView, dataView, gpuTexture } =
+        record;
+
+      console.log("dataViewSize:", dataView.length);
+
+      device.queue.writeTexture(
+        {
+          texture: gpuTexture,
+          origin: {
+            x: originView[0],
+            y: originView[1],
+          },
+        },
+        dataView, // 提前准备的数据
+        {
+          offset: dataLayoutView[0],
+          bytesPerRow: dataLayoutView[1],
+          rowsPerImage: sizeView[1],
+        },
+        [sizeView[0], sizeView[1], 1]
+      );
+      record.version = version;
+
+      console.debug(
+        `[mutable_texture ${textreId}] write <${gpuTexture.label}>`,
+        `v${version}`
+      );
+    }
+  }
+}
+
 export function addObjectGPUSampler(device: GPUDevice, opts: {}) {
   const key = JSON.stringify(opts);
   let sampler = samplerMap.get(key);
@@ -215,6 +326,25 @@ export function removeObjectGPUTexture(textureId: string) {
         )}>`
       );
     }
+  } else {
+    removeObjectMutableGPUTexture(textureId);
+  }
+}
+
+export function removeObjectMutableGPUTexture(textureId: string) {
+  const record = mutableTexturesMap.get(textureId);
+  if (record) {
+    record.referenceCount--;
+    if (record.referenceCount === 0) {
+      record.gpuTexture.destroy();
+      mutableTexturesMap.delete(textureId);
+      console.debug(
+        `[mutable_texture ${textureId}] destroy, <${usageToString(
+          "texture",
+          record.usage
+        )}>`
+      );
+    }
   }
 }
 
@@ -226,7 +356,7 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
 
   if (record.version < version) {
     record.version = version;
-    device.queue.writeBuffer(record.gpuBuffer, 0, record.cpuUint8Array, 0);
+    device.queue.writeBuffer(record.gpuBuffer, 0, record.dataView, 0);
     console.debug(
       `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
       `v${version}`

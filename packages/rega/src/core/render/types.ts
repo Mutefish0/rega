@@ -10,6 +10,7 @@ export interface NamedBindingLayout {
   type: ResourceType;
   name: string;
   binding: number;
+  visibility: number;
 }
 
 export interface BindingLayout {

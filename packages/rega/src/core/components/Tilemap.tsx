@@ -15,10 +15,8 @@ import {
   float,
   positionGeometry,
   vec2,
-  vec3,
   vec4,
   modelWorldMatrix,
-  Matrix4,
   cameraProjectionMatrix,
   cameraViewMatrix,
   dataTexture,
@@ -27,8 +25,8 @@ import {
 import TextureManager from "../common/texture_manager";
 import quad from "../render/geometry/quad";
 import useBindings from "../hooks/useBingdings";
+import useTextureBinding from "../hooks/useTextureBinding";
 
-import Mesh from "../primitives/Mesh";
 import { parseColor } from "../tools/color";
 
 interface Props {
@@ -45,7 +43,7 @@ interface Props {
 const gridSize = uniform("vec2", "gridSize");
 const tex = texture("tex");
 const texSize = uniform("vec2", "texSize");
-const dataTex = dataTexture("rgba8unorm", "dataTex");
+const dataTex = dataTexture("rgba8uint", "dataTex");
 const pixelPerTile = uniform("float", "pixelPerTile");
 const color = uniform("vec4", "color");
 
@@ -59,10 +57,12 @@ const fragmentNode = (function () {
   // uniforms.dataTexture.uvNode = vUv;
   const offsetX = float(mod(vUv.x.mul(float(gridSize.x)), 1.0));
   const offsetY = float(mod(vUv.y.mul(float(gridSize.y)), 1.0));
-  const tx1 = int(round(dataTex.r.mul(255.0)));
-  const tx2 = int(round(dataTex.g.mul(255.0)));
-  const ty1 = int(round(dataTex.b.mul(255.0)));
-  const ty2 = int(round(dataTex.a.mul(255.0)));
+
+  const tx1 = dataTex.r;
+  const tx2 = dataTex.g;
+  const ty1 = dataTex.b;
+  const ty2 = dataTex.a;
+
   const tx = int(tx1.mul(int(256)).add(tx2)).toVar();
   const ty = int(ty1.mul(int(256)).add(ty2)).toVar();
   const px = float(
@@ -102,12 +102,13 @@ export default React.memo(function Tilemap({
   color,
 }: Props) {
   const texture = useMemo(() => TextureManager.get(textureId)!, [textureId]);
-  //   const gridSize = uniform("vec2", "gridSize");
-  // const tex = texture("tex");
-  // const texSize = uniform("vec2", "texSize");
-  // const dataTex = texture("dataTex");
-  // const pixelPerTile = uniform("float", "pixelPerTile");
-  // const color = uniform("vec4", "color");
+
+  const dataTextureBinding = useTextureBinding(
+    "rgba8uint",
+    texture.width,
+    texture.height
+  );
+
   const bindings = useBindings(
     {
       gridSize: "vec2",
@@ -118,6 +119,7 @@ export default React.memo(function Tilemap({
       dataTex: "texture_2d",
     },
     (init) => {
+      init.dataTex(dataTextureBinding.textureId);
       init.tex(textureId);
       init.texSize([texture.width, texture.height]);
     }
@@ -128,50 +130,38 @@ export default React.memo(function Tilemap({
     [coords, pixelPerTile, texture!.height]
   );
 
-  // useUniforms(
-  //   uniforms,
-  //   function () {
-  //     let width = 0;
-  //     let height = 0;
+  useEffect(() => {
+    let width = 0;
+    let height = 0;
 
-  //     const normalizedTiles = tiles.map(([x, y]) => [
-  //       x / tileSize,
-  //       y / tileSize,
-  //     ]);
+    const normalizedTiles = tiles.map(([x, y]) => [x / tileSize, y / tileSize]);
 
-  //     for (let [x, y] of normalizedTiles) {
-  //       width = Math.max(width, Math.abs(x > 0 ? x + 1 : x) * 2);
-  //       height = Math.max(height, Math.abs(y > 0 ? y + 1 : y) * 2);
-  //     }
+    for (let [x, y] of normalizedTiles) {
+      width = Math.max(width, Math.abs(x > 0 ? x + 1 : x) * 2);
+      height = Math.max(height, Math.abs(y > 0 ? y + 1 : y) * 2);
+    }
 
-  //     const data = new Uint8Array(width * height * 4).fill(255);
+    const data: Record<string, number[]> = {};
 
-  //     for (let i = 0; i < normalizedTiles.length; i++) {
-  //       const [_x, _y] = normalizedTiles[i];
-  //       const rect = rects[i];
-  //       const x = _x + width / 2;
-  //       const y = _y + height / 2;
-  //       const r = rect[0] >> 8;
-  //       const g = rect[0] & 0xff;
-  //       const b = rect[1] >> 8;
-  //       const a = rect[1] & 0xff;
-  //       const stride = (y * width + x) * 4;
-  //       data[stride] = r;
-  //       data[stride + 1] = g;
-  //       data[stride + 2] = b;
-  //       data[stride + 3] = a;
-  //     }
+    for (let i = 0; i < normalizedTiles.length; i++) {
+      const [_x, _y] = normalizedTiles[i];
+      const rect = rects[i];
+      const x = _x + width / 2;
+      const y = _y + height / 2;
+      const r = rect[0] >> 8;
+      const g = rect[0] & 0xff;
+      const b = rect[1] >> 8;
+      const a = rect[1] & 0xff;
 
-  //     const dataTexture = new DataTexture(data, width, height);
-  //     dataTexture.needsUpdate = true;
+      data[`${x}-${y}`] = [r, g, b, a];
+    }
 
-  //     return {
-  //       dataTexture,
-  //       gridSize: new Vector2(width, height),
-  //     };
-  //   },
-  //   [tiles, rects]
-  // );
+    dataTextureBinding.update([0, 0, width, height], (x, y) => {
+      return data[`${x}-${y}`] || [0, 0, 0, 0];
+    });
+
+    bindings.updates.gridSize([width, height]);
+  }, [tiles, rects]);
 
   useEffect(() => {
     if (color) {

@@ -15,9 +15,18 @@ import {
   Text,
   GUIView,
   GUICamera,
+  useTextureBinding,
+  Tilemap,
 } from "rega";
 // import Level from "./scenes/Level";
-// import TitleScreen from "./scenes/TitleScreen";
+import TitleScreen from "./scenes/TitleScreen";
+
+import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./scenes/Level/celesteLevel";
+
+const celesteLevel = new CelesteLevel(TITLE_SCREEN_LEVEL);
+
+const { clips, tiles } = celesteLevel.getLevelMapAll();
+
 // import Camera from "./camera";
 
 export default function App() {
@@ -82,30 +91,15 @@ export default function App() {
 
   const appElement = (
     <>
-      <RenderTarget main>
-        <RenderTarget
-          style={{ width: "100%", height: "100%" }}
-          targetId="gui"
-        />
-      </RenderTarget>
-      <RenderGroup targetId="gui">
-        <Sprite2D
+      <RenderTarget main />
+      <RenderGroup>
+        <Tilemap
           textureId="/images/atlas.png"
-          size={[1, 1]}
-          clip={[0, 0, 128, 88]}
+          tiles={tiles.map(([x, y]) => [x, y - 8])}
+          coords={clips.map(([x, y]) => [x, y])}
+          pixelPerTile={8}
+          tileSize={8}
         />
-        {/* <GUIView>
-          <Box2D size={[150, 50]} color="skyblue" anchor="top-left" />
-          <Text
-            style={{
-              fontSize: 20,
-              fontFamily: "celeste",
-              color: "rgba(100,200,0, 1)",
-            }}
-          >
-            HELLO
-          </Text>
-        </GUIView> */}
       </RenderGroup>
     </>
   );

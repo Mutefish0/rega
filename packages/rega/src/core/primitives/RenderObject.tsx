@@ -114,6 +114,7 @@ export default function RenderObject({
         name,
         type: renderCtx.renderTargetBindGroupLayout[name],
         binding: getOrcreateSlot("target", name),
+        visibility: 3,
       });
     }
 

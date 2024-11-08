@@ -11,13 +11,14 @@ import {
   removeObjectGPUBuffer,
   addObjectGPUTexture,
   removeObjectGPUTexture,
+  updateGPUTexture,
   addObjectGPUSampler,
   updateGPUBuffer,
 } from "./bufferPair";
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
 
-import { createBindGroupLayout } from "./utils";
+import createBindGroupLayout from "./createBindGroupLayout";
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
@@ -126,9 +127,11 @@ self.addEventListener("message", async (event) => {
 
     const bindGroupLayout = createBindGroupLayout(
       device,
-      bindings.map(({ binding, resource }) => ({
+      bindings.map(({ binding, resource, name }) => ({
         binding,
         type: resource.type,
+        name,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
       }))
     );
 
@@ -151,6 +154,7 @@ self.addEventListener("message", async (event) => {
         const t = textures[name];
         const texture = addObjectGPUTexture(
           device,
+          t.immutable,
           name,
           resource.textureId,
           t.buffer,
@@ -161,6 +165,7 @@ self.addEventListener("message", async (event) => {
             format: t.format,
           }
         );
+
         return {
           binding,
           resource: texture.createView(),
@@ -228,6 +233,7 @@ self.addEventListener("message", async (event) => {
         const t = textures[name];
         const texture = addObjectGPUTexture(
           device,
+          t.immutable,
           name,
           resource.textureId,
           t.buffer,
@@ -348,7 +354,7 @@ async function start() {
         if (resource.type === "uniformBuffer") {
           updateGPUBuffer(device, resource.buffer);
         } else if (resource.type === "sampledTexture") {
-          // do nothing
+          updateGPUTexture(device, resource.textureId);
         } else if (resource.type === "sampler") {
           // do nothing
         } else {
@@ -367,7 +373,7 @@ async function start() {
             if (resource.type === "uniformBuffer") {
               updateGPUBuffer(device, resource.buffer);
             } else if (resource.type === "sampledTexture") {
-              // do nothing
+              updateGPUTexture(device, resource.textureId);
             } else if (resource.type === "sampler") {
               // do nothing
             } else {

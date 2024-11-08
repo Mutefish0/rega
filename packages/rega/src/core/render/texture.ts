@@ -1,8 +1,4 @@
-import TextureManager from "../common/texture_manager";
-import { texture, WGSLValueType } from "pure3";
 import createSharedBuffer, {
-  createUint16Array,
-  createFloat32Array,
   createVersionView,
   updateVersion,
   HEADER_SIZE,
@@ -50,9 +46,9 @@ export function createDataTextureBinding(
   // === size
   // pixelWidth, pixelHeight //  2 + 2
 
-  const destOriginView = new Uint16Array(sab, HEADER_SIZE, 3); // x, y, z
+  const destOriginView = new Uint16Array(sab, HEADER_SIZE, 2); // x, y,
   const dataLayoutView = new Uint32Array(sab, HEADER_SIZE + 4, 2); // offset, bytesPerRow
-  const sizeView = new Uint16Array(sab, HEADER_SIZE + 12, 3); // x, y, z
+  const sizeView = new Uint16Array(sab, HEADER_SIZE + 12, 2); // x, y
 
   const v = (viewerMap as any)[format];
 
@@ -63,24 +59,31 @@ export function createDataTextureBinding(
   const [viewer, channel] = v;
 
   // 1d, 2d
+  // 为了满足 offset 256 对齐
+  // 我们这里总是从 0 开始写入
   function update(
-    origin: [number, number], // x, y
-    size: [number, number],
+    rect: [number, number, number, number], //  // x, y, width, height
     cb: (x: number, y: number) => number[]
   ) {
-    let destStartOffset = bytesPerRow * origin[1] + origin[0] * bytesPerTexel;
+    let [originX, originY, sizeX, sizeY] = rect;
+    sizeX = Math.min(sizeX, width - originX);
+    sizeY = Math.min(sizeY, height - originY);
 
-    destOriginView.set(origin);
-    sizeView.set(size);
+    let destStartOffset = bytesPerRow * originY + originX * bytesPerTexel;
 
-    dataLayoutView.set([HEADER_SIZE + 16 + destStartOffset, bytesPerRow]);
+    console.log("offset:", destStartOffset);
 
-    for (let i = 0; i < size[1]; i++) {
+    destOriginView.set([originX, originY]);
+    sizeView.set([sizeX, sizeY]);
+
+    dataLayoutView.set([destStartOffset, bytesPerRow]);
+
+    for (let i = 0; i < sizeY; i++) {
       const view = new viewer(
         sab,
         HEADER_SIZE + 16 + destStartOffset + i * bytesPerRow
       );
-      for (let j = 0; j < size[0]; j++) {
+      for (let j = 0; j < sizeX; j++) {
         const values = cb(j, i);
         for (let k = 0; k < channel; k++) {
           view[j * channel + k] = values[k];
@@ -91,19 +94,15 @@ export function createDataTextureBinding(
     updateVersion(versionView);
   }
 
-  const id = crypto.randomUUID();
-
-  TextureManager.setTexture(id, {
-    type: "sampledTexture",
-    buffer: sab,
-    format,
-    width,
-    height,
-    immutable: false,
-  });
-
   return {
-    textureId: id,
+    texture: {
+      type: "sampledTexture" as const,
+      buffer: sab,
+      format,
+      width,
+      height,
+      immutable: false,
+    },
     update,
   };
 }

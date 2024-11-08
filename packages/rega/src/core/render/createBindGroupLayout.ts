@@ -1,15 +1,15 @@
-import { BindingLayout } from "./types";
+import { NamedBindingLayout } from "./types";
 
-export function createBindGroupLayout(
+export default function createBindGroupLayout(
   device: GPUDevice,
-  bindings: BindingLayout[]
+  bindings: NamedBindingLayout[]
 ) {
   const entries: GPUBindGroupLayoutEntry[] = [];
 
   for (const binding of bindings) {
     const bindingGPU: GPUBindGroupLayoutEntry = {
       binding: binding.binding,
-      visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+      visibility: binding.visibility,
     };
     if (binding.type === "uniformBuffer") {
       const buffer: GPUBufferBindingLayout = {}; // GPUBufferBindingLayout
@@ -26,21 +26,4 @@ export function createBindGroupLayout(
   }
 
   return device.createBindGroupLayout({ entries });
-}
-
-export function createAttributeBuffer(
-  device: GPUDevice,
-  attribute: { name: string; type: string },
-  usage: any,
-  byteLength: number
-) {
-  const size = byteLength + ((4 - (byteLength % 4)) % 4); // ensure 4 byte alignment, see #20441
-
-  const buffer = device.createBuffer({
-    label: attribute.name,
-    size: size,
-    usage: usage,
-  });
-
-  return buffer;
 }

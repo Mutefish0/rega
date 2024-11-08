@@ -52,6 +52,8 @@ import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
 import { TextStyle } from "./components/UI/Text";
 
+import useTextureBinding from "./hooks/useTextureBinding";
+
 import {
   KeyboardInput,
   KeyboardVectorInput,
@@ -155,3 +157,5 @@ export {
   GUIView,
   localStorage,
 };
+
+export { useTextureBinding };

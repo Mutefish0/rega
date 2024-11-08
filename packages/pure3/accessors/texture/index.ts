@@ -1,4 +1,5 @@
 import { nodeProxy } from "three/src/nodes/tsl/TSLBase.js";
+import { UnsignedIntType, IntType } from "three/src/constants.js";
 import TextureNode from "./TextureNode";
 import type { Node } from "../../core/types.ts";
 
@@ -17,12 +18,18 @@ function texture(label: string) {
 
 function dataTexture(format: GPUTextureFormat, label: string) {
   const t = _texture({
+    type: /uint/.test(format)
+      ? UnsignedIntType
+      : /sint/.test(format)
+      ? IntType
+      : undefined,
     internalFormat: format,
     isDataTexture: true,
     isTexture: true,
     uuid: crypto.randomUUID(),
   });
   t.label(label);
+  t.setSampler(false);
   return t as Node<"vec4"> & { uvNode: Node<"vec2"> };
 }
 

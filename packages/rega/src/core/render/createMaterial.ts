@@ -118,28 +118,59 @@ export default function createMaterial(
 
   for (const g of bindings) {
     const index = +g.name;
+    const visited: Record<
+      string,
+      { bindingIndex: number; visibility: number }
+    > = {};
+    let bindingIndex = 0;
+
     for (const b of g.bindings) {
       const layout = getBindingLayout(b.name);
+
       if (layout.group !== index) {
         throw new Error("Unmatched group: " + b.name);
       }
+
+      const visitedItem = visited[b.name];
+
+      if (visitedItem) {
+        if (visitedItem.visibility !== b.visibility) {
+          visitedItem.visibility = visitedItem.visibility | b.visibility;
+          bindGroups[index][visitedItem.bindingIndex].visibility =
+            visitedItem.visibility;
+          continue;
+        } else {
+          throw new Error("Duplicated binding: " + b.name);
+        }
+      }
+
+      visited[b.name] = {
+        bindingIndex,
+        visibility: b.visibility,
+      };
+
+      bindingIndex++;
+
       if (b.isSampler) {
         bindGroups[index].push({
           name: b.name,
           type: "sampler",
           binding: layout.binding,
+          visibility: b.visibility,
         });
       } else if (b.isSampledTexture) {
         bindGroups[index].push({
           name: b.name,
           type: "sampledTexture",
           binding: layout.binding,
+          visibility: b.visibility,
         });
       } else if (b.isUniformBuffer) {
         bindGroups[index].push({
           name: b.name,
           type: "uniformBuffer",
           binding: layout.binding,
+          visibility: b.visibility,
         });
       } else {
         throw new Error("Unknown binding type");

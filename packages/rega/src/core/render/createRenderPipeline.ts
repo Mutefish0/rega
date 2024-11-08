@@ -1,5 +1,5 @@
 import { MaterialJSON } from "./types";
-import { createBindGroupLayout } from "./utils";
+import createBindGroupLayout from "./createBindGroupLayout";
 
 export default function createRenderPipeline(
   device: GPUDevice,
