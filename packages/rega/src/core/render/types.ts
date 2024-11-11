@@ -60,13 +60,24 @@ export interface TransferInput {
   };
 }
 
-export type ResourceType = "uniformBuffer" | "sampler" | "sampledTexture";
+export type ResourceType =
+  | "uniformBuffer"
+  | "sampler"
+  | "sampledTexture"
+  | "uintTexture"
+  | "sintTexture";
 
-export type UniformType = WGSLValueType | "texture_2d" | "sampler";
+export type UniformType =
+  | WGSLValueType
+  | "texture_2d"
+  | "texture_2d<uint>"
+  | "texture_2d<sint>"
+  | "sampler";
 
 export type TransferTextureResource = {
-  type: "sampledTexture";
+  type: "texture";
   textureId: string;
+  sampleType: "float" | "uint" | "sint";
 };
 
 export type TransferSamplerResource = {

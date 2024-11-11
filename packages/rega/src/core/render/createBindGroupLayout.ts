@@ -18,6 +18,16 @@ export default function createBindGroupLayout(
       bindingGPU.sampler = {};
     } else if (binding.type === "sampledTexture") {
       bindingGPU.texture = {};
+    } else if (binding.type === "sintTexture") {
+      console.log("========= sintTexture");
+
+      bindingGPU.texture = {
+        sampleType: "sint",
+      };
+    } else if (binding.type === "uintTexture") {
+      bindingGPU.texture = {
+        sampleType: "uint",
+      };
     } else {
       throw new Error("CreateBindingsLayout: not supported uniform type");
     }

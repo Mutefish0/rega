@@ -40,7 +40,7 @@ export type BindingUpdater<
   T extends UniformType,
   A = T extends WGSLValueType
     ? number[]
-    : T extends "texture_2d"
+    : T extends "texture_2d" | "texture_2d<uint>" | "texture_2d<sint>"
     ? string
     : void
 > = (values: A) => void;
@@ -97,10 +97,20 @@ function createUniformValueBindingView<T extends WGSLValueType>(
 export function createUniformBinding<T extends UniformType>(
   type: T
 ): BindingHandle<T> {
-  if (type === "texture_2d") {
+  if (
+    type === "texture_2d" ||
+    type === "texture_2d<uint>" ||
+    type === "texture_2d<sint>"
+  ) {
     const resource: TransferResource = {
-      type: "sampledTexture" as const,
+      type: "texture" as const,
       textureId: "",
+      sampleType:
+        type === "texture_2d"
+          ? "float"
+          : type === "texture_2d<uint>"
+          ? "uint"
+          : "sint",
     };
     return {
       resource,
@@ -122,7 +132,7 @@ export function createUniformBindingView<T extends UniformType>(
   res: TransferResource,
   type: T
 ): BindingView<T> {
-  if (res.type === "sampledTexture") {
+  if (res.type === "texture") {
     return {
       update: ((id: string) => {
         res.textureId = id;

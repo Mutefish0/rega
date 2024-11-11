@@ -159,9 +159,14 @@ export default function createMaterial(
           visibility: b.visibility,
         });
       } else if (b.isSampledTexture) {
+        const internalFormat = b.texture.internalFormat;
         bindGroups[index].push({
           name: b.name,
-          type: "sampledTexture",
+          type: /uint/.test(internalFormat)
+            ? "uintTexture"
+            : /sint/.test(internalFormat)
+            ? "sintTexture"
+            : "sampledTexture",
           binding: layout.binding,
           visibility: b.visibility,
         });

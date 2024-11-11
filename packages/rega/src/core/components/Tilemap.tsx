@@ -44,6 +44,7 @@ const gridSize = uniform("vec2", "gridSize");
 const tex = texture("tex");
 const texSize = uniform("vec2", "texSize");
 const dataTex = dataTexture("rgba8uint", "dataTex");
+// const dataTexSize = uniform("vec2", "dataTexSize");
 const pixelPerTile = uniform("float", "pixelPerTile");
 const color = uniform("vec4", "color");
 
@@ -54,9 +55,15 @@ const vertexNode = cameraProjectionMatrix
 
 const fragmentNode = (function () {
   const vUv = varying(uv());
-  // uniforms.dataTexture.uvNode = vUv;
+
   const offsetX = float(mod(vUv.x.mul(float(gridSize.x)), 1.0));
   const offsetY = float(mod(vUv.y.mul(float(gridSize.y)), 1.0));
+
+  const dUv = vec2(offsetX, offsetY);
+
+  return vec4(dUv.x, dUv.y, 0, 1);
+
+  dataTex.uvNode = dUv;
 
   const tx1 = dataTex.r;
   const tx2 = dataTex.g;
@@ -65,6 +72,7 @@ const fragmentNode = (function () {
 
   const tx = int(tx1.mul(int(256)).add(tx2)).toVar();
   const ty = int(ty1.mul(int(256)).add(ty2)).toVar();
+
   const px = float(
     float(tx)
       .add(offsetX.mul(float(pixelPerTile)))
@@ -103,11 +111,7 @@ export default React.memo(function Tilemap({
 }: Props) {
   const texture = useMemo(() => TextureManager.get(textureId)!, [textureId]);
 
-  const dataTextureBinding = useTextureBinding(
-    "rgba8uint",
-    texture.width,
-    texture.height
-  );
+  const dataTextureBinding = useTextureBinding("rgba8uint", 1000, 1000); // max_tile_size 1000*1000
 
   const bindings = useBindings(
     {
@@ -116,7 +120,7 @@ export default React.memo(function Tilemap({
       pixelPerTile: "float",
       color: "vec4",
       tex: "texture_2d",
-      dataTex: "texture_2d",
+      dataTex: "texture_2d<uint>",
     },
     (init) => {
       init.dataTex(dataTextureBinding.textureId);

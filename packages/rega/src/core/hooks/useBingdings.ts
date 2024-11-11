@@ -50,6 +50,11 @@ export default function useBindings<
       >;
     };
 
+    const checkList: UniformType[] = [
+      "texture_2d",
+      "texture_2d<sint>",
+      "texture_2d<uint>",
+    ];
     const checkInits: string[] = [];
 
     for (const name in obj) {
@@ -64,7 +69,7 @@ export default function useBindings<
       resources[name] = h.resource;
       updates[name] = h.update;
 
-      if (type === "texture_2d") {
+      if (checkList.includes(t)) {
         checkInits.push(name);
       }
     }

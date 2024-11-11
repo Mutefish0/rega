@@ -121,7 +121,11 @@ export default function RenderObject({
     const textures: Record<string, Texture> = {};
 
     for (const b of material.bindGroups[0]) {
-      if (b.type === "sampledTexture") {
+      if (
+        b.type === "sampledTexture" ||
+        b.type === "sintTexture" ||
+        b.type === "uintTexture"
+      ) {
         const res = allBindings[b.name] as TransferTextureResource;
         const texture = TextureManager.get(res.textureId);
         if (!texture) {

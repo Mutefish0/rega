@@ -127,12 +127,27 @@ self.addEventListener("message", async (event) => {
 
     const bindGroupLayout = createBindGroupLayout(
       device,
-      bindings.map(({ binding, resource, name }) => ({
-        binding,
-        type: resource.type,
-        name,
-        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-      }))
+      bindings.map(({ binding, resource, name }) => {
+        let type;
+        if (resource.type === "texture") {
+          if (resource.sampleType === "sint") {
+            type = "sintTexture" as const;
+          } else if (resource.sampleType === "uint") {
+            type = "uintTexture" as const;
+          } else {
+            type = "sampledTexture" as const;
+          }
+        } else {
+          type = resource.type;
+        }
+
+        return {
+          binding,
+          type,
+          name,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        };
+      })
     );
 
     const gpuResources = bindings.map(({ resource, binding, name }) => {
@@ -148,7 +163,7 @@ self.addEventListener("message", async (event) => {
           binding,
           resource: { buffer: gpuBuffer } as GPUBufferBinding,
         };
-      } else if (resource.type === "sampledTexture") {
+      } else if (resource.type === "texture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
         const t = textures[name];
@@ -227,7 +242,7 @@ self.addEventListener("message", async (event) => {
           binding,
           resource: { buffer: gpuBuffer } as GPUBufferBinding,
         };
-      } else if (resource.type === "sampledTexture") {
+      } else if (resource.type === "texture") {
         const usage =
           GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
         const t = textures[name];
@@ -298,7 +313,7 @@ self.addEventListener("message", async (event) => {
       bindings.forEach(({ resource }) => {
         if (resource.type === "uniformBuffer") {
           removeObjectGPUBuffer(resource.buffer);
-        } else if (resource.type === "sampledTexture") {
+        } else if (resource.type === "texture") {
           removeObjectGPUTexture(resource.textureId);
         } else if (resource.type === "sampler") {
           // do nothing
@@ -353,7 +368,7 @@ async function start() {
       target.bindings.forEach(({ resource }) => {
         if (resource.type === "uniformBuffer") {
           updateGPUBuffer(device, resource.buffer);
-        } else if (resource.type === "sampledTexture") {
+        } else if (resource.type === "texture") {
           updateGPUTexture(device, resource.textureId);
         } else if (resource.type === "sampler") {
           // do nothing
@@ -372,7 +387,7 @@ async function start() {
           object.bindings.forEach(({ resource }) => {
             if (resource.type === "uniformBuffer") {
               updateGPUBuffer(device, resource.buffer);
-            } else if (resource.type === "sampledTexture") {
+            } else if (resource.type === "texture") {
               updateGPUTexture(device, resource.textureId);
             } else if (resource.type === "sampler") {
               // do nothing
