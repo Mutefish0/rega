@@ -274,8 +274,6 @@ export function updateGPUTexture(device: GPUDevice, textreId: string) {
       const { originView, dataLayoutView, sizeView, dataView, gpuTexture } =
         record;
 
-      console.log("dataViewSize:", dataView.length);
-
       device.queue.writeTexture(
         {
           texture: gpuTexture,

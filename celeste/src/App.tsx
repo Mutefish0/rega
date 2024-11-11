@@ -18,12 +18,13 @@ import {
   useTextureBinding,
   Tilemap,
 } from "rega";
-// import Level from "./scenes/Level";
+import Player from "./scenes/Player";
+import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./scenes/Level/celesteLevel";
 
-const celesteLevel = new CelesteLevel(TITLE_SCREEN_LEVEL);
+const celesteLevel = new CelesteLevel(0);
 
 const { clips, tiles } = celesteLevel.getLevelMapAll();
 
@@ -93,13 +94,30 @@ export default function App() {
     <>
       <RenderTarget main />
       <RenderGroup>
-        <Tilemap
+        <Relative translation={{ z: 1 }}>
+          <Camera type="orthographic" width={400} height={400} />
+        </Relative>
+        <Sprite2D
+          textureId="/images/atlas.png"
+          clip={[8, 0, 8, 8]}
+          size={[120, 120]}
+        />
+        {/* <Level initialLevel={0} onShake={onShake} /> */}
+        {/* <Tilemap
           textureId="/images/atlas.png"
           tiles={tiles.map(([x, y]) => [x, y - 8])}
           coords={clips.map(([x, y]) => [x, y])}
+          // tiles={[
+          //   [2, 2],
+          //   [10, 10],
+          // ]}
+          // coords={[
+          //   [8, 8],
+          //   [8, 8],
+          // ]}
           pixelPerTile={8}
           tileSize={8}
-        />
+        /> */}
       </RenderGroup>
     </>
   );

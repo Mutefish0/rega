@@ -101,6 +101,32 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     );
   });
 
+  // (deltaTime, now) => {
+  //   ctx.removedCallbacks.forEach((cb) => {
+  //     ctx.frameCallbacks.delete(cb);
+  //   });
+  //   ctx.removedCallbacks.clear();
+  //   ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
+  // },
+
+  let lastTime = performance.now();
+
+  function loop() {
+    const now = performance.now();
+    const deltaTime = now - lastTime;
+    lastTime = now;
+
+    ctx.removedCallbacks.forEach((cb) => {
+      ctx.frameCallbacks.delete(cb);
+    });
+    ctx.removedCallbacks.clear();
+    ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
+
+    setTimeout(loop, 0);
+  }
+
+  loop();
+
   function pause() {
     gameState.paused = true;
   }

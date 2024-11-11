@@ -3,6 +3,7 @@ import RenderObject from "../primitives/RenderObject";
 
 import {
   uv,
+  floor,
   varying,
   int,
   round,
@@ -14,6 +15,7 @@ import {
   uniform,
   float,
   positionGeometry,
+  uvec2,
   vec2,
   vec4,
   modelWorldMatrix,
@@ -54,37 +56,50 @@ const vertexNode = cameraProjectionMatrix
   .mul(vec4(positionGeometry.xy.mul(gridSize), positionGeometry.z, 1));
 
 const fragmentNode = (function () {
-  const vUv = varying(uv());
+  const uvNode = uv();
 
-  const offsetX = float(mod(vUv.x.mul(float(gridSize.x)), 1.0));
-  const offsetY = float(mod(vUv.y.mul(float(gridSize.y)), 1.0));
+  const offsetX = float(mod(uvNode.x.mul(float(gridSize.x)), 1.0));
+  const offsetY = float(mod(uvNode.y.mul(float(gridSize.y)), 1.0));
 
-  const dUv = vec2(offsetX, offsetY);
+  dataTex.uvNode = uvec2(uvNode.mul(gridSize));
 
-  return vec4(dUv.x, dUv.y, 0, 1);
+  //dataTex.uvNode = uvec2(20, 13);
 
-  dataTex.uvNode = dUv;
+  // return vec4(
+  //   float(dataTex.r).div(255),
+  //   float(dataTex.g).div(255),
+  //   float(dataTex.b).div(255),
+  //   1
+  // );
 
   const tx1 = dataTex.r;
   const tx2 = dataTex.g;
   const ty1 = dataTex.b;
   const ty2 = dataTex.a;
 
-  const tx = int(tx1.mul(int(256)).add(tx2)).toVar();
-  const ty = int(ty1.mul(int(256)).add(ty2)).toVar();
+  const tx = tx1.mul(int(256)).add(tx2).toVar();
+  const ty = ty1.mul(int(256)).add(ty2).toVar();
 
-  const px = float(
-    float(tx)
-      .add(offsetX.mul(float(pixelPerTile)))
-      .div(float(texSize.x))
-  );
-  const py = float(
-    float(ty)
-      .add(offsetY.mul(float(pixelPerTile)))
-      .div(float(texSize.y))
+  // const px = float(
+  //   float(tx)
+  //     .mul(pixelPerTile)
+  //     .add(offsetX.mul(float(pixelPerTile)))
+  //     .div(float(texSize.x))
+  // );
+
+  // const py = float(
+  //   float(ty)
+  //     .mul(pixelPerTile)
+  //     .add(offsetY.mul(float(pixelPerTile)))
+  //     .div(float(texSize.y))
+  //);
+
+  const tuv = vec2(
+    float(tx).div(texSize.x),
+    float(1).sub(float(ty)).div(texSize.y)
   );
 
-  const tuv = vec2(px, py);
+  //tex.uvNode = tuv;
 
   tex.uvNode = tuv;
 
@@ -157,8 +172,12 @@ export default React.memo(function Tilemap({
       const b = rect[1] >> 8;
       const a = rect[1] & 0xff;
 
+      console.log(`${x}-${y}`, rect);
+
       data[`${x}-${y}`] = [r, g, b, a];
     }
+
+    console.log("data: ", data);
 
     dataTextureBinding.update([0, 0, width, height], (x, y) => {
       return data[`${x}-${y}`] || [0, 0, 0, 0];

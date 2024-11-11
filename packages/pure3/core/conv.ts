@@ -3,6 +3,12 @@ import {
   vec2 as _vec2,
   vec3 as _vec3,
   vec4 as _vec4,
+  ivec2,
+  ivec3,
+  ivec4,
+  uvec2,
+  uvec3,
+  uvec4,
 } from "three/src/nodes/TSL.js";
 
 import { Node } from "./types";
@@ -59,3 +65,5 @@ export function vec4(a: Node<"vec4">): Node<"vec4">;
 export function vec4(...args: any[]): Node<"vec4"> {
   return _vec4(...args);
 }
+
+export { ivec2, ivec3, ivec4, uvec2, uvec3, uvec4 };
