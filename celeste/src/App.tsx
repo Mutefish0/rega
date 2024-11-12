@@ -102,6 +102,20 @@ export default function App() {
             anchor="top-left"
           />
         </Relative>
+        {/* <Order order={1}>
+          <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
+        </Order> */}
+
+        {/* <Order order={10}>
+          <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
+        </Order>
+
+        <Order order={5}>
+          <Relative translation={{ x: 10, y: 10 }}>
+            <Box2D size={[20, 20]} anchor="bottom-left" color="red" />
+          </Relative>
+        </Order> */}
+
         {/* <Sprite2D
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}

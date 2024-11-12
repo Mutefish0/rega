@@ -63,11 +63,13 @@ export default function createRenderPipeline(
 
   const pipeline = device.createRenderPipeline({
     layout: pipelineLayout, // 使用自定义的管线布局
+
     vertex: {
       module: shaderModuleVertex,
       entryPoint: "main",
       buffers: gpuVeterxBufferLayouts,
     },
+
     fragment: {
       module: shaderModuleFragment,
       entryPoint: "main",
@@ -78,10 +80,17 @@ export default function createRenderPipeline(
         },
       ],
     },
+
     primitive: {
       topology: "triangle-list",
       cullMode,
       frontFace,
+    },
+
+    depthStencil: {
+      format: "depth24plus", // 与深度纹理的格式一致
+      depthWriteEnabled: true,
+      depthCompare: "less-equal",
     },
   });
 

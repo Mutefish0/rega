@@ -17,6 +17,7 @@ import {
   cameraProjectionMatrix as _cameraProjectionMatrix,
   cameraViewMatrix as _cameraViewMatrix,
 } from "three/src/nodes/TSL.js";
+import { vec4 } from "./core/conv";
 
 export {
   Vector2,
@@ -36,3 +37,9 @@ export { positionGeometry, cameraProjectionMatrix, cameraViewMatrix };
 const uv = _uv as () => Node<"vec2">;
 
 export { uv };
+
+const zIndex = uniform("float", "zIndex");
+const normZIndex = zIndex.div(zIndex.add(1));
+const zIndexBias = vec4(0, 0, 0, normZIndex.div(1_000_000));
+
+export { zIndexBias };

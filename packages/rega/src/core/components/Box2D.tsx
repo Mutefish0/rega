@@ -69,6 +69,7 @@ export default React.memo(function Box2D({
         vertex={quad.vertex}
         index={quad.index}
         bindings={bindings.resources}
+        zIndexEnabled
       />
     </Relative>
   );

@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useRef } from "react";
 import TransformContext from "./TransformContext";
 import RenderContext from "./RenderContext";
+import OrderContext from "./OrderContext";
 import { RenderGroupContext } from "./RenderGroup";
 import {
   NamedBindingLayout,
@@ -9,12 +10,12 @@ import {
   TransferTextureResource,
 } from "../render";
 import { BindingContext } from "./BindingContext";
-import { createUniformBinding } from "../../core/render/binding";
+import useBindings from "../hooks/useBingdings";
 import { getOrcreateSlot } from "../render/slot";
 import { differenceBy } from "lodash";
 import createMaterial from "../render/createMaterial";
 import TextureManager, { Texture } from "../common/texture_manager";
-import { Node } from "pure3";
+import { Node, zIndexBias } from "pure3";
 
 interface Props {
   bindings?: Record<string, TransferResource>;
@@ -29,6 +30,8 @@ interface Props {
     indexCount: number;
     indexBuffer: SharedArrayBuffer;
   };
+
+  zIndexEnabled?: boolean;
 }
 
 export default function RenderObject({
@@ -38,8 +41,10 @@ export default function RenderObject({
   vertexCount,
   index,
   bindings = {},
+  zIndexEnabled,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
+  const orderCtx = useContext(OrderContext);
   const rgCtx = useContext(RenderGroupContext);
   const renderCtx = useContext(RenderContext);
   const transform = useContext(TransformContext);
@@ -48,7 +53,10 @@ export default function RenderObject({
     targetIds: [] as string[],
   });
 
-  const bModelWorldMatrix = useMemo(() => createUniformBinding("mat4"), []);
+  const binds = useBindings({
+    modelWorldMatrix: "mat4",
+    zIndex: "float",
+  });
 
   function getBindingLayout(name: string) {
     if (renderCtx.renderTargetBindGroupLayout[name]) {
@@ -64,21 +72,29 @@ export default function RenderObject({
     }
   }
 
-  const material = useMemo(
-    () => createMaterial(vertexNode, fragmentNode, getBindingLayout),
-    [vertexNode, fragmentNode]
-  );
+  const material = useMemo(() => {
+    let vertex = vertexNode;
+
+    if (zIndexEnabled) {
+      vertex = vertex.add(zIndexBias);
+      vertex.uuid = vertexNode.uuid + "-zIndexEnabled";
+    }
+
+    return createMaterial(vertex, fragmentNode, getBindingLayout);
+  }, [vertexNode, fragmentNode, zIndexEnabled]);
 
   useEffect(() => {
     const mat = transform.leafMatrix;
-    bModelWorldMatrix.update(mat.elements);
+    binds.updates.modelWorldMatrix(mat.elements);
   }, [transform]);
+
+  useEffect(() => binds.updates.zIndex([orderCtx.order]), [orderCtx]);
 
   useEffect(() => {
     const allBindings = {
       ...bindingCtx,
       ...bindings,
-      modelWorldMatrix: bModelWorldMatrix.resource,
+      ...binds.resources,
     } as Record<string, TransferResource>;
 
     const objectBindings: TransferBinding[] = [];

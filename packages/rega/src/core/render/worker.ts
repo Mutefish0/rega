@@ -22,6 +22,7 @@ import createBindGroupLayout from "./createBindGroupLayout";
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
+let canvasSize = { width: 0, height: 0 };
 
 const pipelineMap = new Map<
   string,
@@ -96,8 +97,9 @@ let _initialized = false;
 self.addEventListener("message", async (event) => {
   if (event.data.type === "initCanvas" && !_initialized) {
     _initialized = true;
-    const canvas = event.data.canvas;
+    const canvas = event.data.canvas as OffscreenCanvas;
     const adapter = await navigator.gpu.requestAdapter();
+    canvasSize = { width: canvas.width, height: canvas.height };
     device = await adapter!.requestDevice();
     context = canvas.getContext("webgpu")!;
     // 配置画布格式
@@ -333,6 +335,12 @@ self.addEventListener("message", async (event) => {
 async function start() {
   let frame = 0;
 
+  const depthTexture = device.createTexture({
+    size: [canvasSize.width, canvasSize.height, 1],
+    format: "depth24plus",
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+
   function render() {
     frame++;
 
@@ -347,6 +355,12 @@ async function start() {
           storeOp: "store",
         },
       ],
+      depthStencilAttachment: {
+        view: depthTexture.createView(),
+        depthClearValue: 1.0, // 深度清除值
+        depthStoreOp: "store",
+        depthLoadOp: "clear",
+      },
     };
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);

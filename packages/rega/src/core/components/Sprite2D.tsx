@@ -156,6 +156,7 @@ export default React.memo(function Sprite2D({
         vertexCount={quad.vertexCount}
         vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
         index={quad.index}
+        zIndexEnabled
       />
     </Relative>
   );

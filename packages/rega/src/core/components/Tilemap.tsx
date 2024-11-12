@@ -189,6 +189,7 @@ export default React.memo(function Tilemap({
         }}
         vertexCount={quad.vertexCount}
         index={quad.index}
+        zIndexEnabled
       />
     </Relative>
   );
