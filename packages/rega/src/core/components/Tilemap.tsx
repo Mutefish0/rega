@@ -4,9 +4,7 @@ import RenderObject from "../primitives/RenderObject";
 import {
   uv,
   floor,
-  varying,
   int,
-  round,
   tslFn,
   If,
   Discard,
@@ -22,8 +20,10 @@ import {
   cameraProjectionMatrix,
   cameraViewMatrix,
   dataTexture,
+  Matrix4,
 } from "pure3";
 
+import Relative from "../primitives/Relative";
 import TextureManager from "../common/texture_manager";
 import quad from "../render/geometry/quad";
 import useBindings from "../hooks/useBingdings";
@@ -33,12 +33,17 @@ import { parseColor } from "../tools/color";
 
 interface Props {
   textureId: string;
+
+  /* sprite pixel size per tile */
   pixelPerTile: number;
   /* sprite coord, top-left anchor */
   coords: Array<[number, number]>;
-  /* tile coord, bottom-left anchor */
+
+  /* tile coord, top-left anchor */
   tiles: Array<[number, number]>; // [x, y]
+  /* world size per tile */
   tileSize?: number;
+
   color?: string;
 }
 
@@ -53,7 +58,7 @@ const color = uniform("vec4", "color");
 const vertexNode = cameraProjectionMatrix
   .mul(cameraViewMatrix)
   .mul(modelWorldMatrix)
-  .mul(vec4(positionGeometry.xy.mul(gridSize), positionGeometry.z, 1));
+  .mul(vec4(positionGeometry, 1));
 
 const fragmentNode = (function () {
   const uvNode = uv();
@@ -61,16 +66,7 @@ const fragmentNode = (function () {
   const offsetX = float(mod(uvNode.x.mul(float(gridSize.x)), 1.0));
   const offsetY = float(mod(uvNode.y.mul(float(gridSize.y)), 1.0));
 
-  dataTex.uvNode = uvec2(uvNode.mul(gridSize));
-
-  //dataTex.uvNode = uvec2(20, 13);
-
-  // return vec4(
-  //   float(dataTex.r).div(255),
-  //   float(dataTex.g).div(255),
-  //   float(dataTex.b).div(255),
-  //   1
-  // );
+  dataTex.uvNode = uvec2(floor(uvNode.mul(gridSize)));
 
   const tx1 = dataTex.r;
   const tx2 = dataTex.g;
@@ -80,28 +76,10 @@ const fragmentNode = (function () {
   const tx = tx1.mul(int(256)).add(tx2).toVar();
   const ty = ty1.mul(int(256)).add(ty2).toVar();
 
-  // const px = float(
-  //   float(tx)
-  //     .mul(pixelPerTile)
-  //     .add(offsetX.mul(float(pixelPerTile)))
-  //     .div(float(texSize.x))
-  // );
-
-  // const py = float(
-  //   float(ty)
-  //     .mul(pixelPerTile)
-  //     .add(offsetY.mul(float(pixelPerTile)))
-  //     .div(float(texSize.y))
-  //);
-
-  const tuv = vec2(
-    float(tx).div(texSize.x),
-    float(1).sub(float(ty)).div(texSize.y)
+  tex.uvNode = vec2(
+    float(tx.add(offsetX.mul(pixelPerTile))).div(texSize.x),
+    float(ty.add(offsetY.mul(pixelPerTile))).div(texSize.y)
   );
-
-  //tex.uvNode = tuv;
-
-  tex.uvNode = tuv;
 
   const cnode = tslFn(() => {
     const cNode = vec4(1, 1, 1, 1).toVar();
@@ -144,47 +122,41 @@ export default React.memo(function Tilemap({
     }
   );
 
-  const rects = useMemo(
-    () => coords.map(([x, y]) => [x, texture!.height - y - pixelPerTile]),
-    [coords, pixelPerTile, texture!.height]
-  );
-
-  useEffect(() => {
+  const gridSize = useMemo(() => {
     let width = 0;
     let height = 0;
-
-    const normalizedTiles = tiles.map(([x, y]) => [x / tileSize, y / tileSize]);
-
-    for (let [x, y] of normalizedTiles) {
-      width = Math.max(width, Math.abs(x > 0 ? x + 1 : x) * 2);
-      height = Math.max(height, Math.abs(y > 0 ? y + 1 : y) * 2);
+    for (let [x, y] of tiles) {
+      width = Math.max(width, Math.abs(x >= 0 ? x + 1 : x) * 2);
+      height = Math.max(height, Math.abs(y >= 0 ? y + 1 : y) * 2);
     }
 
+    return [width, height];
+  }, [tiles]);
+
+  useEffect(() => {
+    bindings.updates.gridSize(gridSize);
+  }, [gridSize]);
+
+  useEffect(() => {
     const data: Record<string, number[]> = {};
 
-    for (let i = 0; i < normalizedTiles.length; i++) {
-      const [_x, _y] = normalizedTiles[i];
-      const rect = rects[i];
-      const x = _x + width / 2;
-      const y = _y + height / 2;
+    for (let i = 0; i < tiles.length; i++) {
+      const [_x, _y] = tiles[i];
+      const rect = coords[i];
+      // world coord to texture coord (top-left anchor)
+      const x = _x + gridSize[0] / 2;
+      const y = gridSize[1] / 2 - _y;
       const r = rect[0] >> 8;
       const g = rect[0] & 0xff;
       const b = rect[1] >> 8;
       const a = rect[1] & 0xff;
-
-      console.log(`${x}-${y}`, rect);
-
       data[`${x}-${y}`] = [r, g, b, a];
     }
 
-    console.log("data: ", data);
-
-    dataTextureBinding.update([0, 0, width, height], (x, y) => {
-      return data[`${x}-${y}`] || [0, 0, 0, 0];
+    dataTextureBinding.update([0, 0, gridSize[0], gridSize[1]], (x, y) => {
+      return data[`${x}-${y}`] || [0, -1, 0, -1];
     });
-
-    bindings.updates.gridSize([width, height]);
-  }, [tiles, rects]);
+  }, [gridSize, tiles, coords]);
 
   useEffect(() => {
     if (color) {
@@ -195,83 +167,29 @@ export default React.memo(function Tilemap({
     }
   }, [color]);
 
-  // const { geometry, material } = useMemo(() => {
-  //   const geometry = new PlaneGeometry(tileSize, tileSize);
-  //   const material = new MeshBasicNodeMaterial();
-  //   material.transparent = true;
+  useEffect(() => {
+    bindings.updates.pixelPerTile([pixelPerTile]);
+  }, [pixelPerTile]);
 
-  //   material.positionNode = positionGeometry.mul(
-  //     vec3(uniforms.gridSize.x, uniforms.gridSize.y, 1)
-  //   );
-
-  //   const vUv = varying(uv());
-
-  //   uniforms.dataTexture.uvNode = vUv;
-
-  //   const offsetX = float(mod(vUv.x.mul(float(uniforms.gridSize.x)), 1.0));
-
-  //   const offsetY = float(mod(vUv.y.mul(float(uniforms.gridSize.y)), 1.0));
-
-  //   const tx1 = int(round(uniforms.dataTexture.r.mul(255.0)));
-  //   const tx2 = int(round(uniforms.dataTexture.g.mul(255.0)));
-  //   const ty1 = int(round(uniforms.dataTexture.b.mul(255.0)));
-  //   const ty2 = int(round(uniforms.dataTexture.a.mul(255.0)));
-
-  //   const tx = int(tx1.mul(int(256)).add(tx2)).toVar();
-  //   const ty = int(ty1.mul(int(256)).add(ty2)).toVar();
-
-  //   const px = float(
-  //     float(tx)
-  //       .add(offsetX.mul(float(pixelPerTile)))
-  //       .div(float(uniforms.textureSize.x))
-  //   );
-
-  //   const py = float(
-  //     float(ty)
-  //       .add(offsetY.mul(float(pixelPerTile)))
-  //       .div(float(uniforms.textureSize.y))
-  //   );
-
-  //   const tuv = vec2(px, py);
-
-  //   uniforms.tex.uvNode = tuv;
-
-  //   const cnode = tslFn(() => {
-  //     const cNode = vec4(1, 1, 1, 1).toVar();
-
-  //     If(
-  //       tx
-  //         .lessThan(uniforms.textureSize.x)
-  //         .and(ty.lessThan(uniforms.textureSize.y)),
-  //       () => {
-  //         cNode.assign(uniforms.tex, 1);
-  //       }
-  //     ).else(() => {
-  //       Discard(true);
-  //     });
-
-  //     return cNode.mul(uniforms.color);
-  //   });
-
-  //   material.colorNode = cnode();
-
-  //   return {
-  //     geometry,
-  //     material,
-  //   };
-  // }, []);
+  const matrix = useMemo(() => {
+    const mat = new Matrix4();
+    mat.makeScale(gridSize[0] * tileSize, gridSize[1] * tileSize, 1);
+    return mat;
+  }, [gridSize.join(","), tileSize]);
 
   return (
-    <RenderObject
-      bindings={bindings.resources}
-      vertexNode={vertexNode}
-      fragmentNode={fragmentNode}
-      vertex={{
-        position: quad.vertex.position,
-        uv: quad.vertex.uv,
-      }}
-      vertexCount={quad.vertexCount}
-      index={quad.index}
-    />
+    <Relative matrix={matrix}>
+      <RenderObject
+        bindings={bindings.resources}
+        vertexNode={vertexNode}
+        fragmentNode={fragmentNode}
+        vertex={{
+          position: quad.vertex.position,
+          uv: quad.vertex.uv,
+        }}
+        vertexCount={quad.vertexCount}
+        index={quad.index}
+      />
+    </Relative>
   );
 });

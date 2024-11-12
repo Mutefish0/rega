@@ -95,29 +95,27 @@ export default function App() {
       <RenderTarget main />
       <RenderGroup>
         <Relative translation={{ z: 1 }}>
-          <Camera type="orthographic" width={400} height={400} />
+          <Camera
+            type="orthographic"
+            width={128}
+            height={128}
+            anchor="top-left"
+          />
         </Relative>
-        <Sprite2D
+        {/* <Sprite2D
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}
           size={[120, 120]}
-        />
+        /> */}
         {/* <Level initialLevel={0} onShake={onShake} /> */}
-        {/* <Tilemap
+        {/* <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" /> */}
+        <Tilemap
           textureId="/images/atlas.png"
-          tiles={tiles.map(([x, y]) => [x, y - 8])}
+          tiles={tiles.map(([x, y]) => [x, y])}
           coords={clips.map(([x, y]) => [x, y])}
-          // tiles={[
-          //   [2, 2],
-          //   [10, 10],
-          // ]}
-          // coords={[
-          //   [8, 8],
-          //   [8, 8],
-          // ]}
           pixelPerTile={8}
           tileSize={8}
-        /> */}
+        />
       </RenderGroup>
     </>
   );

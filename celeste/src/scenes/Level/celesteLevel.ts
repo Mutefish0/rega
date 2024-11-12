@@ -744,8 +744,8 @@ class CelesteLevel {
    */
   getLevelMap(mask = 0 | 1 | 2 | 3) {
     const mw = 16,
-      mh = 16,
-      ty = 0;
+      mh = 16;
+
     let tx = 0;
 
     if (this.isTitle()) {
@@ -767,7 +767,7 @@ class CelesteLevel {
         const tile = this.data[x + mx + (y + my) * 128];
         if (mask == 0 || fget(tile, mask)) {
           const clip = spr(tile);
-          const t = [tx + x * 8, -(ty + y * 8)] as [number, number];
+          const t = [tx + x, -y] as [number, number];
           clips.push(clip);
           tiles.push(t);
           if (fget(tile, 0)) {

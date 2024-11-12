@@ -96,7 +96,7 @@ export default function Room({
     <RigidBody2D type="fixed" mass={1000}>
       <Tilemap
         textureId="/images/atlas.png"
-        tiles={tiles.map(([x, y]) => [x, y - 8])}
+        tiles={tiles.map(([x, y]) => [x, y])}
         coords={clips.map(([x, y]) => [x, y])}
         pixelPerTile={8}
         tileSize={8}
