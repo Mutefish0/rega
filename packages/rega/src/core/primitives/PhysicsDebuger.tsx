@@ -76,6 +76,7 @@ export default React.memo(function PhysicsDebuger() {
       vertexNode={vertexNode}
       fragmentNode={fragmentNode}
       topology="line-list"
+      zIndexEnabled
     />
   );
 });

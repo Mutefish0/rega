@@ -4,6 +4,7 @@ import Relative from "../../primitives/Relative";
 import Grid from "../Grid";
 import Camera from "../../primitives/Camera";
 import useWheels from "../../hooks/useWheels";
+import Order from "../../primitives/Order";
 import PhysicsDebuger from "../../primitives/PhysicsDebuger";
 
 interface Props {
@@ -58,7 +59,11 @@ export default function Editor({
     <>
       {/* <Grid color="rgba(0,0,0,0.15)" principleColor="rgba(125,0,0,0.3)" /> */}
       {children}
-      {!!showPhysicDebuger && <PhysicsDebuger />}
+      {!!showPhysicDebuger && (
+        <Order order={1000}>
+          <PhysicsDebuger />
+        </Order>
+      )}
       {/* {!!showIteractiveCamera && (
         <>
           <Relative translation={position}>
