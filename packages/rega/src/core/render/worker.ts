@@ -50,6 +50,8 @@ const renderObjectMap = new Map<
     bindGroup: GPUBindGroup;
 
     input: TransferInput;
+
+    vertexCountView: Uint32Array;
   }
 >();
 
@@ -307,6 +309,7 @@ self.addEventListener("message", async (event) => {
       material,
       bindGroup: gpuBindGroup,
       bindings,
+      vertexCountView: new Uint32Array(input.vertexCtrlBuffer),
     });
   } else if (event.data.type === "removeObject") {
     const id = event.data.id;
@@ -425,7 +428,7 @@ async function start() {
             passEncoder.setIndexBuffer(gpuBuffer, "uint16");
             passEncoder.drawIndexed(indexCount);
           } else {
-            passEncoder.draw(object.input.vertexCount);
+            passEncoder.draw(object.vertexCountView[0]);
           }
         }
       });

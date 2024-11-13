@@ -52,3 +52,20 @@ export function createIndexBinding(indexCount: number) {
     update,
   };
 }
+
+export function createVertexControll(vertexCount = 0) {
+  const buf = new SharedArrayBuffer(4);
+
+  const vertexCountView = new Uint32Array(buf);
+
+  function updateVertexCount(count: number) {
+    vertexCountView.set([count]);
+  }
+
+  updateVertexCount(vertexCount);
+
+  return {
+    buffer: buf,
+    updateVertexCount,
+  };
+}

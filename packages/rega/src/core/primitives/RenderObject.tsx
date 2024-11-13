@@ -9,6 +9,7 @@ import {
   TransferResource,
   TransferTextureResource,
 } from "../render";
+import { createVertexControll } from "../render/vertex";
 import { BindingContext } from "./BindingContext";
 import useBindings from "../hooks/useBingdings";
 import { getOrcreateSlot } from "../render/slot";
@@ -32,6 +33,8 @@ interface Props {
   };
 
   zIndexEnabled?: boolean;
+
+  topology?: GPUPrimitiveTopology;
 }
 
 export default function RenderObject({
@@ -42,6 +45,7 @@ export default function RenderObject({
   index,
   bindings = {},
   zIndexEnabled,
+  topology,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const orderCtx = useContext(OrderContext);
@@ -53,10 +57,16 @@ export default function RenderObject({
     targetIds: [] as string[],
   });
 
+  const vc = useMemo(() => createVertexControll(vertexCount), []);
+
   const binds = useBindings({
     modelWorldMatrix: "mat4",
     zIndex: "float",
   });
+
+  useEffect(() => {
+    vc.updateVertexCount(vertexCount);
+  }, [vertexCount]);
 
   function getBindingLayout(name: string) {
     if (renderCtx.renderTargetBindGroupLayout[name]) {
@@ -80,7 +90,7 @@ export default function RenderObject({
       vertex.uuid = vertexNode.uuid + "-zIndexEnabled";
     }
 
-    return createMaterial(vertex, fragmentNode, getBindingLayout);
+    return createMaterial(vertex, fragmentNode, getBindingLayout, { topology });
   }, [vertexNode, fragmentNode, zIndexEnabled]);
 
   useEffect(() => {
@@ -171,7 +181,7 @@ export default function RenderObject({
       bindings: objectBindings,
       input: {
         vertexBuffers,
-        vertexCount,
+        vertexCtrlBuffer: vc.buffer,
         index,
       },
       textures,

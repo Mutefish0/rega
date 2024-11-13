@@ -53,7 +53,8 @@ export interface TransferRenderTarget {
 
 export interface TransferInput {
   vertexBuffers: SharedArrayBuffer[];
-  vertexCount: number;
+  vertexCtrlBuffer: SharedArrayBuffer;
+
   index?: {
     indexBuffer: SharedArrayBuffer;
     indexCount: number;
@@ -153,4 +154,6 @@ export interface MaterialJSON {
 
   frontFace: GPUFrontFace;
   cullMode: GPUCullMode;
+
+  topology: GPUPrimitiveTopology;
 }

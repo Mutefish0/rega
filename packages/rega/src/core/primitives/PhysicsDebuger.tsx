@@ -1,39 +1,42 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import PhysicsContext from "./PhysicsContext";
-import ThreeContext from "./ThreeContext";
+
 import {
-  BufferGeometry,
-  LineBasicMaterial,
-  LineSegments,
-  BufferAttribute,
-  AlwaysDepth,
-} from "three/webgpu";
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+  modelWorldMatrix,
+  positionGeometry,
+  vec4,
+  vertexColor,
+} from "pure3";
+
+import RenderObject from "./RenderObject";
+import { createVertexBinding } from "../render/vertex";
 import { useAfterPhysicsFrame } from "../primitives/Physics";
+
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
+
+const fragmentNode = vertexColor as any;
 
 // max debug vertices
 const MAX_POINTS = 1000;
 
 export default React.memo(function PhysicsDebuger() {
   const ctx = useContext(PhysicsContext);
-  const context = useContext(ThreeContext);
+  const [vertexCount, setVertexCount] = useState(0);
 
-  const { geometry, positionAttribute, colorAttribute } = useMemo(() => {
-    const geometry = new BufferGeometry();
+  const positionBinding = useMemo(
+    () => createVertexBinding("vec3", MAX_POINTS),
+    []
+  );
 
-    const positionAttribute = new BufferAttribute(
-      new Float32Array(MAX_POINTS * 3),
-      3
-    );
-    const colorAttribute = new BufferAttribute(
-      new Float32Array(MAX_POINTS * 4),
-      4
-    );
-
-    geometry.setAttribute("position", positionAttribute);
-    geometry.setAttribute("color", colorAttribute);
-
-    return { geometry, positionAttribute, colorAttribute };
-  }, []);
+  const colorBinding = useMemo(
+    () => createVertexBinding("vec4", MAX_POINTS),
+    []
+  );
 
   useAfterPhysicsFrame(() => {
     const { vertices, colors } = ctx.debugRender() as {
@@ -42,42 +45,37 @@ export default React.memo(function PhysicsDebuger() {
     };
     let i = 0;
     for (; i < vertices.length; i += 2) {
-      positionAttribute.setXYZ(i / 2, vertices[i], vertices[i + 1], 0);
+      positionBinding.update([i / 2, vertices[i], vertices[i + 1], 0]);
     }
-    geometry.setDrawRange(0, i / 2);
-    positionAttribute.needsUpdate = true;
 
     for (let i = 0; i < colors.length; i += 4) {
-      colorAttribute.setXYZW(
+      colorBinding.update([
         i / 4,
         colors[i],
         colors[i + 1],
         colors[i + 2],
-        colors[i + 3]
-      );
+        colors[i + 3],
+      ]);
     }
-    colorAttribute.needsUpdate = true;
+
+    setVertexCount(i / 2);
   }, []);
 
-  useEffect(() => {
-    const lines = new LineSegments(
-      geometry,
-      new LineBasicMaterial({
-        linewidth: 1,
-        vertexColors: true,
-        transparent: true,
-      })
-    );
-    context.scene.add(lines);
-    lines.frustumCulled = false;
-    lines.renderOrder = 9999;
+  const vertex = useMemo(
+    () => ({
+      position: positionBinding.buffer,
+      color: colorBinding.buffer,
+    }),
+    []
+  );
 
-    return () => {
-      context.scene.remove(lines);
-      lines.material.dispose();
-      lines.geometry.dispose();
-    };
-  }, []);
-
-  return null;
+  return (
+    <RenderObject
+      vertex={vertex}
+      vertexCount={vertexCount}
+      vertexNode={vertexNode}
+      fragmentNode={fragmentNode}
+      topology="line-list"
+    />
+  );
 });

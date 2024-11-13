@@ -13,6 +13,7 @@ export default function createRenderPipeline(
     format,
     frontFace,
     cullMode,
+    topology,
   } = materialJSON;
 
   const shaderModuleVertex = device.createShaderModule({
@@ -82,7 +83,7 @@ export default function createRenderPipeline(
     },
 
     primitive: {
-      topology: "triangle-list",
+      topology,
       cullMode,
       frontFace,
     },

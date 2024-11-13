@@ -136,7 +136,7 @@ export default function App() {
     </>
   );
 
-  return appElement;
+  // return appElement;
 
   // const appElement = (
   //   <>
@@ -161,13 +161,13 @@ export default function App() {
   //   </>
   // );
 
-  // if (import.meta.env.DEV) {
-  //   return (
-  //     <Editor showIteractiveCamera={false} showPhysicDebuger={false}>
-  //       {appElement}
-  //     </Editor>
-  //   );
-  // } else {
-  //   return appElement;
-  // }
+  if (import.meta.env.DEV) {
+    return (
+      <Editor showIteractiveCamera={true} showPhysicDebuger={true}>
+        {appElement}
+      </Editor>
+    );
+  } else {
+    return appElement;
+  }
 }

@@ -94,16 +94,16 @@ export default function Room({
 
   return (
     <RigidBody2D type="fixed" mass={1000}>
-      <Tilemap
+      {/* <Tilemap
         textureId="/images/atlas.png"
         tiles={tiles.map(([x, y]) => [x, y])}
         coords={clips.map(([x, y]) => [x, y])}
         pixelPerTile={8}
         tileSize={8}
-      />
+      /> */}
       <TilemapCollider2D
         tiles={colliderSolids}
-        tileSize={8}
+        tileSize={1}
         collisionGroup={CollisionGroup.Solid}
       />
       {/* platforms */}

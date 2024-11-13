@@ -69,6 +69,7 @@ function calcBindingBufferLayout(uniforms: UniformLayout[]) {
 interface Options {
   frontFace?: GPUFrontFace;
   cullMode?: GPUCullMode;
+  topology?: GPUPrimitiveTopology;
 }
 
 const cahce = new Map<string, MaterialJSON>();
@@ -80,6 +81,7 @@ export default function createMaterial(
   options: Options = {
     frontFace: "ccw",
     cullMode: "none",
+    topology: "triangle-list",
   }
 ) {
   const key = [vertexNode.uuid, fragmentNode.uuid].join(",");
@@ -192,6 +194,8 @@ export default function createMaterial(
     format: "bgra8unorm",
     frontFace: options.frontFace || "ccw",
     cullMode: options.cullMode || "back",
+
+    topology: options.topology || "triangle-list",
   };
 
   cahce.set(key, mat);

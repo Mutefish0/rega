@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Vector3, Camera } from "three/webgpu";
+import { Vector3 } from "pure3";
 import Relative from "../../primitives/Relative";
 import Grid from "../Grid";
-import Lens from "../Camera/Lens";
-import Screen from "../Camera/Screen";
+import Camera from "../../primitives/Camera";
 import useWheels from "../../hooks/useWheels";
 import PhysicsDebuger from "../../primitives/PhysicsDebuger";
-import Order from "../../primitives/Order";
 
 interface Props {
   showPhysicDebuger?: boolean;
@@ -38,39 +36,36 @@ export default function Editor({
   showPhysicDebuger,
   showIteractiveCamera,
 }: Props) {
-  const cameraRef = useRef<Camera>();
-
   const [position, setPosition] = useState(INITIAL_POSITION);
 
-  const mat = useWheels(cameraRef);
+  useWheels(handleWheel);
 
-  useEffect(() => {
-    if (mat) {
-      setPosition((prev) => {
-        const p = prev.clone().applyMatrix4(mat);
-        setLocalPosition(p);
-        return p;
-      });
-    }
-  }, [mat]);
+  function handleWheel(dx: number, dy: number) {
+    //
+  }
+
+  // useEffect(() => {
+  //   if (mat) {
+  //     setPosition((prev) => {
+  //       const p = prev.clone().applyMatrix4(mat);
+  //       setLocalPosition(p);
+  //       return p;
+  //     });
+  //   }
+  // }, [mat]);
 
   return (
     <>
-      <Grid color="rgba(0,0,0,0.15)" principleColor="rgba(125,0,0,0.3)" />
+      {/* <Grid color="rgba(0,0,0,0.15)" principleColor="rgba(125,0,0,0.3)" /> */}
       {children}
       {!!showPhysicDebuger && <PhysicsDebuger />}
-      {!!showIteractiveCamera && (
+      {/* {!!showIteractiveCamera && (
         <>
-          <Screen root screenId="__editorCamera__" />
           <Relative translation={position}>
-            <Lens
-              cameraRef={cameraRef}
-              type="perspective"
-              screenId="__editorCamera__"
-            />
+            <Camera type="perspective" />
           </Relative>
         </>
-      )}
+      )} */}
     </>
   );
 }
