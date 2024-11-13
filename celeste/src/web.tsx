@@ -6,4 +6,5 @@ import "./index.css";
 Engine(<App />, {
   width: 512,
   height: 512,
+  backgroundColor: "rgba(100,100,100,0.4)",
 });

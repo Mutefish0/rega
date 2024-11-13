@@ -17,7 +17,9 @@ import {
   GUICamera,
   useTextureBinding,
   Tilemap,
+  TilemapCollider2D,
 } from "rega";
+
 import Player from "./scenes/Player";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
@@ -26,7 +28,7 @@ import Fruit from "./scenes/Room/Fruit";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./scenes/Level/celesteLevel";
 
-const celesteLevel = new CelesteLevel(0);
+const celesteLevel = new CelesteLevel(1);
 
 const { clips, tiles } = celesteLevel.getLevelMapAll();
 
@@ -101,7 +103,7 @@ export default function App() {
             type="orthographic"
             width={128}
             height={128}
-            anchor="top-left"
+            //anchor="top-left"
           />
         </Relative>
 
@@ -118,12 +120,14 @@ export default function App() {
             <Box2D size={[20, 20]} anchor="bottom-left" color="red" />
           </Relative>
         </Order> */}
-        {/* <Sprite2D
+        <Sprite2D
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}
-          size={[120, 120]}
-        /> */}
-        <Level initialLevel={0} onShake={onShake} />
+          size={[20, 20]}
+          flipX={false}
+        />
+        {/* <Level initialLevel={0} onShake={onShake} /> */}
+
         {/* <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" /> */}
         {/* <Tilemap
           textureId="/images/atlas.png"
@@ -132,11 +136,15 @@ export default function App() {
           pixelPerTile={8}
           tileSize={8}
         /> */}
+
+        {import.meta.env.DEV && (
+          <Editor showIteractiveCamera={true} showPhysicDebuger={true} />
+        )}
       </RenderGroup>
     </>
   );
 
-  // return appElement;
+  return appElement;
 
   // const appElement = (
   //   <>
@@ -161,13 +169,13 @@ export default function App() {
   //   </>
   // );
 
-  if (import.meta.env.DEV) {
-    return (
-      <Editor showIteractiveCamera={true} showPhysicDebuger={true}>
-        {appElement}
-      </Editor>
-    );
-  } else {
-    return appElement;
-  }
+  // if (import.meta.env.DEV) {
+  //   return (
+  //     <Editor showIteractiveCamera={true} showPhysicDebuger={true}>
+  //       {appElement}
+  //     </Editor>
+  //   );
+  // } else {
+  //   return appElement;
+  // }
 }

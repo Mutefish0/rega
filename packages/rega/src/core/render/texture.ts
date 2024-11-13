@@ -71,8 +71,6 @@ export function createDataTextureBinding(
 
     let destStartOffset = bytesPerRow * originY + originX * bytesPerTexel;
 
-    console.log("offset:", destStartOffset);
-
     destOriginView.set([originX, originY]);
     sizeView.set([sizeX, sizeY]);
 

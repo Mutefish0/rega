@@ -16,6 +16,7 @@ import {
   positionGeometry as _positionGeometry,
   cameraProjectionMatrix as _cameraProjectionMatrix,
   cameraViewMatrix as _cameraViewMatrix,
+  attribute as _attribute,
 } from "three/src/nodes/TSL.js";
 import { vec4 } from "./core/conv";
 
@@ -31,6 +32,12 @@ export {
 const positionGeometry = _positionGeometry as Node<"vec3">;
 const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
 const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
+
+function attribute<T extends WGSLValueType>(type: T, name: string) {
+  return _attribute(name, type) as Node<T>;
+}
+
+export { attribute };
 
 export { positionGeometry, cameraProjectionMatrix, cameraViewMatrix };
 

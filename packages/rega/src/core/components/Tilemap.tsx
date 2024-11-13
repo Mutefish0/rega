@@ -33,12 +33,10 @@ import { parseColor } from "../tools/color";
 
 interface Props {
   textureId: string;
-
   /* sprite pixel size per tile */
   pixelPerTile: number;
   /* sprite coord, top-left anchor */
   coords: Array<[number, number]>;
-
   /* tile coord, top-left anchor */
   tiles: Array<[number, number]>; // [x, y]
   /* world size per tile */
@@ -127,7 +125,7 @@ export default React.memo(function Tilemap({
     let height = 0;
     for (let [x, y] of tiles) {
       width = Math.max(width, Math.abs(x >= 0 ? x + 1 : x) * 2);
-      height = Math.max(height, Math.abs(y >= 0 ? y + 1 : y) * 2);
+      height = Math.max(height, Math.abs(y >= 0 ? y + 1 : y - 1) * 2);
     }
 
     return [width, height];

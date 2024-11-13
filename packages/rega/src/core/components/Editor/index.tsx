@@ -10,7 +10,6 @@ import PhysicsDebuger from "../../primitives/PhysicsDebuger";
 interface Props {
   showPhysicDebuger?: boolean;
   showIteractiveCamera?: boolean;
-  children: React.ReactNode;
 }
 
 const LOCAL_INITIAL_POSITION = localStorage.getItem(
@@ -33,7 +32,6 @@ const INITIAL_POSITION = LOCAL_INITIAL_POSITION
   : new Vector3(0, 0, 10);
 
 export default function Editor({
-  children,
   showPhysicDebuger,
   showIteractiveCamera,
 }: Props) {
@@ -58,7 +56,6 @@ export default function Editor({
   return (
     <>
       {/* <Grid color="rgba(0,0,0,0.15)" principleColor="rgba(125,0,0,0.3)" /> */}
-      {children}
       {!!showPhysicDebuger && (
         <Order order={1000}>
           <PhysicsDebuger />

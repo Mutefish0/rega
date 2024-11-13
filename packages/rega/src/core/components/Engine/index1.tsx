@@ -42,8 +42,6 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
 
   const gameState = { paused: false };
 
-  const c = parseColor(config.backgroundColor ?? "rgb(255,255,255)");
-
   //scene.background = new Color().fromArray(c.array);
 
   let canvas = config.canvas;
@@ -85,21 +83,23 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     null
   );
 
-  renderServer.init(canvas as HTMLCanvasElement).then(() => {
-    reconciler.updateContainer(
-      <ThreeContext.Provider value={ctx}>
-        <GameStateContext.Provider value={gameState}>
-          <InputSystem />
-          <Physics>
-            <RenderContext.Provider value={renderCtx}>
-              {app}
-            </RenderContext.Provider>
-          </Physics>
-        </GameStateContext.Provider>
-      </ThreeContext.Provider>,
-      root
-    );
-  });
+  renderServer
+    .init(canvas as HTMLCanvasElement, config.backgroundColor || "#000")
+    .then(() => {
+      reconciler.updateContainer(
+        <ThreeContext.Provider value={ctx}>
+          <GameStateContext.Provider value={gameState}>
+            <InputSystem />
+            <Physics>
+              <RenderContext.Provider value={renderCtx}>
+                {app}
+              </RenderContext.Provider>
+            </Physics>
+          </GameStateContext.Provider>
+        </ThreeContext.Provider>,
+        root
+      );
+    });
 
   // (deltaTime, now) => {
   //   ctx.removedCallbacks.forEach((cb) => {
@@ -122,7 +122,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     ctx.removedCallbacks.clear();
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
 
-    setTimeout(loop, 0);
+    requestAnimationFrame(loop);
   }
 
   loop();

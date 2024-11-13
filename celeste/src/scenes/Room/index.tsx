@@ -74,11 +74,6 @@ export default function Room({
 
   const { clips, tiles, solids, spikes } = tilemap;
 
-  const colliderSolids = useMemo(
-    () => solids.map(([x, y]) => [x, y - 8]),
-    [solids]
-  ) as Array<[number, number]>;
-
   function onPlayerGetKey() {
     getKeySfx.play();
     setHasKey(true);
@@ -94,16 +89,16 @@ export default function Room({
 
   return (
     <RigidBody2D type="fixed" mass={1000}>
-      {/* <Tilemap
+      <Tilemap
         textureId="/images/atlas.png"
-        tiles={tiles.map(([x, y]) => [x, y])}
+        tiles={tiles}
         coords={clips.map(([x, y]) => [x, y])}
         pixelPerTile={8}
         tileSize={8}
-      /> */}
+      />
       <TilemapCollider2D
-        tiles={colliderSolids}
-        tileSize={1}
+        tiles={solids}
+        tileSize={8}
         collisionGroup={CollisionGroup.Solid}
       />
       {/* platforms */}

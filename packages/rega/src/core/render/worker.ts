@@ -17,12 +17,14 @@ import {
 } from "./bufferPair";
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
-
 import createBindGroupLayout from "./createBindGroupLayout";
+
+import { parseColor } from "../tools/color";
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
 let canvasSize = { width: 0, height: 0 };
+let backgroundColor = { r: 0, g: 0, b: 0, a: 1 };
 
 const pipelineMap = new Map<
   string,
@@ -104,6 +106,15 @@ self.addEventListener("message", async (event) => {
     canvasSize = { width: canvas.width, height: canvas.height };
     device = await adapter!.requestDevice();
     context = canvas.getContext("webgpu")!;
+
+    const { array, opacity } = parseColor(event.data.backgroundColor);
+    backgroundColor = {
+      r: array[0],
+      g: array[1],
+      b: array[2],
+      a: opacity,
+    };
+
     // 配置画布格式
     context.configure({
       device: device,
@@ -355,7 +366,7 @@ async function start() {
         {
           view: textureView,
           loadOp: "clear",
-          clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
+          clearValue: backgroundColor,
           storeOp: "store",
         },
       ],

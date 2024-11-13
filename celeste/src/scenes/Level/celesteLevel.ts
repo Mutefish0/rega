@@ -775,13 +775,13 @@ class CelesteLevel {
           }
           // 1-top 2-bottom 3-left 4-right
           if (tile == 17) {
-            spikes.push([t[0] + 1, t[1] - 3, 1]);
+            spikes.push([t[0] * 8 + 1, t[1] * 8 - 3, 1]);
           } else if (tile === 27) {
-            spikes.push([t[0], t[1], 2]);
+            spikes.push([t[0] * 8, t[1] * 8, 2]);
           } else if (tile === 43) {
-            spikes.push([t[0], t[1], 4]);
+            spikes.push([t[0] * 8, t[1] * 8, 4]);
           } else if (tile === 59) {
-            spikes.push([t[0], t[1], 3]);
+            spikes.push([t[0] * 8, t[1] * 8, 3]);
           }
         }
       }

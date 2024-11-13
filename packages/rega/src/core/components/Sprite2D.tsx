@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useContext } from "react";
 
 import {
-  sampler,
   luminance,
   vec4,
   texture,

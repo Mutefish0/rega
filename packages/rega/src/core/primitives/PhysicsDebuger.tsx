@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import PhysicsContext from "./PhysicsContext";
 
 import {
@@ -7,11 +7,11 @@ import {
   modelWorldMatrix,
   positionGeometry,
   vec4,
-  vertexColor,
+  attribute,
 } from "pure3";
 
 import RenderObject from "./RenderObject";
-import { createVertexBinding } from "../render/vertex";
+import useVertexBindings from "../hooks/useVertexBindings";
 import { useAfterPhysicsFrame } from "../primitives/Physics";
 
 const vertexNode = cameraProjectionMatrix
@@ -19,7 +19,7 @@ const vertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
-const fragmentNode = vertexColor as any;
+const fragmentNode = attribute("vec4", "color");
 
 // max debug vertices
 const MAX_POINTS = 1000;
@@ -28,14 +28,12 @@ export default React.memo(function PhysicsDebuger() {
   const ctx = useContext(PhysicsContext);
   const [vertexCount, setVertexCount] = useState(0);
 
-  const positionBinding = useMemo(
-    () => createVertexBinding("vec3", MAX_POINTS),
-    []
-  );
-
-  const colorBinding = useMemo(
-    () => createVertexBinding("vec4", MAX_POINTS),
-    []
+  const vertexBindings = useVertexBindings(
+    {
+      position: "vec3",
+      color: "vec4",
+    },
+    MAX_POINTS
   );
 
   useAfterPhysicsFrame(() => {
@@ -43,35 +41,32 @@ export default React.memo(function PhysicsDebuger() {
       vertices: number[];
       colors: number[];
     };
-    let i = 0;
-    for (; i < vertices.length; i += 2) {
-      positionBinding.update([i / 2, vertices[i], vertices[i + 1], 0]);
+    const vertexCount = Math.floor(vertices.length / 2);
+    for (let i = 0; i < vertexCount; i++) {
+      let base = i * 2;
+      vertexBindings.updates.position(
+        [vertices[base], vertices[base + 1], 0],
+        i * 3,
+        false
+      );
+      base = i * 4;
+      vertexBindings.updates.color(
+        [colors[base], colors[base + 1], colors[base + 2], colors[base + 3]],
+        i * 4,
+        false
+      );
     }
 
-    for (let i = 0; i < colors.length; i += 4) {
-      colorBinding.update([
-        i / 4,
-        colors[i],
-        colors[i + 1],
-        colors[i + 2],
-        colors[i + 3],
-      ]);
-    }
+    // commit
+    vertexBindings.updates.position([]);
+    vertexBindings.updates.color([]);
 
-    setVertexCount(i / 2);
+    setVertexCount(vertexCount);
   }, []);
-
-  const vertex = useMemo(
-    () => ({
-      position: positionBinding.buffer,
-      color: colorBinding.buffer,
-    }),
-    []
-  );
 
   return (
     <RenderObject
-      vertex={vertex}
+      vertex={vertexBindings.buffers}
       vertexCount={vertexCount}
       vertexNode={vertexNode}
       fragmentNode={fragmentNode}
