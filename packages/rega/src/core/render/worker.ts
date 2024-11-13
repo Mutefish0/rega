@@ -309,7 +309,8 @@ self.addEventListener("message", async (event) => {
       bindings,
     });
   } else if (event.data.type === "removeObject") {
-    const object = renderObjectMap.get(event.data.objectID);
+    const id = event.data.id;
+    const object = renderObjectMap.get(id);
     if (object) {
       const { bindings, input } = object;
       bindings.forEach(({ resource }) => {
@@ -327,7 +328,7 @@ self.addEventListener("message", async (event) => {
         removeObjectGPUBuffer(buffer);
       });
       input.index && removeObjectGPUBuffer(input.index.indexBuffer);
-      renderObjectMap.delete(event.data.objectID);
+      renderObjectMap.delete(id);
     }
   }
 });

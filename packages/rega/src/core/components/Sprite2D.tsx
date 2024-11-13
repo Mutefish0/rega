@@ -64,7 +64,7 @@ export default React.memo(function Sprite2D({
   opacity: opacityValue,
   padding = 0,
   color: colorValue,
-  size = [1, 1],
+  size,
   alphaTextureId,
 }: Props) {
   const ctx = useContext(ThreeContext);
@@ -118,16 +118,16 @@ export default React.memo(function Sprite2D({
     bUv.update(uvs);
   }, [clip.join(","), texture]);
 
-  const anchorMatrix = useAnchor(anchor, size);
-
   const scale = useMemo(() => {
     if (size) {
       return size;
     }
-    const cWidth = clip[2] / ctx.assetsPixelRatio;
-    const cHeight = clip[3] / ctx.assetsPixelRatio;
+    const cWidth = clip[2] * ctx.assetsPixelToWorldRatio;
+    const cHeight = clip[3] * ctx.assetsPixelToWorldRatio;
     return [cWidth, cHeight, 1] as [number, number, number];
-  }, [size, ctx.assetsPixelRatio]);
+  }, [size, ctx.assetsPixelToWorldRatio]);
+
+  const anchorMatrix = useAnchor(anchor, scale);
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();

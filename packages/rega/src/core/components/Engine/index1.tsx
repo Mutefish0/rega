@@ -27,7 +27,7 @@ export interface EngineConfig {
   height: number;
   title?: string;
   outputColorSpace?: ColorSpace;
-  assetsPixelRatio?: number;
+  assetsPixelToWorldRatio?: number;
   fixedTimestep?: number;
   canvas?: CanvasLike;
   backgroundColor?: string;
@@ -68,7 +68,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
   const renderCtx = createRenderContext(renderServer);
 
   const ctx = createContextValues({
-    assetsPixelRatio: config?.assetsPixelRatio ?? 1,
+    assetsPixelToWorldRatio: config?.assetsPixelToWorldRatio ?? 1,
     fixedTimestep: config?.fixedTimestep,
     size,
     pixelRatio,

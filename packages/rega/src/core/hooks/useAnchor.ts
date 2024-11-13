@@ -8,7 +8,10 @@ export type AnchorType =
   | "top-left"
   | "center";
 
-export default function useAnchor(anchor: AnchorType, size: [number, number]) {
+export default function useAnchor(
+  anchor: AnchorType,
+  size: [number, number] | [number, number, number]
+): Matrix4 {
   const matrix = useMemo(() => {
     if (size[0] === 0 && size[1] === 0) {
       return new Matrix4();

@@ -21,6 +21,8 @@ import {
 import Player from "./scenes/Player";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
+import FlyFruit from "./scenes/Room/FlyFruit";
+import Fruit from "./scenes/Room/Fruit";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./scenes/Level/celesteLevel";
 
@@ -102,10 +104,11 @@ export default function App() {
             anchor="top-left"
           />
         </Relative>
+
+        {/* <FlyFruit onGetFruit={() => {}} playerHasDashed={false} /> */}
         {/* <Order order={1}>
           <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
         </Order> */}
-
         {/* <Order order={10}>
           <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
         </Order>
@@ -115,21 +118,20 @@ export default function App() {
             <Box2D size={[20, 20]} anchor="bottom-left" color="red" />
           </Relative>
         </Order> */}
-
         {/* <Sprite2D
           textureId="/images/atlas.png"
           clip={[8, 0, 8, 8]}
           size={[120, 120]}
         /> */}
-        {/* <Level initialLevel={0} onShake={onShake} /> */}
+        <Level initialLevel={0} onShake={onShake} />
         {/* <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" /> */}
-        <Tilemap
+        {/* <Tilemap
           textureId="/images/atlas.png"
           tiles={tiles.map(([x, y]) => [x, y])}
           coords={clips.map(([x, y]) => [x, y])}
           pixelPerTile={8}
           tileSize={8}
-        />
+        /> */}
       </RenderGroup>
     </>
   );

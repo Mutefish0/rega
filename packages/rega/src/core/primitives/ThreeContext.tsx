@@ -14,12 +14,12 @@ const ThreeContext = createContext<ReturnType<typeof createContextValues>>(
 
 export function createContextValues({
   size,
-  assetsPixelRatio,
+  assetsPixelToWorldRatio,
   fixedTimestep = 20,
   pixelRatio = 1,
 }: {
   size?: [number, number];
-  assetsPixelRatio: number;
+  assetsPixelToWorldRatio: number;
   fixedTimestep?: number;
   pixelRatio?: number;
 }) {
@@ -28,7 +28,7 @@ export function createContextValues({
     size: size || [0, 0],
     frameCallbacks: new Set<FrameCallback>(),
     removedCallbacks: new Set<FrameCallback>(),
-    assetsPixelRatio,
+    assetsPixelToWorldRatio,
     fixedTimestep,
     reactDevtools: !!window.__REACT_DEVTOOLS_GLOBAL_HOOK__,
     dev: !!(import.meta as any).env.DEV,
