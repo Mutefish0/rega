@@ -123,6 +123,8 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
 
     requestAnimationFrame(loop);
+    // requestIdleCallback(loop);
+    // setTimeout(loop, 0);
   }
 
   loop();

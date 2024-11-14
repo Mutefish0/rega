@@ -194,7 +194,6 @@ export default function createMaterial(
     format: "bgra8unorm",
     frontFace: options.frontFace || "ccw",
     cullMode: options.cullMode || "back",
-
     topology: options.topology || "triangle-list",
   };
 

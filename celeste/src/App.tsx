@@ -98,12 +98,12 @@ export default function App() {
     <>
       <RenderTarget main />
       <RenderGroup>
-        <Relative translation={{ z: 1 }}>
+        <Relative translation={{ z: 100 }}>
           <Camera
             type="orthographic"
             width={128}
             height={128}
-            //anchor="top-left"
+            anchor="top-left"
           />
         </Relative>
 
@@ -120,13 +120,16 @@ export default function App() {
             <Box2D size={[20, 20]} anchor="bottom-left" color="red" />
           </Relative>
         </Order> */}
-        <Sprite2D
-          textureId="/images/atlas.png"
-          clip={[8, 0, 8, 8]}
-          size={[20, 20]}
-          flipX={false}
-        />
-        {/* <Level initialLevel={0} onShake={onShake} /> */}
+        {/* <Relative translation={{ z: 50 }}>
+          <Sprite2D
+            textureId="/images/atlas.png"
+            clip={[8, 0, 8, 8]}
+            size={[20, 20]}
+            flipX={true}
+            flipY={true}
+          />
+        </Relative> */}
+        <Level initialLevel={0} onShake={onShake} />
 
         {/* <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" /> */}
         {/* <Tilemap

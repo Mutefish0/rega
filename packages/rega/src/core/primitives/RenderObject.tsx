@@ -35,6 +35,7 @@ interface Props {
   zIndexEnabled?: boolean;
 
   topology?: GPUPrimitiveTopology;
+  cullMode?: GPUCullMode;
 }
 
 export default function RenderObject({
@@ -46,6 +47,7 @@ export default function RenderObject({
   bindings = {},
   zIndexEnabled,
   topology,
+  cullMode = "back",
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const orderCtx = useContext(OrderContext);
@@ -90,7 +92,10 @@ export default function RenderObject({
       vertex.uuid = vertexNode.uuid + "-zIndexEnabled";
     }
 
-    return createMaterial(vertex, fragmentNode, getBindingLayout, { topology });
+    return createMaterial(vertex, fragmentNode, getBindingLayout, {
+      topology,
+      cullMode,
+    });
   }, [vertexNode, fragmentNode, zIndexEnabled]);
 
   useEffect(() => {

@@ -130,19 +130,25 @@ export default React.memo(function Sprite2D({
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
-
+    const matScale = new Matrix4();
     const matRX = new Matrix4();
     const matRY = new Matrix4();
 
     if (flipY) {
       matRX.makeRotationX(Math.PI);
     }
+
     if (flipX) {
       matRY.makeRotationY(Math.PI);
     }
 
-    mat.makeScale(scale[0], scale[1], 1);
-    mat.premultiply(anchorMatrix).multiply(matRY).multiply(matRX);
+    matScale.makeScale(scale[0], scale[1], 1);
+
+    mat
+      .multiply(anchorMatrix)
+      .multiply(matScale)
+      .multiply(matRY)
+      .multiply(matRX);
     return mat;
   }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
@@ -156,6 +162,7 @@ export default React.memo(function Sprite2D({
         vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
         index={quad.index}
         zIndexEnabled
+        cullMode="none"
       />
     </Relative>
   );
