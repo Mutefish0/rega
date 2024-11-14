@@ -78,6 +78,7 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
     platforms,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
+    ref.current.level = level;
     const tilemap = celesteLevel.getLevelMapAll();
     const bgm = celesteLevel.getLevelBGM();
 
@@ -100,8 +101,6 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
   }
 
   function saveGame() {
-    ref.current.level = level;
-    ref.current.fruitsGot = fruitsGot;
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
     console.log("saved: ", ref.current);
   }

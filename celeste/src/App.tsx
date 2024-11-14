@@ -107,78 +107,14 @@ export default function App() {
           />
         </Relative>
 
-        {/* <FlyFruit onGetFruit={() => {}} playerHasDashed={false} /> */}
-        {/* <Order order={1}>
-          <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
-        </Order> */}
-        {/* <Order order={10}>
-          <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" />
-        </Order>
-
-        <Order order={5}>
-          <Relative translation={{ x: 10, y: 10 }}>
-            <Box2D size={[20, 20]} anchor="bottom-left" color="red" />
-          </Relative>
-        </Order> */}
-        {/* <Relative translation={{ z: 50 }}>
-          <Sprite2D
-            textureId="/images/atlas.png"
-            clip={[8, 0, 8, 8]}
-            size={[20, 20]}
-            flipX={true}
-            flipY={true}
-          />
-        </Relative> */}
         <Level initialLevel={0} onShake={onShake} />
 
-        {/* <Box2D size={[20, 20]} anchor="bottom-left" color="#fff" /> */}
-        {/* <Tilemap
-          textureId="/images/atlas.png"
-          tiles={tiles.map(([x, y]) => [x, y])}
-          coords={clips.map(([x, y]) => [x, y])}
-          pixelPerTile={8}
-          tileSize={8}
-        /> */}
-
         {import.meta.env.DEV && (
-          <Editor showIteractiveCamera={true} showPhysicDebuger={true} />
+          <Editor showIteractiveCamera={true} showPhysicDebuger={false} />
         )}
       </RenderGroup>
     </>
   );
 
   return appElement;
-
-  // const appElement = (
-  //   <>
-  //     <FPS
-  //       style={{
-  //         fontFamily: "Arial",
-  //         marginLeft: "auto",
-  //         fontSize: 12,
-  //         marginTop: 8,
-  //         marginRight: 12,
-  //         color: "rgba(200, 200, 200, 0.3)",
-  //       }}
-  //     />
-  //     <Camera shake={shake} onShakeEnd={() => setShake(0)} />
-  //     <Order order={1}>
-  //       {!started && <TitleScreen onStart={() => setStarted(true)} />}
-  //       {!!started && <Level initialLevel={0} onShake={onShake} />}
-  //     </Order>
-  //     <Order order={-1}>
-  //       <Box2D size={[128, 128]} color="black" anchor="top-left" />
-  //     </Order>
-  //   </>
-  // );
-
-  // if (import.meta.env.DEV) {
-  //   return (
-  //     <Editor showIteractiveCamera={true} showPhysicDebuger={true}>
-  //       {appElement}
-  //     </Editor>
-  //   );
-  // } else {
-  //   return appElement;
-  // }
 }

@@ -47,6 +47,6 @@ export { uv };
 
 const zIndex = uniform("float", "zIndex");
 const normZIndex = zIndex.div(zIndex.add(1));
-const zIndexBias = vec4(0, 0, 0, normZIndex.div(1_000_000));
+const zIndexBias = vec4(0, 0, 0, normZIndex.div(100_000));
 
 export { zIndexBias };

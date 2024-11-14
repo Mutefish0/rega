@@ -10,6 +10,9 @@ import {
   Matrix4,
   cameraProjectionMatrix,
   cameraViewMatrix,
+  Fn,
+  Discard,
+  If,
 } from "pure3";
 
 import TextureManager from "../common/texture_manager";
@@ -47,11 +50,23 @@ const vertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
-const fragmentNode = tex.mul(vec4(color, opacity));
+const transparentDiscard = Fn(({ color }: any) => {
+  const result = color.toVar();
 
-const fragmentNodeWithAlpha = tex.mul(
-  vec4(color, opacity.mul(luminance(texAlpha.rgb)))
-);
+  If(color.a.lessThanEqual(0.0), () => {
+    Discard();
+  });
+
+  return result;
+});
+
+const fragmentNode = transparentDiscard({
+  color: tex.mul(vec4(color, opacity)),
+});
+
+const fragmentNodeWithAlpha = transparentDiscard({
+  color: tex.mul(vec4(color, opacity.mul(luminance(texAlpha.rgb)))),
+});
 
 // TODO 支持复用 Vertex
 export default React.memo(function Sprite2D({
