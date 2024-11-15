@@ -71,6 +71,10 @@ importers:
       three:
         specifier: workspace:*
         version: link:../three.js
+    devDependencies:
+      '@webgpu/types':
+        specifier: ^0.1.49
+        version: 0.1.49
 
   packages/rapier: {}
 

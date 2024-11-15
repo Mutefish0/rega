@@ -1,212 +1,57 @@
 export type WGSLValueType =
   | "float"
+  | "int"
+  | "uint"
   | "vec2"
   | "vec3"
   | "vec4"
+  | "ivec2"
+  | "ivec3"
+  | "ivec4"
+  | "uvec2"
+  | "uvec3"
+  | "uvec4"
   | "mat2"
   | "mat3"
   | "mat4";
-// | "sint"
-// | "uint"
-// | "vec2uint"
-// | "vec3uint"
-// | "vec4uint"
-// | "vec2sint"
-// | "vec3sint"
-// | "vec4sint";
 
-export type NodeValueType = "lit_float" | WGSLValueType;
+export type NodeValueType = "literal" | WGSLValueType;
 
-type Mul<A extends WGSLValueType, B extends NodeValueType> =
-  // 矢量和矩阵只能左乘标量，反之无效
-  A extends "vec2"
-    ? B extends "float" | "lit_float"
-      ? "vec2"
-      : B extends "vec2"
-      ? "vec2"
-      : void
-    : A extends "vec3"
-    ? B extends "float" | "lit_float"
-      ? "vec3"
-      : B extends "vec3"
-      ? "vec3"
-      : void
-    : A extends "vec4"
-    ? B extends "float" | "lit_float"
-      ? "vec4"
-      : B extends "vec4"
-      ? "vec4"
-      : void
-    : A extends "mat2"
-    ? B extends "float" | "lit_float"
-      ? "mat2"
-      : B extends "vec2"
-      ? "vec2"
-      : B extends "mat2"
-      ? "mat2"
-      : void
-    : A extends "mat3"
-    ? B extends "float" | "lit_float"
-      ? "mat3"
-      : B extends "vec3"
-      ? "vec3"
-      : B extends "mat3"
-      ? "mat3"
-      : void
-    : A extends "mat4"
-    ? B extends "float" | "lit_float"
-      ? "mat4"
-      : B extends "vec4"
-      ? "vec4"
-      : B extends "mat4"
-      ? "mat4"
-      : void
-    : A extends "float"
-    ? B extends "float" | "lit_float"
-      ? "float"
-      : void
-    : void;
-
-type Add<A extends WGSLValueType, B extends NodeValueType> =
-  // 矢量和矩阵只能加标量，反之无效
-  A extends "vec2"
-    ? B extends "float" | "lit_float"
-      ? "vec2"
-      : B extends "vec2"
-      ? "vec2"
-      : void
-    : A extends "vec3"
-    ? B extends "float" | "lit_float"
-      ? "vec3"
-      : B extends "vec3"
-      ? "vec3"
-      : void
-    : A extends "vec4"
-    ? B extends "float" | "lit_float"
-      ? "vec4"
-      : B extends "vec4"
-      ? "vec4"
-      : void
-    : A extends "mat2"
-    ? B extends "float" | "lit_float"
-      ? "mat2"
-      : B extends "mat2"
-      ? "mat2"
-      : void
-    : A extends "mat3"
-    ? B extends "float" | "lit_float"
-      ? "mat3"
-      : B extends "mat3"
-      ? "mat3"
-      : void
-    : A extends "mat4"
-    ? B extends "float" | "lit_float"
-      ? "mat4"
-      : B extends "mat4"
-      ? "mat4"
-      : void
-    : A extends "float"
-    ? B extends "float" | "lit_float"
-      ? "float"
-      : void
-    : void;
-
-type Div<A extends WGSLValueType, B extends NodeValueType> =
-  // 标量和标量之间的除法
-  A extends "float"
-    ? B extends "float" | "lit_float"
-      ? "float"
-      : void
-    : A extends "vec2"
-    ? B extends "float" | "lit_float"
-      ? "vec2"
-      : void
-    : A extends "vec3"
-    ? B extends "float" | "lit_float"
-      ? "vec3"
-      : void
-    : A extends "vec4"
-    ? B extends "float" | "lit_float"
-      ? "vec4"
-      : void
-    : A extends "mat2"
-    ? B extends "float" | "lit_float"
-      ? "mat2"
-      : void
-    : A extends "mat3"
-    ? B extends "float" | "lit_float"
-      ? "mat3"
-      : void
-    : A extends "mat4"
-    ? B extends "float" | "lit_float"
-      ? "mat4"
-      : void
-    : void;
+import { Mul, Add, Div } from "./ops";
+import { Props } from "./props";
 
 type RemoveVoid<T> = {
   [K in keyof T as T[K] extends void ? never : K]: T[K];
 };
 
-export interface _BoxNode<T extends WGSLValueType> {
-  mul<
-    N extends Node<NodeValueType> | number,
-    P = N extends Node<infer U> ? Mul<T, U> : void
-  >(
-    node: N
-  ): N extends number
-    ? Node<Mul<T, "lit_float">>
-    : P extends NodeValueType
-    ? Node<P>
-    : void;
+export type Node<A extends WGSLValueType> = RemoveVoid<{
+  mul<B extends WGSLValueType>(
+    node: Node<B>
+  ): Mul<A, B> extends WGSLValueType ? Node<Mul<A, B>> : void;
+  mul(node: number): Node<Mul<A, "literal">>;
 
-  add<
-    N extends Node<NodeValueType> | number,
-    P = N extends Node<infer U> ? Add<T, U> : void
-  >(
-    node: N
-  ): N extends number
-    ? Node<Add<T, "lit_float">>
-    : P extends NodeValueType
-    ? Node<P>
-    : void;
+  add<B extends WGSLValueType>(
+    node: Node<B>
+  ): Add<A, B> extends WGSLValueType ? Node<Add<A, B>> : void;
+  add(node: number): Node<Add<A, "literal">>;
 
-  div<
-    N extends Node<NodeValueType> | number,
-    P = N extends Node<infer U> ? Div<T, U> : void
-  >(
-    node: N
-  ): N extends number
-    ? Node<Div<T, "lit_float">>
-    : P extends NodeValueType
-    ? Node<P>
-    : void;
+  sub<B extends WGSLValueType>(
+    node: Node<B>
+  ): Add<A, B> extends WGSLValueType ? Node<Add<A, B>> : void;
+  sub(node: number): Node<Add<A, "literal">>;
 
-  toVar(): Node<T>;
+  div<B extends WGSLValueType>(
+    node: Node<B>
+  ): Div<A, B> extends WGSLValueType ? Node<Div<A, B>> : void;
+  div(node: number): Node<Div<A, "literal">>;
 
-  assign(...params: any[]): this;
+  toVar(): Node<A>;
 
-  nodeType: T;
+  assign(...params: any[]): Node<A>;
+
+  nodeType: A;
   uuid: string;
+}> &
+  Props<A>;
 
-  x: T extends "vec2" | "vec3" | "vec4" ? Node<"float"> : void;
-  y: T extends "vec2" | "vec3" | "vec4" ? Node<"float"> : void;
-  z: T extends "vec3" | "vec4" ? Node<"float"> : void;
-  w: T extends "vec4" ? Node<"float"> : void;
-
-  xy: T extends "vec3" | "vec4" ? Node<"vec2"> : void;
-  xyz: T extends "vec4" ? Node<"vec3"> : void;
-
-  r: T extends "vec4" ? Node<"float"> : void;
-  g: T extends "vec4" ? Node<"float"> : void;
-  b: T extends "vec4" ? Node<"float"> : void;
-  a: T extends "vec4" ? Node<"float"> : void;
-  rgb: T extends "vec4" ? Node<"vec3"> : void;
-}
-
-export type BoxNode<T extends WGSLValueType> = RemoveVoid<_BoxNode<T>>;
-
-export type Node<T extends NodeValueType> = T extends "lit_float"
-  ? number
-  : T extends WGSLValueType
-  ? BoxNode<T>
-  : void;
+// export type Node<T extends WGSLValueType> = RemoveVoid<_BoxNode<T>>;

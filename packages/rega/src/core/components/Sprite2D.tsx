@@ -89,8 +89,8 @@ export default React.memo(function Sprite2D({
 
   const bindings = useBindings(
     {
-      opacity,
-      color,
+      opacity: "float",
+      color: "vec3",
       tex: "texture_2d",
       texAlpha: "texture_2d",
     },

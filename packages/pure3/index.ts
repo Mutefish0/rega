@@ -1,15 +1,29 @@
+/// <reference types="@webgpu/types" />
+
 import texture, { dataTexture } from "./accessors/texture/index";
 import modelWorldMatrix from "./accessors/modelWorldMatrix";
 import uniform from "./core/uniform";
 
 export { texture, dataTexture, uniform, modelWorldMatrix };
 
-import type { Node, WGSLValueType } from "./core/types";
-export type { Node, WGSLValueType };
+export type { Node, WGSLValueType } from "./core/types";
 
 export * from "three/src/nodes/TSL.js";
 
-export { float, vec2, vec3, vec4 } from "./core/conv";
+export {
+  float,
+  int,
+  uint,
+  vec2,
+  ivec2,
+  uvec2,
+  vec3,
+  ivec3,
+  uvec3,
+  vec4,
+  ivec4,
+  uvec4,
+} from "./core/conv";
 
 import {
   uv as _uv,
@@ -18,7 +32,6 @@ import {
   cameraViewMatrix as _cameraViewMatrix,
   attribute as _attribute,
 } from "three/src/nodes/TSL.js";
-import { vec4 } from "./core/conv";
 
 export {
   Vector2,
@@ -29,24 +42,12 @@ export {
   Matrix4,
 } from "three/src/Three.WebGPU.Nodes.js";
 
-const positionGeometry = _positionGeometry as Node<"vec3">;
-const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
-const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
+export {
+  positionGeometry,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+  uv,
+  attribute,
+} from "./misc/nodes";
 
-function attribute<T extends WGSLValueType>(type: T, name: string) {
-  return _attribute(name, type) as Node<T>;
-}
-
-export { attribute };
-
-export { positionGeometry, cameraProjectionMatrix, cameraViewMatrix };
-
-const uv = _uv as () => Node<"vec2">;
-
-export { uv };
-
-const zIndex = uniform("float", "zIndex");
-const normZIndex = zIndex.div(zIndex.add(1));
-const zIndexBias = vec4(0, 0, 0, normZIndex.div(100_000));
-
-export { zIndexBias };
+export * from "./misc/zIndex";

@@ -4,5 +4,8 @@
   "version": "0.1.0",
   "dependencies": {
     "three": "workspace:*"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.49"
   }
 }

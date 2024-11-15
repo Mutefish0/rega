@@ -5,49 +5,22 @@ import {
   TransferTextureResource,
 } from "../render";
 import { createUniformBinding, BindingUpdater } from "../render/binding";
-import { Node, WGSLValueType } from "pure3";
 
-export default function useBindings<
-  T extends Record<string, UniformType | Node<WGSLValueType>>
->(
+export default function useBindings<T extends Record<string, UniformType>>(
   obj: T,
   initilizer?: (updates: {
-    [K in keyof T]: BindingUpdater<
-      T[K] extends UniformType
-        ? T[K]
-        : T[K] extends Node<infer U>
-        ? U extends WGSLValueType
-          ? U
-          : never
-        : never
-    >;
+    [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;
   }) => void
 ): {
   resources: Record<string, TransferResource>;
   updates: {
-    [K in keyof T]: BindingUpdater<
-      T[K] extends UniformType
-        ? T[K]
-        : T[K] extends Node<infer U>
-        ? U extends WGSLValueType
-          ? U
-          : never
-        : never
-    >;
+    [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;
   };
 } {
   return useMemo(() => {
     const resources = {} as Record<string, TransferResource>;
     const updates = {} as {
-      [K in keyof T]: BindingUpdater<
-        T[K] extends UniformType
-          ? T[K]
-          : T[K] extends Node<infer U>
-          ? U extends WGSLValueType
-            ? U
-            : never
-          : never
-      >;
+      [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;
     };
 
     const checkList: UniformType[] = [
@@ -59,12 +32,7 @@ export default function useBindings<
 
     for (const name in obj) {
       const type = obj[name];
-      let t;
-      if (typeof type === "object") {
-        t = type.nodeType;
-      } else {
-        t = type;
-      }
+      let t = type;
       const h = createUniformBinding(t);
       resources[name] = h.resource;
       updates[name] = h.update;
