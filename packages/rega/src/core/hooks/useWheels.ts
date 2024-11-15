@@ -1,7 +1,7 @@
 import { useEffect, useContext } from "react";
 import ThreeContext from "../primitives/ThreeContext";
 
-interface Options {
+export interface Options {
   ctrlKey: boolean;
 }
 

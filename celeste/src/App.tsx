@@ -106,9 +106,7 @@ export default function App() {
             anchor="top-left"
           />
         </Relative>
-
         <Level initialLevel={0} onShake={onShake} />
-
         {import.meta.env.DEV && (
           <Editor showIteractiveCamera={true} showPhysicDebuger={false} />
         )}

@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Vector3 } from "pure3";
+import React, { useEffect, useState } from "react";
 import Relative from "../../primitives/Relative";
 import Grid from "../Grid";
 import Camera from "../../primitives/Camera";
@@ -17,41 +16,47 @@ const LOCAL_INITIAL_POSITION = localStorage.getItem(
 );
 
 let timeout = 0;
-function setLocalPosition(v: Vector3) {
+
+const SPEED = 10;
+
+function setLocalPosition(v: { x: number; y: number; z: number }) {
   clearTimeout(timeout);
   setTimeout(() => {
-    localStorage.setItem(
-      "__REGA_EDITOR_CAMERA__POS_",
-      JSON.stringify([v.x, v.y, v.z])
-    );
+    localStorage.setItem("__REGA_EDITOR_CAMERA__POS_", JSON.stringify(v));
   }, 200);
 }
 
 const INITIAL_POSITION = LOCAL_INITIAL_POSITION
-  ? new Vector3(...JSON.parse(LOCAL_INITIAL_POSITION))
-  : new Vector3(0, 0, 10);
+  ? JSON.parse(LOCAL_INITIAL_POSITION)
+  : { x: 0, y: 0, z: 10 };
 
 export default function Editor({
   showPhysicDebuger,
   showIteractiveCamera,
 }: Props) {
-  const [position, setPosition] = useState(INITIAL_POSITION);
+  const [position, setPosition] = useState<{ x: number; y: number; z: number }>(
+    INITIAL_POSITION
+  );
 
-  useWheels(handleWheel);
+  useWheels((dx, dy, opts) => {
+    if (opts.ctrlKey) {
+      setPosition((prev) => ({
+        x: prev.x,
+        y: prev.y,
+        z: prev.z + dy * SPEED,
+      }));
+    } else {
+      setPosition((prev) => ({
+        x: prev.x + dx * SPEED,
+        y: prev.y - dy * SPEED,
+        z: prev.z,
+      }));
+    }
+  });
 
-  function handleWheel(dx: number, dy: number) {
-    //
-  }
-
-  // useEffect(() => {
-  //   if (mat) {
-  //     setPosition((prev) => {
-  //       const p = prev.clone().applyMatrix4(mat);
-  //       setLocalPosition(p);
-  //       return p;
-  //     });
-  //   }
-  // }, [mat]);
+  useEffect(() => {
+    setLocalPosition(position);
+  }, [position]);
 
   return (
     <>
@@ -61,13 +66,13 @@ export default function Editor({
           <PhysicsDebuger />
         </Order>
       )}
-      {/* {!!showIteractiveCamera && (
+      {!!showIteractiveCamera && (
         <>
           <Relative translation={position}>
             <Camera type="perspective" />
           </Relative>
         </>
-      )} */}
+      )}
     </>
   );
 }

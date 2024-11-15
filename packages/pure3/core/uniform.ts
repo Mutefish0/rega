@@ -13,6 +13,7 @@ import type { Node } from "./types";
 import { NodeValueType, WGSLValueType } from "./types";
 
 export const UNIFORM_INIT_VALUES: Record<NodeValueType, any> = {
+  bool: 0,
   literal: 0,
   float: 0,
   int: 0,

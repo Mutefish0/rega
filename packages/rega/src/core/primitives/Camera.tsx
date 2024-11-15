@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useRef } from "react";
 import TransformContext from "./TransformContext";
 import { useTargetBindingView } from "./RenderTarget";
 import { RenderGroupContext } from "./RenderGroup";
@@ -8,6 +8,8 @@ import { DEG2RAD } from "three/src/math/MathUtils.js";
 import { AnchorType } from "../hooks/useAnchor";
 
 import { Matrix4 } from "pure3";
+
+const emptyMatrix = new Matrix4();
 
 interface CommonProps {
   targetId?: string;
