@@ -1,4 +1,4 @@
-import { WGSLValueType } from "./types";
+import { WGSLValueType, Node } from "./types";
 
 type PS = {
   x:
@@ -118,8 +118,8 @@ type PropsHelper<
   T extends WGSLValueType,
   P extends keyof PS,
   R = PS[P]
-> = R extends [T, infer U] ? U : void;
+> = R extends [T, infer U] ? U : never;
 
 export type Props<T extends WGSLValueType> = {
-  [K in keyof PS]: PropsHelper<T, K>;
+  [K in keyof PS]: Node<PropsHelper<T, K>>;
 };

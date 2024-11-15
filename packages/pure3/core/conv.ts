@@ -1,6 +1,7 @@
 import { Node, WGSLValueType } from "./types";
 
 import {
+  bool as _bool,
   int as _int,
   uint as _uint,
   float as _float,
@@ -15,6 +16,7 @@ import {
   uvec4 as _uvec4,
 } from "three/src/nodes/TSL.js";
 
+export const bool = _bool as Conv<"bool">;
 export const float = _float as Conv<"float">;
 export const int = _int as Conv<"int">;
 export const uint = _uint as Conv<"uint">;
@@ -29,6 +31,7 @@ export const ivec4 = _ivec4 as Conv<"ivec4">;
 export const uvec4 = _uvec4 as Conv<"uvec4">;
 
 type TS = {
+  bool: ["literal"] | ["bool"];
   vec2:
     | ["literal", "literal"]
     | ["literal", "float"]
@@ -146,7 +149,7 @@ type TS = {
     | ["int", "ivec3"]
     | ["literal", "ivec3"]
     | ["ivec4"];
-  float: ["float"] | ["literal"];
+  float: ["float"] | ["literal"] | ["int"] | ["uint"];
   int: ["literal"] | ["int"];
   uint: ["literal"] | ["uint"];
 };

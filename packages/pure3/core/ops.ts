@@ -1,6 +1,6 @@
 import { WGSLValueType, NodeValueType } from "./types";
 
-type MatchMul =
+type RuleMul =
   | ["vec2", "float", "vec2"]
   | ["vec2", "vec2", "vec2"]
   | ["vec2", "literal", "vec2"]
@@ -50,10 +50,10 @@ type MatchMul =
 export type Mul<
   A extends WGSLValueType,
   B extends NodeValueType,
-  R extends [WGSLValueType, NodeValueType, WGSLValueType] = MatchMul
+  R extends [WGSLValueType, NodeValueType, WGSLValueType] = RuleMul
 > = R extends [A, B, infer C] ? C : never;
 
-type MatchAdd =
+type RuleAdd =
   | ["vec2", "vec2", "vec2"]
   | ["vec2", "float", "vec2"]
   | ["vec2", "literal", "vec2"]
@@ -91,10 +91,10 @@ type MatchAdd =
 export type Add<
   A extends WGSLValueType,
   B extends NodeValueType,
-  R extends [WGSLValueType, NodeValueType, WGSLValueType] = MatchAdd
+  R extends [WGSLValueType, NodeValueType, WGSLValueType] = RuleAdd
 > = R extends [A, B, infer C] ? C : never;
 
-type MatchDiv =
+type RuleDiv =
   | ["vec2", "float", "vec2"]
   | ["vec2", "literal", "vec2"]
   | ["ivec2", "int", "ivec2"]
@@ -117,5 +117,26 @@ type MatchDiv =
 export type Div<
   A extends WGSLValueType,
   B extends NodeValueType,
-  R extends [WGSLValueType, NodeValueType, WGSLValueType] = MatchDiv
+  R extends [WGSLValueType, NodeValueType, WGSLValueType] = RuleDiv
+> = R extends [A, B, infer C] ? C : never;
+
+type RuleLessThan =
+  | ["int", "int", "bool"]
+  | ["int", "literal", "bool"]
+  | ["literal", "int", "bool"]
+  | ["float", "float", "bool"]
+  | ["literal", "float", "bool"]
+  | ["float", "literal", "bool"]
+  | ["uint", "uint", "bool"]
+  | ["literal", "uint", "bool"]
+  | ["uint", "literal", "bool"];
+
+export type LessThan<
+  A extends WGSLValueType,
+  B extends NodeValueType,
+  R extends [
+    "int" | "float" | "uint" | "literal",
+    "int" | "float" | "uint" | "literal",
+    "bool"
+  ] = RuleLessThan
 > = R extends [A, B, infer C] ? C : never;

@@ -1,4 +1,4 @@
-import { int, ivec2, uv, type WGSLValueType } from "pure3";
+import { type WGSLValueType } from "pure3";
 import { TransferResource, UniformType } from "./types";
 import { HEADER_SIZE } from "./sharedBufferLayout";
 import createSharedBuffer, {
@@ -7,6 +7,7 @@ import createSharedBuffer, {
 } from "./createSharedBuffer";
 
 const wgslValueTypeToByteLength: Record<WGSLValueType, number> = {
+  bool: 4,
   float: 4,
   int: 4,
   uint: 4,
@@ -25,6 +26,7 @@ const wgslValueTypeToByteLength: Record<WGSLValueType, number> = {
 };
 
 const wgslValueTypeToByteLengthToViewType = {
+  bool: Int32Array,
   float: Float32Array,
   int: Int32Array,
   uint: Uint32Array,

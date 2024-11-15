@@ -1,4 +1,5 @@
 export type WGSLValueType =
+  | "bool"
   | "float"
   | "int"
   | "uint"
@@ -17,7 +18,7 @@ export type WGSLValueType =
 
 export type NodeValueType = "literal" | WGSLValueType;
 
-import { Mul, Add, Div } from "./ops";
+import { Mul, Add, Div, LessThan } from "./ops";
 import { Props } from "./props";
 
 type RemoveVoid<T> = {
@@ -45,6 +46,13 @@ export type Node<A extends WGSLValueType> = RemoveVoid<{
   ): Div<A, B> extends WGSLValueType ? Node<Div<A, B>> : void;
   div(node: number): Node<Div<A, "literal">>;
 
+  lessThan<B extends WGSLValueType>(
+    node: Node<B>
+  ): LessThan<A, B> extends WGSLValueType ? Node<LessThan<A, B>> : void;
+  lessThan(node: number): Node<LessThan<A, "literal">>;
+
+  and(node: Node<"bool">): A extends "bool" ? Node<"bool"> : void;
+
   toVar(): Node<A>;
 
   assign(...params: any[]): Node<A>;
@@ -53,5 +61,3 @@ export type Node<A extends WGSLValueType> = RemoveVoid<{
   uuid: string;
 }> &
   Props<A>;
-
-// export type Node<T extends WGSLValueType> = RemoveVoid<_BoxNode<T>>;

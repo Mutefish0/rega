@@ -4,7 +4,7 @@ import RenderObject from "../primitives/RenderObject";
 import {
   uv,
   floor,
-  int,
+  uint,
   tslFn,
   If,
   Discard,
@@ -71,17 +71,17 @@ const fragmentNode = (function () {
   const ty1 = dataTex.b;
   const ty2 = dataTex.a;
 
-  const tx = tx1.mul(int(256)).add(tx2).toVar();
-  const ty = ty1.mul(int(256)).add(ty2).toVar();
+  const tx = tx1.mul(uint(256)).add(tx2).toVar();
+  const ty = ty1.mul(uint(256)).add(ty2).toVar();
 
   tex.uvNode = vec2(
-    float(tx.add(offsetX.mul(pixelPerTile))).div(texSize.x),
-    float(ty.add(offsetY.mul(pixelPerTile))).div(texSize.y)
+    float(float(tx).add(offsetX.mul(pixelPerTile))).div(texSize.x),
+    float(float(ty).add(offsetY.mul(pixelPerTile))).div(texSize.y)
   );
 
   const cnode = tslFn(() => {
     const cNode = vec4(1, 1, 1, 1).toVar();
-    If(tx.lessThan(texSize.x).and(ty.lessThan(texSize.y)), () => {
+    If(float(tx).lessThan(texSize.x).and(float(ty).lessThan(texSize.y)), () => {
       cNode.assign(tex, 1);
     }).else(() => {
       Discard(true);
