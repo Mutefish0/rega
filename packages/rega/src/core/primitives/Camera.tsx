@@ -1,18 +1,15 @@
-import React, { useContext, useEffect, useMemo, useRef } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import TransformContext from "./TransformContext";
-import { useTargetBindingView } from "./RenderTarget";
-import { RenderGroupContext } from "./RenderGroup";
+import { RenderTargetContext } from "./RenderTarget";
 import { WebGPUCoordinateSystem } from "three/src/constants.js";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
-
 import { AnchorType } from "../hooks/useAnchor";
+import useBindingView from "../hooks/useBindingView";
 
 import { Matrix4 } from "pure3";
 
-const emptyMatrix = new Matrix4();
-
 interface CommonProps {
-  targetId?: string;
+  target?: string;
 }
 
 interface PerspectiveProps {
@@ -42,7 +39,7 @@ interface OrthographicProps {
 type Props = (PerspectiveProps | OrthographicProps) & CommonProps;
 
 export default function Camera({
-  targetId: _targetId,
+  target,
   type,
   width,
   height,
@@ -54,8 +51,8 @@ export default function Camera({
 
   anchor = "center",
 }: Props) {
-  const renderGroup = useContext(RenderGroupContext);
   const transform = useContext(TransformContext);
+  const renderTarget = useContext(RenderTargetContext);
 
   const projectionMatrix = useMemo(() => {
     if (type === "perspective") {
@@ -123,19 +120,27 @@ export default function Camera({
     }
   }, [type, fov, aspect, near, far, width, height, anchor]);
 
-  const targetId = _targetId ?? renderGroup.targetId;
-
-  const bCameraProjectionMatrix = useTargetBindingView(
-    targetId,
-    "cameraProjectionMatrix",
-    "mat4"
+  const bCameraProjectionMatrix = useBindingView(
+    "mat4",
+    renderTarget.bindings["cameraProjectionMatrix"]
   );
 
-  const bCameraViewMatrix = useTargetBindingView(
-    targetId,
-    "cameraViewMatrix",
-    "mat4"
+  // const bCameraProjectionMatrix = useTargetBindingView(
+  //   targetId,
+  //   "cameraProjectionMatrix",
+  //   "mat4"
+  // );
+
+  const bCameraViewMatrix = useBindingView(
+    "mat4",
+    renderTarget.bindings["cameraViewMatrix"]
   );
+
+  // const bCameraViewMatrix = useTargetBindingView(
+  //   targetId,
+  //   "cameraViewMatrix",
+  //   "mat4"
+  // );
 
   useEffect(() => {
     bCameraProjectionMatrix.update(projectionMatrix.elements);

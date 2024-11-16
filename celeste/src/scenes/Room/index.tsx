@@ -23,6 +23,7 @@ import Key from "./Key";
 import Chest from "./Chest";
 import Ballon from "./Balloon";
 import Platform from "./Platform";
+import Message from "./Message";
 
 interface Props {
   tilemap: {
@@ -40,6 +41,7 @@ interface Props {
   chests: Array<[number, number]>;
   balloons: Array<[number, number]>;
   platforms: Array<[number, number, number]>;
+  messages: Array<[number, number]>;
 
   playerHasDashed: boolean;
 
@@ -61,6 +63,7 @@ export default function Room({
   chests,
   balloons,
   platforms,
+  messages,
   fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
@@ -177,6 +180,11 @@ export default function Room({
       {spikes.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y }}>
           <Spike dir={d} onSpike={handleSpike} />
+        </Relative>
+      ))}
+      {messages.map(([x, y], i) => (
+        <Relative key={i} translation={{ x: x + 4, y }}>
+          <Message />
         </Relative>
       ))}
       {/* invisible wall */}

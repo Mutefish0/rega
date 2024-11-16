@@ -66,13 +66,13 @@ export default function Editor({
           <PhysicsDebuger />
         </Order>
       )}
-      {!!showIteractiveCamera && (
+      {/* {!!showIteractiveCamera && (
         <>
           <Relative translation={position}>
             <Camera type="perspective" />
           </Relative>
         </>
-      )}
+      )} */}
     </>
   );
 }

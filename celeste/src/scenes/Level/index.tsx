@@ -76,6 +76,7 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
     keys,
     balloons,
     platforms,
+    messages,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
     ref.current.level = level;
@@ -254,6 +255,7 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
         onPlayerFall={onPlayerDeath}
         onPlayerWin={goNextLevel}
         playerHasDashed={playerHasDashed}
+        messages={messages}
       />
 
       <SoundPlayer sourceId={bgm} loop volume={0.6} />

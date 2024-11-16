@@ -40,7 +40,11 @@ export {
   Matrix2,
   Matrix3,
   Matrix4,
+  Quaternion,
+  Euler,
 } from "three/src/Three.WebGPU.Nodes.js";
+
+export * from "./math/vector";
 
 export {
   positionGeometry,

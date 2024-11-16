@@ -96,19 +96,26 @@ export default function App() {
 
   const appElement = (
     <>
-      <RenderTarget main />
-      <RenderGroup>
-        <Relative translation={{ z: 100 }}>
-          <Camera
-            type="orthographic"
-            width={128}
-            height={128}
-            anchor="top-left"
-          />
-        </Relative>
+      <RenderTarget id="GUI" camera={<GUICamera target="GUI" />} />
+
+      <RenderTarget
+        id="GAME"
+        camera={
+          <Relative translation={{ z: 100 }}>
+            <Camera
+              type="orthographic"
+              width={128}
+              height={128}
+              anchor="top-left"
+            />
+          </Relative>
+        }
+      />
+
+      <RenderGroup target="GAME">
         <Level initialLevel={0} onShake={onShake} />
         {import.meta.env.DEV && (
-          <Editor showIteractiveCamera={true} showPhysicDebuger={false} />
+          <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
         )}
       </RenderGroup>
     </>

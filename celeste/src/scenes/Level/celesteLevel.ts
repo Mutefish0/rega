@@ -682,6 +682,7 @@ class CelesteLevel {
     const chests: Array<[number, number]> = [];
     const balloons: Array<[number, number]> = [];
     const platforms: Array<[number, number, number]> = [];
+    const messages: Array<[number, number]> = [];
 
     const { roomX, roomY } = this.getRoomCoords();
     for (let tx = 0; tx <= 15; tx++) {
@@ -711,6 +712,8 @@ class CelesteLevel {
           flyFruits.push([x, -y]);
         } else if (tile === 64) {
           fakeWalls.push([x, -y]);
+        } else if (tile === 86) {
+          messages.push([x, -y]);
         }
       }
     }
@@ -731,6 +734,7 @@ class CelesteLevel {
       chests,
       balloons,
       platforms,
+      messages,
     };
   }
 

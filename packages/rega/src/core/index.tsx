@@ -48,11 +48,14 @@ import useSoundPlayer from "./hooks/useSoundPlayer";
 
 import FontManager from "./common/font_manager";
 import GUIView from "./components/UI/GUIView";
+import GUICamera from "./components/UI/GUICamera";
 import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
 import { TextStyle } from "./components/UI/Text";
 
 import useTextureBinding from "./hooks/useTextureBinding";
+
+import useAirTag from "./hooks/useAirTag";
 
 import {
   KeyboardInput,
@@ -132,6 +135,9 @@ export {
   SoundPlayer,
   useSoundPlayer,
 
+  // misc
+  useAirTag,
+
   // particles
   useParticles,
 
@@ -155,6 +161,7 @@ export {
   View,
   Text,
   GUIView,
+  GUICamera,
   localStorage,
 };
 

@@ -1,39 +1,37 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 import ThreeContext from "./ThreeContext";
 import RenderContext from "./RenderContext";
 import YogaNode from "../components/YogaFlex/YogaNode";
 import { FlexStyle } from "../components/YogaFlex/FlexStyle";
-import { TransferResource, TransferBinding, UniformType } from "../render";
+import { TransferResource, TransferBinding } from "../render";
 import TextureManager, { Texture } from "../common/texture_manager";
-import {
-  createUniformBinding,
-  createUniformBindingView,
-} from "../../core/render/binding";
+import { createUniformBinding } from "../../core/render/binding";
 
 import { getOrcreateSlot } from "../render/slot";
 import { Matrix4 } from "pure3";
 
-interface CommomProps {
+export const RenderTargetContext = createContext({
+  root: true as boolean,
+  bindings: {} as Record<string, TransferResource>,
+});
+
+interface Props {
+  id: string;
+  camera?: React.ReactNode;
   children?: React.ReactNode;
   style?: FlexStyle;
   bindings?: Record<string, TransferResource>;
 }
 
-type PType = "main" | "sub";
-
-type Props<T extends PType> = T extends "main"
-  ? CommomProps & { main: true; targetId?: never }
-  : CommomProps & { main?: never; targetId: string };
-
-export const mainTarget = "___main___";
-
 const emptyMatrix = new Matrix4();
 
-export default function RenderTarget<T extends PType>(props: Props<T>) {
-  const { main, targetId = mainTarget, children, style, bindings = {} } = props;
+export default function RenderTarget(props: Props) {
+  const { id, camera, children, style, bindings = {} } = props;
 
   const ctx = useContext(ThreeContext);
   const renderCtx = useContext(RenderContext);
+
+  const parentRenderTargetCtx = useContext(RenderTargetContext);
 
   const { sab, view } = useMemo(() => {
     // 4 * 4
@@ -44,7 +42,7 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
 
   const _style = useMemo(
     () =>
-      main
+      parentRenderTargetCtx.root
         ? {
             ...style,
             width: ctx.size[0] / ctx.pixelRatio,
@@ -54,7 +52,7 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
     [style]
   );
 
-  const allBindings = useMemo(() => {
+  const renderTargetCtx = useMemo(() => {
     // "cameraProjectionMatrix",
     const bCameraProjectionMatrix = createUniformBinding("mat4");
     // "cameraViewMatrix"
@@ -69,31 +67,58 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
       ...bindings,
     } as Record<string, TransferResource>;
 
-    renderCtx.renderTargets.set(targetId, {
+    renderCtx.renderTargets.set(id, {
       bindings: allBindings,
     });
 
     for (let name in allBindings) {
-      renderCtx.renderTargetBindGroupLayout[name] = allBindings[name].type;
+      const bind = allBindings[name];
+      let type;
+      if (bind.type === "texture") {
+        if (bind.sampleType === "uint") {
+          type = "uintTexture" as const;
+        } else if (bind.sampleType === "sint") {
+          type = "sintTexture" as const;
+        } else {
+          type = "sampledTexture" as const;
+        }
+      } else {
+        type = bind.type;
+      }
+      renderCtx.renderTargetBindGroupLayout[name] = type;
     }
 
-    return allBindings;
+    return { bindings: allBindings, root: false };
   }, []);
 
   useEffect(() => {
     const textures: Record<string, Texture> = {};
 
     const binds: TransferBinding[] = [];
-    for (let name in allBindings) {
+    for (let name in renderTargetCtx.bindings) {
       const index = getOrcreateSlot("target", name);
-      const resource = allBindings[name];
+      const resource = renderTargetCtx.bindings[name];
       binds.push({
         name,
         binding: index,
         resource,
       });
-      renderCtx.renderTargetBindGroupLayout[name] = allBindings[name].type;
-      if (resource.type === "sampledTexture") {
+
+      let type;
+      if (resource.type === "texture") {
+        if (resource.sampleType === "uint") {
+          type = "uintTexture" as const;
+        } else if (resource.sampleType === "sint") {
+          type = "sintTexture" as const;
+        } else {
+          type = "sampledTexture" as const;
+        }
+      } else {
+        type = resource.type;
+      }
+      renderCtx.renderTargetBindGroupLayout[name] = type;
+
+      if (resource.type === "texture") {
         const texture = TextureManager.get(resource.textureId);
         if (!texture) {
           throw new Error(`Missing texture ${resource.textureId}`);
@@ -103,14 +128,14 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
     }
 
     renderCtx.server.createRenderTarget({
-      id: targetId,
+      id,
       viewport: sab,
       bindings: binds,
       textures,
     });
 
     return () => {
-      renderCtx.server.removeRenderTarget(targetId);
+      renderCtx.server.removeRenderTarget(id);
     };
   }, []);
 
@@ -127,23 +152,10 @@ export default function RenderTarget<T extends PType>(props: Props<T>) {
         ]);
       }}
     >
-      {children}
+      <RenderTargetContext.Provider value={renderTargetCtx}>
+        {camera}
+        {children}
+      </RenderTargetContext.Provider>
     </YogaNode>
   );
-}
-
-export function useTargetBindingView(
-  targetId: string,
-  name: string,
-  type: UniformType
-) {
-  const renderCtx = useContext(RenderContext);
-
-  const view = useMemo(() => {
-    const target = renderCtx.renderTargets.get(targetId)!;
-    const bind = target.bindings[name];
-    return createUniformBindingView(bind, type);
-  }, [name, type]);
-
-  return view;
 }

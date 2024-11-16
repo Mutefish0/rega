@@ -10,6 +10,8 @@ import {
   RigidBody2D,
   RigidBodyRef,
   smoothstep,
+  useAirTag,
+  Absolute,
 } from "rega";
 import { spr } from "../utils";
 import { CollisionGroup } from "../../constants";
@@ -39,12 +41,13 @@ const flyAnimConfig: AnimConfig<number> = {
 };
 
 export default function FlyFruit({ onGetFruit, playerHasDashed }: Props) {
-  const posRef = useRef(0);
   const rbRef = useRef<RigidBodyRef>();
 
   const [state, setState] = useState<"idle" | "got_fruit" | "fly" | "destory">(
     "idle"
   );
+
+  const [tag, info] = useAirTag();
 
   const sfx = useSoundPlayer("/sounds/get_fruit.wav");
 
@@ -63,9 +66,11 @@ export default function FlyFruit({ onGetFruit, playerHasDashed }: Props) {
 
   if (state === "got_fruit") {
     return (
-      <Relative translation={{ x: -22, y: 4 }}>
-        <Lifeup />
-      </Relative>
+      <Absolute matrix={info.matrix}>
+        <Relative translation={{ y: 16 }}>
+          <Lifeup />
+        </Relative>
+      </Absolute>
     );
   }
 
@@ -81,11 +86,17 @@ export default function FlyFruit({ onGetFruit, playerHasDashed }: Props) {
           }}
         />
         <RigidBody2D type="kinematic-velocity" ref={rbRef}>
+          {tag}
           <ShapeCollider2D
             shape="cuboid"
             size={[8, 8]}
             collisionGroup={CollisionGroup.Sensor}
-            collisionMask={CollisionGroup.Solid | CollisionGroup.Sensor}
+            collisionMask={CollisionGroup.Solid}
+            activeCollisionTypes={
+              ActiveCollisionTypes.DEFAULT |
+              ActiveCollisionTypes.KINEMATIC_FIXED |
+              ActiveCollisionTypes.KINEMATIC_KINEMATIC
+            }
             onCollisionChange={(cols) => {
               if (cols.find((col) => col?.userData?.type === "player")) {
                 onGetFruit();
@@ -131,11 +142,9 @@ export default function FlyFruit({ onGetFruit, playerHasDashed }: Props) {
     <>
       <Animation
         genFunc={swingUpDown}
-        onAnimationFrame={(clip) => {
-          posRef.current = clip.y;
-        }}
         renderItem={(clip) => (
           <Relative translation={{ y: clip.y }}>
+            {tag}
             <ShapeCollider2D
               shape="cuboid"
               size={[8, 8]}

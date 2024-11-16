@@ -1,17 +1,17 @@
 import React, { useContext } from "react";
-import GUICamera from "./GUICamera";
+import RenderGroup from "../../primitives/RenderGroup";
 import ThreeContext from "../../primitives/ThreeContext";
 import View from "./View";
 
 interface GUIViewProps {
+  target: string;
   children: React.ReactNode;
 }
 
-export default function GUIView({ children }: GUIViewProps) {
+export default function GUIView({ children, target }: GUIViewProps) {
   const ctx = useContext(ThreeContext);
   return (
-    <>
-      <GUICamera />
+    <RenderGroup target={target}>
       <View
         style={{
           width: ctx.size[0] / ctx.pixelRatio,
@@ -20,6 +20,6 @@ export default function GUIView({ children }: GUIViewProps) {
       >
         {children}
       </View>
-    </>
+    </RenderGroup>
   );
 }

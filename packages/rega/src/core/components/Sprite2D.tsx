@@ -106,7 +106,7 @@ export default React.memo(function Sprite2D({
     const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
     bindings.updates.opacity([opacityValue ?? opacity1]);
     bindings.updates.color(array);
-  }, [color, opacity]);
+  }, [colorValue, opacityValue]);
 
   useEffect(() => {
     const { width, height } = texture;

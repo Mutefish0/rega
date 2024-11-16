@@ -61,7 +61,7 @@ const renderObjectMap = new Map<
 // check-every-frame
 // check-every-scene
 const renderTargets = new Map<
-  string, // scene ID
+  string,
   {
     objects: Set<string>;
 
@@ -356,6 +356,8 @@ async function start() {
     usage: GPUTextureUsage.RENDER_ATTACHMENT,
   });
 
+  const depthTextureView = depthTexture.createView();
+
   function render() {
     frame++;
 
@@ -371,7 +373,7 @@ async function start() {
         },
       ],
       depthStencilAttachment: {
-        view: depthTexture.createView(),
+        view: depthTextureView,
         depthClearValue: 1.0, // 深度清除值
         depthStoreOp: "store",
         depthLoadOp: "clear",
