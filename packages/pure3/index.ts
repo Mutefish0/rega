@@ -33,6 +33,8 @@ import {
   attribute as _attribute,
 } from "three/src/nodes/TSL.js";
 
+import { Matrix4 } from "three/src/Three.WebGPU.Nodes.js";
+
 export {
   Vector2,
   Vector3,
@@ -43,6 +45,8 @@ export {
   Quaternion,
   Euler,
 } from "three/src/Three.WebGPU.Nodes.js";
+
+export const emptyMatrix4 = new Matrix4();
 
 export * from "./math/vector";
 

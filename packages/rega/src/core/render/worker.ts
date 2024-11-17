@@ -64,17 +64,17 @@ const renderTargets = new Map<
   string,
   {
     objects: Set<string>;
-
     viewportView: Float32Array;
-
     bindings: Array<{
       binding: number;
       resource: TransferResource;
     }>;
-
     bindGroup: GPUBindGroup;
+    depthTexture: GPUTexture;
+    depthTextureView: GPUTextureView;
   }
 >();
+let renderTargetIds: string[] = [];
 
 // index 1
 // check-every-frame
@@ -209,18 +209,37 @@ self.addEventListener("message", async (event) => {
         throw new Error("not supported uniform type");
       }
     });
+
     const gpuBindGroup = createGPUBindGroup(
       device,
       bindGroupLayout,
       gpuResources
     );
+
+    const depthTexture = device.createTexture({
+      size: [canvasSize.width, canvasSize.height, 1],
+      format: "depth24plus",
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+
+    const depthTextureView = depthTexture.createView();
     renderTargets.set(id, {
       objects: new Set(),
       viewportView,
       bindGroup: gpuBindGroup,
       bindings,
+      depthTexture,
+      depthTextureView,
     });
+    renderTargetIds.push(id);
   } else if (event.data.type === "removeRenderTarget") {
+    const { id } = event.data;
+    const target = renderTargets.get(id);
+    if (target) {
+      renderTargetIds = renderTargetIds.filter((targetId) => targetId !== id);
+      target.depthTexture.destroy();
+      renderTargets.delete(id);
+    }
   } else if (event.data.type === "addObjectToTarget") {
     const { targetId, objectId } = event.data;
     const target = renderTargets.get(targetId);
@@ -350,42 +369,36 @@ self.addEventListener("message", async (event) => {
 async function start() {
   let frame = 0;
 
-  const depthTexture = device.createTexture({
-    size: [canvasSize.width, canvasSize.height, 1],
-    format: "depth24plus",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
-
-  const depthTextureView = depthTexture.createView();
-
   function render() {
     frame++;
 
     const textureView = context.getCurrentTexture().createView();
     const commandEncoder = device.createCommandEncoder();
-    const renderPassDescriptor: GPURenderPassDescriptor = {
-      colorAttachments: [
-        {
-          view: textureView,
-          loadOp: "clear",
-          clearValue: backgroundColor,
-          storeOp: "store",
+
+    renderTargetIds.forEach((targetId, i) => {
+      const target = renderTargets.get(targetId)!;
+      const renderPassDescriptor: GPURenderPassDescriptor = {
+        colorAttachments: [
+          {
+            view: textureView,
+            loadOp: i == 0 ? "clear" : "load",
+            clearValue: backgroundColor,
+            storeOp: "store",
+          },
+        ],
+        depthStencilAttachment: {
+          view: target.depthTextureView,
+          depthClearValue: 1.0, // 深度清除值
+          depthStoreOp: "store",
+          depthLoadOp: "clear",
         },
-      ],
-      depthStencilAttachment: {
-        view: depthTextureView,
-        depthClearValue: 1.0, // 深度清除值
-        depthStoreOp: "store",
-        depthLoadOp: "clear",
-      },
-    };
+      };
 
-    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+      const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
-    passEncoder.setBindGroup(3, globalBindGroup.bindGroup);
-    passEncoder.setBindGroup(2, frameBindGroup.bindGroup);
+      passEncoder.setBindGroup(3, globalBindGroup.bindGroup);
+      passEncoder.setBindGroup(2, frameBindGroup.bindGroup);
 
-    renderTargets.forEach((target) => {
       passEncoder.setViewport(
         target.viewportView[0],
         target.viewportView[1],
@@ -407,6 +420,7 @@ async function start() {
           throw new Error("update: not supported uniform type");
         }
       });
+
       passEncoder.setBindGroup(1, target.bindGroup);
 
       target.objects.forEach((objectId) => {
@@ -445,9 +459,10 @@ async function start() {
           }
         }
       });
+
+      passEncoder.end();
     });
 
-    passEncoder.end();
     device.queue.submit([commandEncoder.finish()]);
 
     requestAnimationFrame(render);

@@ -91,9 +91,8 @@ export default function RenderTarget(props: Props) {
     return { bindings: allBindings, root: false };
   }, []);
 
-  useEffect(() => {
+  useMemo(() => {
     const textures: Record<string, Texture> = {};
-
     const binds: TransferBinding[] = [];
     for (let name in renderTargetCtx.bindings) {
       const index = getOrcreateSlot("target", name);
@@ -133,7 +132,9 @@ export default function RenderTarget(props: Props) {
       bindings: binds,
       textures,
     });
+  }, []);
 
+  useEffect(() => {
     return () => {
       renderCtx.server.removeRenderTarget(id);
     };

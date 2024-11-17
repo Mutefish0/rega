@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
 import Sprite2D from "../Sprite2D";
 import Relative from "../../primitives/Relative";
-import { Node, MeasureMode } from "yoga-layout";
+import { Node, MeasureMode, Edge } from "yoga-layout";
 import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
@@ -23,32 +23,49 @@ interface ViewLayout {
   height: number;
   left: number;
   top: number;
+
+  paddingLeft: number;
+  paddingTop: number;
 }
 
 function splitText(
   charWidth: number,
   letterSpacing: number,
-  charCount: number,
+  codes: number[],
   maxWidth: number
 ): Array<[number, number]> {
   const result: Array<[number, number]> = [];
   let currentWidth = 0;
   let startIndex = 0;
+  const charCount = codes.length;
 
   for (let i = 0; i < charCount; i++) {
+    const charCode = codes[i];
+
+    // 检查是否是换行符
+    if (charCode === 10) {
+      // '\n' 的 Unicode 编码是 10
+      // 遇到换行符，强制结束当前行
+      result.push([startIndex, i]);
+      startIndex = i + 1; // 新行从换行符后开始
+      currentWidth = 0; // 重置宽度
+      continue;
+    }
+
     // 计算当前字符的宽度，只在不是第一字符时才考虑间距
     const charTotalWidth = charWidth + (i > startIndex ? letterSpacing : 0);
 
     if (currentWidth + charTotalWidth > maxWidth && currentWidth > 0) {
+      // 当前行超出宽度限制，分割
       result.push([startIndex, i]);
       startIndex = i;
       currentWidth = charWidth; // 新行开始，重置宽度
     } else {
-      currentWidth += charTotalWidth;
+      currentWidth += charTotalWidth; // 累加当前宽度
     }
   }
 
-  // Add the last line if there are remaining characters
+  // 添加最后一行
   if (startIndex < charCount) {
     result.push([startIndex, charCount]);
   }
@@ -96,10 +113,14 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
   function _handleLayout(node: Node) {
     if (node.hasNewLayout()) {
       const viewLayout = node.getComputedLayout();
+
+      const paddingLeft = node.getComputedPadding(Edge.Left);
+      const paddingTop = node.getComputedPadding(Edge.Top);
+
       const lines = splitText(
         charWidth,
         letterSpacing,
-        clips.length,
+        clips.map((c) => c.code),
         viewLayout.width
       );
 
@@ -107,7 +128,15 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
         segments: lines.map((line) => clips.slice(line[0], line[1])),
       };
 
-      setLayout({ textLayout, viewLayout });
+      setLayout({
+        textLayout,
+        viewLayout: {
+          ...viewLayout,
+          paddingLeft,
+
+          paddingTop,
+        },
+      });
     }
   }
 
@@ -132,7 +161,12 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
           width = _width;
         }
       } else {
-        const lines = splitText(charWidth, letterSpacing, clips.length, _width);
+        const lines = splitText(
+          charWidth,
+          letterSpacing,
+          clips.map((c) => c.code),
+          _width
+        );
         width = _width;
         fullHeight = lines.length * lineHeight;
         height = fullHeight;
@@ -197,8 +231,10 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
                 key={`${clip.code}:${i}:${j}`}
                 translation={{
                   x:
-                    j * charWidth + (j === line.length ? 0 : j * letterSpacing),
-                  y: 0,
+                    layout.viewLayout.paddingLeft +
+                    j * charWidth +
+                    (j === line.length ? 0 : j * letterSpacing),
+                  y: -layout.viewLayout.paddingTop,
                   z: 0,
                 }}
               >

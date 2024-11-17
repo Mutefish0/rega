@@ -14,6 +14,7 @@ import {
   Camera,
   Text,
   GUIView,
+  View,
   GUICamera,
   useTextureBinding,
   Tilemap,
@@ -63,6 +64,7 @@ export default function App() {
       "/sounds/death.wav",
       "/sounds/fruit_fly.wav",
       "/sounds/start.wav",
+      "/sounds/type.wav",
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 
@@ -96,8 +98,6 @@ export default function App() {
 
   const appElement = (
     <>
-      <RenderTarget id="GUI" camera={<GUICamera target="GUI" />} />
-
       <RenderTarget
         id="GAME"
         camera={
@@ -111,11 +111,12 @@ export default function App() {
           </Relative>
         }
       />
+      <RenderTarget id="GUI" camera={<GUICamera />} />
 
       <RenderGroup target="GAME">
         <Level initialLevel={0} onShake={onShake} />
         {import.meta.env.DEV && (
-          <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
+          <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
       </RenderGroup>
     </>

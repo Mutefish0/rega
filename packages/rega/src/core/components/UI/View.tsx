@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import Relative from "../../primitives/Relative";
 import YogaNode, { Node } from "../YogaFlex/YogaNode";
+import { Edge } from "yoga-layout";
 import Box2D from "../Box2D";
 
 import { FlexStyle } from "../YogaFlex/FlexStyle";
@@ -30,7 +31,12 @@ export default function View({ children = null, style = {} }: ViewProps) {
   return (
     <YogaNode style={style} onLayout={onLayout}>
       {layout && (
-        <Relative translation={{ x: layout.left, y: -layout.top }}>
+        <Relative
+          translation={{
+            x: layout.left,
+            y: -layout.top,
+          }}
+        >
           {!!style.backgroundColor && (
             <Box2D
               anchor="top-left"
@@ -38,9 +44,9 @@ export default function View({ children = null, style = {} }: ViewProps) {
               color={style.backgroundColor}
             />
           )}
+          {children}
         </Relative>
       )}
-      {children}
     </YogaNode>
   );
 }

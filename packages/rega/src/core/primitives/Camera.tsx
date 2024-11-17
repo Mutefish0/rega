@@ -8,9 +8,7 @@ import useBindingView from "../hooks/useBindingView";
 
 import { Matrix4 } from "pure3";
 
-interface CommonProps {
-  target?: string;
-}
+interface CommonProps {}
 
 interface PerspectiveProps {
   type: "perspective";
@@ -39,7 +37,6 @@ interface OrthographicProps {
 type Props = (PerspectiveProps | OrthographicProps) & CommonProps;
 
 export default function Camera({
-  target,
   type,
   width,
   height,
