@@ -1,10 +1,23 @@
 import React, { useEffect, useMemo } from "react";
+import {
+  positionGeometry,
+  vec4,
+  uniform,
+  modelWorldMatrix,
+  Matrix4,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+} from "pure3";
 
-import Mesh from "../primitives/Mesh";
+import quad from "../render/geometry/quad";
+
+import useBindings from "../hooks/useBingdings";
+
+import RenderObject from "../primitives/RenderObject";
+
 import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
-import { PlaneGeometry, MeshBasicMaterial, Matrix4 } from "three/webgpu";
 
 interface Props {
   size: [number, number];
@@ -12,24 +25,31 @@ interface Props {
   color?: string;
 }
 
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
+
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
+
+const fragmentNode = vec4(color, opacity);
+
 export default React.memo(function Box2D({
   size,
   anchor = "center",
   color = "white",
 }: Props) {
-  const { geometry, material } = useMemo(() => {
-    const geometry = new PlaneGeometry(1, 1);
+  const bindings = useBindings({
+    opacity: "float",
+    color: "vec3",
+  });
 
-    const material = new MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-    });
-
-    return {
-      geometry,
-      material,
-    };
-  }, []);
+  useEffect(() => {
+    const { opacity, array } = parseColor(color || "#fff");
+    bindings.updates.opacity([opacity]);
+    bindings.updates.color(array);
+  }, [color, opacity]);
 
   const anchorMatrix = useAnchor(anchor, size);
 
@@ -40,16 +60,17 @@ export default React.memo(function Box2D({
     return mat;
   }, [anchorMatrix, size.join(",")]);
 
-  useEffect(() => {
-    const { opacity, array } = parseColor(color);
-    material.color.setRGB(array[0], array[1], array[2]);
-    material.opacity = opacity;
-    material.needsUpdate = true;
-  }, [color]);
-
   return (
     <Relative matrix={matrix}>
-      <Mesh geometry={geometry} material={material} />
+      <RenderObject
+        vertexNode={vertexNode}
+        fragmentNode={fragmentNode}
+        vertexCount={quad.vertexCount}
+        vertex={quad.vertex}
+        index={quad.index}
+        bindings={bindings.resources}
+        zIndexEnabled
+      />
     </Relative>
   );
 });

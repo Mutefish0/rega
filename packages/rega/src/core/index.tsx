@@ -1,5 +1,8 @@
 import { Vector } from "@dimforge/rapier2d";
 
+import RenderGroup from "./primitives/RenderGroup";
+import RenderTarget from "./primitives/RenderTarget";
+
 import AnimationTree from "./components/Animation/AnimationTree";
 import Transition from "./components/Animation/Transition";
 import Animation from "./components/Animation/Animation";
@@ -15,8 +18,9 @@ import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
 import Order from "./primitives/Order";
 import useTransform from "./hooks/useTransform";
-import Lens from "./components/Camera/Lens";
-import Screen from "./components/Camera/Screen";
+
+import Camera from "./primitives/Camera";
+
 import TextureManager from "./common/texture_manager";
 import Tilemap from "./components/Tilemap";
 
@@ -44,9 +48,14 @@ import useSoundPlayer from "./hooks/useSoundPlayer";
 
 import FontManager from "./common/font_manager";
 import GUIView from "./components/UI/GUIView";
+import GUICamera from "./components/UI/GUICamera";
 import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
 import { TextStyle } from "./components/UI/Text";
+
+import useTextureBinding from "./hooks/useTextureBinding";
+
+import useAirTag from "./hooks/useAirTag";
 
 import {
   KeyboardInput,
@@ -75,6 +84,8 @@ export type {
   ViewStyle,
   TextStyle,
 };
+
+export { RenderGroup, RenderTarget };
 
 export {
   // animations
@@ -117,13 +128,15 @@ export {
   FPS,
 
   // camera
-  Lens,
-  Screen,
+  Camera,
 
   // audio
   SoundManager,
   SoundPlayer,
   useSoundPlayer,
+
+  // misc
+  useAirTag,
 
   // particles
   useParticles,
@@ -148,5 +161,8 @@ export {
   View,
   Text,
   GUIView,
+  GUICamera,
   localStorage,
 };
+
+export { useTextureBinding };

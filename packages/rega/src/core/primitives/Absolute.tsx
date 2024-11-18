@@ -1,6 +1,6 @@
 import { ReactNode, useMemo } from "react";
 import TransformContext, { createContextValues } from "./TransformContext";
-import { Vector3Like, Matrix4 } from "three/webgpu";
+import { Vector3Like, Matrix4 } from "pure3";
 import { transformToMatrix } from "../math/transform";
 import { keyStringify } from "../tools/key";
 import useTransform from "../hooks/useTransform";

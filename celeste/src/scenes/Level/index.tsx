@@ -23,11 +23,12 @@ import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 interface Props {
   initialLevel?: number;
   onShake: (duration: number) => void;
+  showToast: (msg: string) => void;
 }
 
 const GAME_STATE_KEY = "__CELESTE_GAME_STATE__";
 
-export default function Level({ initialLevel = 0, onShake }: Props) {
+export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const [death, setDeath] = useState(false);
   const [level, setLevel] = useState(initialLevel);
   const [fruitsGot, setFruitsGot] = useState(0);
@@ -76,8 +77,10 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
     keys,
     balloons,
     platforms,
+    messages,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
+    ref.current.level = level;
     const tilemap = celesteLevel.getLevelMapAll();
     const bgm = celesteLevel.getLevelBGM();
 
@@ -100,10 +103,9 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
   }
 
   function saveGame() {
-    ref.current.level = level;
-    ref.current.fruitsGot = fruitsGot;
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
     console.log("saved: ", ref.current);
+    showToast("GAME SAVED");
   }
 
   function loadGame() {
@@ -125,6 +127,8 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
       setPlayerInstance((i) => i + 1);
 
       console.log("loaded: ", state);
+
+      showToast("GAME LOADED");
     } catch (err) {
       //
     }
@@ -255,6 +259,7 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
         onPlayerFall={onPlayerDeath}
         onPlayerWin={goNextLevel}
         playerHasDashed={playerHasDashed}
+        messages={messages}
       />
 
       <SoundPlayer sourceId={bgm} loop volume={0.6} />

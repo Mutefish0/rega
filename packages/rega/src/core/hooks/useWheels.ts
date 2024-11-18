@@ -1,75 +1,25 @@
-import { useEffect, useState, RefObject } from "react";
-import {
-  Matrix4,
-  Camera,
-  Vector2,
-  Vector3,
-  Raycaster,
-  Plane,
-} from "three/webgpu";
+import { useEffect, useContext } from "react";
+import ThreeContext from "../primitives/ThreeContext";
 
-function screenToWorld({ x, y, camera }: any) {
-  const worldPosition = new Vector3();
-  const plane = new Plane(camera.getWorldDirection(new Vector3()));
-
-  const raycaster = new Raycaster();
-  raycaster.setFromCamera(new Vector2(x, y), camera);
-  return raycaster.ray.intersectPlane(plane, worldPosition)!;
+export interface Options {
+  ctrlKey: boolean;
 }
 
-const MOVE_SPEED = 1 / 2000;
-const ZOOM_SPEED = 1 / 100;
-
-export default function useWheels(ref: RefObject<Camera | undefined>) {
-  const [mat, setMat] = useState<Matrix4>();
+export default function useWheels(
+  cb: (dx: number, dy: number, opts: Options) => void
+) {
+  const ctx = useContext(ThreeContext);
 
   function handleWheels(e: WheelEvent) {
-    const camera = ref.current;
-    if (camera) {
-      const { deltaX, deltaY } = e;
-      const nextMat = new Matrix4();
+    const { deltaX, deltaY } = e;
 
-      if (e.ctrlKey) {
-        const dy = -deltaY * ZOOM_SPEED;
-        const dir = camera.getWorldDirection(new Vector3());
+    const dx = deltaX / (ctx.size[0] / ctx.pixelRatio);
+    const dy = deltaY / (ctx.size[1] / ctx.pixelRatio);
+    cb(dx, dy, {
+      ctrlKey: e.ctrlKey,
+    });
 
-        const z = Math.abs(camera.position.z);
-
-        dir.multiplyScalar(dy * z);
-        nextMat.makeTranslation(dir);
-      } else {
-        const worldWidth =
-          screenToWorld({
-            x: 1,
-            y: 0,
-            camera,
-          }).x -
-          screenToWorld({
-            x: -1,
-            y: 0,
-            camera,
-          }).x;
-
-        const worldHeight =
-          screenToWorld({
-            x: 0,
-            y: 1,
-            camera,
-          }).y -
-          screenToWorld({
-            x: 0,
-            y: -1,
-            camera,
-          }).y;
-        const dx = deltaX * MOVE_SPEED;
-        const dy = -deltaY * MOVE_SPEED;
-        nextMat.makeTranslation(dx * worldWidth, dy * worldHeight, 0);
-      }
-
-      setMat(nextMat);
-
-      e.preventDefault();
-    }
+    e.preventDefault();
   }
 
   useEffect(() => {
@@ -80,6 +30,4 @@ export default function useWheels(ref: RefObject<Camera | undefined>) {
       return () => document.removeEventListener("wheel", handleWheels);
     }
   }, []);
-
-  return mat;
 }

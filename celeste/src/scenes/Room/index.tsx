@@ -23,6 +23,7 @@ import Key from "./Key";
 import Chest from "./Chest";
 import Ballon from "./Balloon";
 import Platform from "./Platform";
+import Message from "./Message";
 
 interface Props {
   tilemap: {
@@ -40,6 +41,7 @@ interface Props {
   chests: Array<[number, number]>;
   balloons: Array<[number, number]>;
   platforms: Array<[number, number, number]>;
+  messages: Array<[number, number]>;
 
   playerHasDashed: boolean;
 
@@ -61,6 +63,7 @@ export default function Room({
   chests,
   balloons,
   platforms,
+  messages,
   fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
@@ -73,11 +76,6 @@ export default function Room({
   const getKeySfx = useSoundPlayer("/sounds/get_key.wav");
 
   const { clips, tiles, solids, spikes } = tilemap;
-
-  const colliderSolids = useMemo(
-    () => solids.map(([x, y]) => [x, y - 8]),
-    [solids]
-  ) as Array<[number, number]>;
 
   function onPlayerGetKey() {
     getKeySfx.play();
@@ -96,13 +94,13 @@ export default function Room({
     <RigidBody2D type="fixed" mass={1000}>
       <Tilemap
         textureId="/images/atlas.png"
-        tiles={tiles.map(([x, y]) => [x, y - 8])}
+        tiles={tiles}
         coords={clips.map(([x, y]) => [x, y])}
         pixelPerTile={8}
         tileSize={8}
       />
       <TilemapCollider2D
-        tiles={colliderSolids}
+        tiles={solids}
         tileSize={8}
         collisionGroup={CollisionGroup.Solid}
       />
@@ -182,6 +180,11 @@ export default function Room({
       {spikes.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y }}>
           <Spike dir={d} onSpike={handleSpike} />
+        </Relative>
+      ))}
+      {messages.map(([x, y], i) => (
+        <Relative key={i} translation={{ x: x + 4, y }}>
+          <Message />
         </Relative>
       ))}
       {/* invisible wall */}

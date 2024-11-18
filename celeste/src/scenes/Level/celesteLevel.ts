@@ -682,6 +682,7 @@ class CelesteLevel {
     const chests: Array<[number, number]> = [];
     const balloons: Array<[number, number]> = [];
     const platforms: Array<[number, number, number]> = [];
+    const messages: Array<[number, number]> = [];
 
     const { roomX, roomY } = this.getRoomCoords();
     for (let tx = 0; tx <= 15; tx++) {
@@ -711,6 +712,8 @@ class CelesteLevel {
           flyFruits.push([x, -y]);
         } else if (tile === 64) {
           fakeWalls.push([x, -y]);
+        } else if (tile === 86) {
+          messages.push([x, -y]);
         }
       }
     }
@@ -731,6 +734,7 @@ class CelesteLevel {
       chests,
       balloons,
       platforms,
+      messages,
     };
   }
 
@@ -744,8 +748,8 @@ class CelesteLevel {
    */
   getLevelMap(mask = 0 | 1 | 2 | 3) {
     const mw = 16,
-      mh = 16,
-      ty = 0;
+      mh = 16;
+
     let tx = 0;
 
     if (this.isTitle()) {
@@ -767,7 +771,7 @@ class CelesteLevel {
         const tile = this.data[x + mx + (y + my) * 128];
         if (mask == 0 || fget(tile, mask)) {
           const clip = spr(tile);
-          const t = [tx + x * 8, -(ty + y * 8)] as [number, number];
+          const t = [tx + x, -y] as [number, number];
           clips.push(clip);
           tiles.push(t);
           if (fget(tile, 0)) {
@@ -775,13 +779,13 @@ class CelesteLevel {
           }
           // 1-top 2-bottom 3-left 4-right
           if (tile == 17) {
-            spikes.push([t[0] + 1, t[1] - 3, 1]);
+            spikes.push([t[0] * 8 + 1, t[1] * 8 - 3, 1]);
           } else if (tile === 27) {
-            spikes.push([t[0], t[1], 2]);
+            spikes.push([t[0] * 8, t[1] * 8, 2]);
           } else if (tile === 43) {
-            spikes.push([t[0], t[1], 4]);
+            spikes.push([t[0] * 8, t[1] * 8, 4]);
           } else if (tile === 59) {
-            spikes.push([t[0], t[1], 3]);
+            spikes.push([t[0] * 8, t[1] * 8, 3]);
           }
         }
       }

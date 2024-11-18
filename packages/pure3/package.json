@@ -1,0 +1,11 @@
+{
+  "name": "pure3",
+  "description": "pure nodes system based on three.js",
+  "version": "0.1.0",
+  "dependencies": {
+    "three": "workspace:*"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.49"
+  }
+}

@@ -4,21 +4,25 @@ import {
   SoundManager,
   FontManager,
   Editor,
-  Box2D,
-  Order,
   FPS,
+  Relative,
+  RenderGroup,
+  RenderTarget,
+  GUICamera,
 } from "rega";
+
+import ShakeCamera from "./camera";
+import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
-import TitleScreen from "./scenes/TitleScreen";
-import Camera from "./camera";
 
 export default function App() {
+  const [toast, setToast] = useState("");
   const [loadingTexture, setLoadingTexture] = useState(true);
   const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png"];
+    const textures: string[] = ["/images/atlas.png", "/images/test.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
 
     const sounds: string[] = [
@@ -41,6 +45,7 @@ export default function App() {
       "/sounds/death.wav",
       "/sounds/fruit_fly.wav",
       "/sounds/start.wav",
+      "/sounds/type.wav",
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 
@@ -68,40 +73,42 @@ export default function App() {
     setShake(duration);
   }
 
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  }
+
   if (loadingTexture) {
     return null;
   }
 
   const appElement = (
     <>
-      <FPS
-        style={{
-          fontFamily: "Arial",
-          marginLeft: "auto",
-          fontSize: 12,
-          marginTop: 8,
-          marginRight: 12,
-          color: "rgba(200, 200, 200, 0.3)",
-        }}
+      <RenderTarget
+        id="GAME"
+        camera={
+          <Relative translation={{ z: 100 }}>
+            <ShakeCamera shake={shake} onShakeEnd={() => setShake(0)} />
+          </Relative>
+        }
       />
-      <Camera shake={shake} onShakeEnd={() => setShake(0)} />
-      <Order order={1}>
-        {!started && <TitleScreen onStart={() => setStarted(true)} />}
-        {!!started && <Level initialLevel={0} onShake={onShake} />}
-      </Order>
-      <Order order={-1}>
-        <Box2D size={[128, 128]} color="black" anchor="top-left" />
-      </Order>
+
+      <RenderTarget id="GUI" camera={<GUICamera />} />
+
+      <RenderGroup target="GUI">
+        {!!toast && <Toast>{toast}</Toast>}
+      </RenderGroup>
+
+      <RenderGroup target="GAME">
+        <Level initialLevel={0} onShake={onShake} showToast={showToast} />
+        {import.meta.env.DEV && (
+          <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
+        )}
+      </RenderGroup>
     </>
   );
 
-  if (import.meta.env.DEV) {
-    return (
-      <Editor showIteractiveCamera={false} showPhysicDebuger={false}>
-        {appElement}
-      </Editor>
-    );
-  } else {
-    return appElement;
-  }
+  return appElement;
 }

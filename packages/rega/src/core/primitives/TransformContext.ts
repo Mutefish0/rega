@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { Matrix4 } from "three/webgpu";
+import { Matrix4 } from "pure3";
 
 // baseMatrix        - the matrix of the absolute parent
 // relativeMatrix    - the matrix of the compose of relative parents

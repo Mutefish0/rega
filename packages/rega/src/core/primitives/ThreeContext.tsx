@@ -1,5 +1,4 @@
 import { createContext } from "react";
-import { ArrayCamera, Vector4Like, Scene } from "three/webgpu";
 
 declare global {
   interface Window {
@@ -14,35 +13,27 @@ const ThreeContext = createContext<ReturnType<typeof createContextValues>>(
 );
 
 export function createContextValues({
-  scene,
-  guiScene,
-  camera,
   size,
-  assetsPixelRatio,
+  assetsPixelToWorldRatio,
   fixedTimestep = 20,
+  pixelRatio = 1,
 }: {
-  scene: Scene;
-  guiScene: Scene;
-  camera: ArrayCamera;
   size?: [number, number];
-  assetsPixelRatio: number;
+  assetsPixelToWorldRatio: number;
   fixedTimestep?: number;
+  pixelRatio?: number;
 }) {
   return {
     id: Math.random().toString(36).slice(2),
-    camera,
-    scene,
-    guiScene,
-    viewportMap: new Map<string, Vector4Like>(),
     size: size || [0, 0],
     frameCallbacks: new Set<FrameCallback>(),
     removedCallbacks: new Set<FrameCallback>(),
-    assetsPixelRatio,
+    assetsPixelToWorldRatio,
     fixedTimestep,
     reactDevtools: !!window.__REACT_DEVTOOLS_GLOBAL_HOOK__,
     dev: !!(import.meta as any).env.DEV,
     now: performance.now(),
-    pixelRatio: 1,
+    pixelRatio,
   };
 }
 

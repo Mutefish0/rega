@@ -1,4 +1,4 @@
-import { Vector3Like, Matrix4, Vector3, Quaternion, Euler } from "three/webgpu";
+import { Vector3Like, Matrix4, Vector3, Quaternion, Euler } from "pure3";
 
 interface Transform {
   translation: Vector3Like;

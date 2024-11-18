@@ -1,17 +1,31 @@
 import React, { useEffect, useMemo, useContext } from "react";
-import ThreeContext from "../primitives/ThreeContext";
-import Mesh from "../primitives/Mesh";
-import TextureManager from "../common/texture_manager";
+
 import {
-  PlaneGeometry,
-  MeshBasicMaterial,
-  Float32BufferAttribute,
-  DoubleSide,
-  Vector3,
-} from "three/webgpu";
-import Relative from "../primitives/Relative";
+  luminance,
+  vec4,
+  texture,
+  positionGeometry,
+  uniform,
+  modelWorldMatrix,
+  Matrix4,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+  Fn,
+  Discard,
+  If,
+} from "pure3";
+
+import TextureManager from "../common/texture_manager";
+import ThreeContext from "../primitives/ThreeContext";
+
+import RenderObject from "../primitives/RenderObject";
 import useAnchor, { AnchorType } from "../hooks/useAnchor";
+import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
+
+import quad from "../render/geometry/quad";
+import useBindings from "../hooks/useBingdings";
+import useVertexBinding from "../hooks/useVertexBinding";
 
 interface Props {
   textureId: string;
@@ -26,105 +40,145 @@ interface Props {
   size?: [number, number];
 }
 
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
+const tex = texture("tex");
+const texAlpha = texture("texAlpha");
+
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
+
+const transparentDiscard = Fn(({ color }: any) => {
+  const result = color.toVar();
+
+  If(color.a.lessThanEqual(0.0), () => {
+    Discard();
+  });
+
+  return result;
+});
+
+const fragmentNode = transparentDiscard({
+  color: tex.mul(vec4(color, opacity)),
+});
+
+const fragmentNodeWithAlpha = transparentDiscard({
+  color: tex.mul(vec4(color, opacity.mul(luminance(texAlpha.rgb)))),
+});
+
+// TODO 支持复用 Vertex
 export default React.memo(function Sprite2D({
   textureId,
   clip,
   anchor = "center",
   flipX = false,
   flipY = false,
-  opacity,
+  opacity: opacityValue,
   padding = 0,
-  color,
+  color: colorValue,
   size,
   alphaTextureId,
 }: Props) {
   const ctx = useContext(ThreeContext);
 
-  const scale = useMemo(() => {
-    if (size) {
-      return size;
-    }
-    const cWidth = clip[2] / ctx.assetsPixelRatio;
-    const cHeight = clip[3] / ctx.assetsPixelRatio;
-    return [cWidth, cHeight, 1] as [number, number, number];
-  }, [size, ctx.assetsPixelRatio]);
-
-  const { geometry, material } = useMemo(() => {
-    const geometry = new PlaneGeometry(scale[0], scale[1]);
-
-    const material = new MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      side: DoubleSide,
-    });
-
-    return {
-      geometry,
-      material,
-    };
-  }, []);
-
-  const { texture, width, height } = useMemo(() => {
-    const texture = TextureManager.get(textureId)!;
-    const { width, height } = texture!.image!;
-    return { texture, width, height };
+  const texture = useMemo(() => {
+    return TextureManager.get(textureId)!;
   }, [textureId]);
 
-  const anchorMatrix = useAnchor(anchor, [scale[0], scale[1]]);
-
-  const translation = useMemo(() => {
-    const v = new Vector3();
-    v.applyMatrix4(anchorMatrix);
-    return v;
-  }, [anchorMatrix]);
-
-  useEffect(() => {
-    material.map = texture;
-    if (alphaTextureId) {
-      material.alphaMap = TextureManager.get(alphaTextureId)!;
+  const bindings = useBindings(
+    {
+      opacity: "float",
+      color: "vec3",
+      tex: "texture_2d",
+      texAlpha: "texture_2d",
+    },
+    (init) => {
+      init.tex(textureId);
+      init.texAlpha(alphaTextureId || textureId);
     }
-  }, [texture, alphaTextureId]);
+  );
+
+  const bUv = useVertexBinding("vec2", quad.vertexCount);
 
   useEffect(() => {
-    const { opacity, array } = parseColor(color || "#ffffff");
-    material.opacity = opacity;
-    material.color.setRGB(array[0], array[1], array[2]);
-    material.needsUpdate = true;
-  }, [color]);
+    const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
+    bindings.updates.opacity([opacityValue ?? opacity1]);
+    bindings.updates.color(array);
+  }, [colorValue, opacityValue]);
 
   useEffect(() => {
+    const { width, height } = texture;
     const cWidth = (clip[2] - 2 * padding) / width;
     const cHeight = (clip[3] - 2 * padding) / height;
     const cLeftTop = [
       (clip[0] + padding) / width,
-      1 - (clip[1] + padding) / height,
+      (clip[1] + padding) / height,
     ];
-
-    geometry.attributes.uv.setXY(0, cLeftTop[0], cLeftTop[1]);
-    geometry.attributes.uv.setXY(1, cLeftTop[0] + cWidth, cLeftTop[1]);
-    geometry.attributes.uv.setXY(2, cLeftTop[0], cLeftTop[1] - cHeight);
-    geometry.attributes.uv.setXY(
-      3,
+    const uvs = [
+      cLeftTop[0],
+      cLeftTop[1],
+      // --
       cLeftTop[0] + cWidth,
-      cLeftTop[1] - cHeight
-    );
-    geometry.attributes.uv.needsUpdate = true;
-  }, [clip.join(","), width, height]);
+      cLeftTop[1],
+      // --
+      cLeftTop[0],
+      cLeftTop[1] + cHeight,
+      // --
+      cLeftTop[0] + cWidth,
+      cLeftTop[1] + cHeight,
+    ];
+    bUv.update(uvs);
+  }, [clip.join(","), texture]);
 
-  useEffect(() => {
-    material.opacity = opacity ?? 1;
-  }, [opacity]);
+  const scale = useMemo(() => {
+    if (size) {
+      return size;
+    }
+    const cWidth = clip[2] * ctx.assetsPixelToWorldRatio;
+    const cHeight = clip[3] * ctx.assetsPixelToWorldRatio;
+    return [cWidth, cHeight, 1] as [number, number, number];
+  }, [size, ctx.assetsPixelToWorldRatio]);
+
+  const anchorMatrix = useAnchor(anchor, scale);
+
+  const matrix = useMemo(() => {
+    const mat = new Matrix4();
+    const matScale = new Matrix4();
+    const matRX = new Matrix4();
+    const matRY = new Matrix4();
+
+    if (flipY) {
+      matRX.makeRotationX(Math.PI);
+    }
+
+    if (flipX) {
+      matRY.makeRotationY(Math.PI);
+    }
+
+    matScale.makeScale(scale[0], scale[1], 1);
+
+    mat
+      .multiply(anchorMatrix)
+      .multiply(matScale)
+      .multiply(matRY)
+      .multiply(matRX);
+    return mat;
+  }, [anchorMatrix, scale.join(","), flipX, flipY]);
 
   return (
-    <Relative
-      translation={translation}
-      rotation={{
-        x: flipY ? Math.PI : 0,
-        y: flipX ? Math.PI : 0,
-        z: 0,
-      }}
-    >
-      <Mesh geometry={geometry} material={material} />
+    <Relative matrix={matrix}>
+      <RenderObject
+        vertexNode={vertexNode}
+        fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
+        bindings={bindings.resources}
+        vertexCount={quad.vertexCount}
+        vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
+        index={quad.index}
+        zIndexEnabled
+        cullMode="none"
+      />
     </Relative>
   );
 });
