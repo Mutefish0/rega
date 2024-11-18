@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Animation, Screen, Lens, Relative } from "rega";
+import { Relative, Animation, Camera } from "rega";
 import { times } from "lodash";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onShakeEnd: () => void;
 }
 
-export default function Camera({ shake, onShakeEnd }: Props) {
+export default function ShakeCamera({ shake, onShakeEnd }: Props) {
   const [animation, setAnimation] = useState<{
     duration: number;
     steps: Array<[number, number]>;
@@ -28,9 +28,13 @@ export default function Camera({ shake, onShakeEnd }: Props) {
 
   return (
     <>
-      <Screen root screenId="main" />
-      <Relative translation={{ x: 64 + offset[0], y: -64 + offset[1], z: 1 }}>
-        <Lens screenId="main" type="orthographic" width={128} height={128} />
+      <Relative translation={{ x: offset[0], y: +offset[1] }}>
+        <Camera
+          type="orthographic"
+          width={128}
+          height={128}
+          anchor="top-left"
+        />
       </Relative>
       {!!animation && (
         <Animation

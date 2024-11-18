@@ -23,11 +23,12 @@ import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 interface Props {
   initialLevel?: number;
   onShake: (duration: number) => void;
+  showToast: (msg: string) => void;
 }
 
 const GAME_STATE_KEY = "__CELESTE_GAME_STATE__";
 
-export default function Level({ initialLevel = 0, onShake }: Props) {
+export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const [death, setDeath] = useState(false);
   const [level, setLevel] = useState(initialLevel);
   const [fruitsGot, setFruitsGot] = useState(0);
@@ -104,6 +105,7 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
   function saveGame() {
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
     console.log("saved: ", ref.current);
+    showToast("GAME SAVED");
   }
 
   function loadGame() {
@@ -125,6 +127,8 @@ export default function Level({ initialLevel = 0, onShake }: Props) {
       setPlayerInstance((i) => i + 1);
 
       console.log("loaded: ", state);
+
+      showToast("GAME LOADED");
     } catch (err) {
       //
     }

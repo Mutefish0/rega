@@ -1,13 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import {
-  Sprite2D,
-  Animation,
-  Relative,
   ShapeCollider2D,
   ActiveCollisionTypes,
   useSoundPlayer,
-  useParticles,
-  Absolute,
   GUIView,
   RenderGroup,
   View,
@@ -46,31 +41,33 @@ export default function Message() {
   return (
     <>
       {state === "showing" && (
-        <GUIView target="GUI">
-          <View
-            style={{
-              marginTop: 380,
-              marginLeft: "auto",
-              marginRight: "auto",
-              flexDirection: "row",
-              width: 464,
-            }}
-          >
-            <Text
+        <RenderGroup target="GUI">
+          <GUIView>
+            <View
               style={{
-                paddingLeft: 10,
-                paddingTop: 10,
-                fontFamily: "celeste",
-                fontSize: 28,
-                color: "#000",
-                backgroundColor: "#fff1e8",
-                letterSpacing: -8,
+                marginTop: 380,
+                marginLeft: "auto",
+                marginRight: "auto",
+                flexDirection: "row",
+                width: 464,
               }}
             >
-              {text}
-            </Text>
-          </View>
-        </GUIView>
+              <Text
+                style={{
+                  paddingLeft: 10,
+                  paddingTop: 10,
+                  fontFamily: "celeste",
+                  fontSize: 28,
+                  color: "#000",
+                  backgroundColor: "#fff1e8",
+                  letterSpacing: -8,
+                }}
+              >
+                {text}
+              </Text>
+            </View>
+          </GUIView>
+        </RenderGroup>
       )}
       <ShapeCollider2D
         shape="cuboid"

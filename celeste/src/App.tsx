@@ -4,38 +4,19 @@ import {
   SoundManager,
   FontManager,
   Editor,
-  Box2D,
-  Order,
   FPS,
   Relative,
-  Sprite2D,
   RenderGroup,
   RenderTarget,
-  Camera,
-  Text,
-  GUIView,
-  View,
   GUICamera,
-  useTextureBinding,
-  Tilemap,
-  TilemapCollider2D,
 } from "rega";
 
-import Player from "./scenes/Player";
+import ShakeCamera from "./camera";
+import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
-import TitleScreen from "./scenes/TitleScreen";
-import FlyFruit from "./scenes/Room/FlyFruit";
-import Fruit from "./scenes/Room/Fruit";
-
-import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./scenes/Level/celesteLevel";
-
-const celesteLevel = new CelesteLevel(1);
-
-const { clips, tiles } = celesteLevel.getLevelMapAll();
-
-// import Camera from "./camera";
 
 export default function App() {
+  const [toast, setToast] = useState("");
   const [loadingTexture, setLoadingTexture] = useState(true);
   const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
@@ -92,6 +73,13 @@ export default function App() {
     setShake(duration);
   }
 
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  }
+
   if (loadingTexture) {
     return null;
   }
@@ -102,19 +90,19 @@ export default function App() {
         id="GAME"
         camera={
           <Relative translation={{ z: 100 }}>
-            <Camera
-              type="orthographic"
-              width={128}
-              height={128}
-              anchor="top-left"
-            />
+            <ShakeCamera shake={shake} onShakeEnd={() => setShake(0)} />
           </Relative>
         }
       />
+
       <RenderTarget id="GUI" camera={<GUICamera />} />
 
+      <RenderGroup target="GUI">
+        {!!toast && <Toast>{toast}</Toast>}
+      </RenderGroup>
+
       <RenderGroup target="GAME">
-        <Level initialLevel={0} onShake={onShake} />
+        <Level initialLevel={0} onShake={onShake} showToast={showToast} />
         {import.meta.env.DEV && (
           <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
