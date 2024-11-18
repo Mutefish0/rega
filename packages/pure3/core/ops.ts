@@ -140,3 +140,10 @@ export type LessThan<
     "bool"
   ] = RuleLessThan
 > = R extends [A, B, infer C] ? C : never;
+
+type OneMinusRule = ["float", "float"] | ["int", "int"] | ["uint", "uint"];
+
+export type OneMinus<
+  B extends NodeValueType,
+  R extends ["int" | "float" | "uint", "int" | "float" | "uint"] = OneMinusRule
+> = R extends [B, infer C] ? C : never;

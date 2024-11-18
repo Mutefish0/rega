@@ -8,9 +8,14 @@ import {
   attribute as _attribute,
 } from "three/src/nodes/TSL.js";
 
+import uniform from "../core/uniform";
+
 export const positionGeometry = _positionGeometry as Node<"vec3">;
 export const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
 export const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
+export const modelWorldMatrix = uniform("mat4", "modelWorldMatrix");
+export const modelViewMatrix = cameraViewMatrix.mul(modelWorldMatrix);
+
 export const uv = _uv as () => Node<"vec2">;
 
 export function attribute<T extends WGSLValueType>(type: T, name: string) {

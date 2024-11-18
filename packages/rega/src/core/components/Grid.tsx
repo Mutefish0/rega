@@ -1,11 +1,8 @@
-import React, { useMemo, useContext } from "react";
-import { PlaneGeometry, Vector2, Vector3 } from "three/webgpu";
+import React, { useEffect } from "react";
 import {
   uniform,
   float,
   positionGeometry,
-  MeshBasicNodeMaterial,
-  varying,
   round,
   vec2,
   vec4,
@@ -17,17 +14,20 @@ import {
   If,
   normalize,
   modelViewMatrix,
+  cameraViewMatrix,
+  modelWorldMatrix,
   cameraProjectionMatrix,
   max,
   abs,
   viewportCoordinate,
   Discard,
   cond,
-} from "three/webgpu";
-import Color from "color";
-import ThreeContext from "../primitives/ThreeContext";
-import Mesh from "../primitives/Mesh";
-import useUniforms from "../hooks/useUniforms";
+} from "pure3";
+import RenderObject from "../primitives/RenderObject";
+import useBindings from "../hooks/useBingdings";
+import { parseColor } from "../tools/color";
+
+import quad from "../render/geometry/quad";
 
 const frag_line_dist_alpha = tslFn(
   ([
@@ -107,6 +107,67 @@ const cnode = tslFn(
   ],
 });
 
+const fadeDistance = uniform("uint", "fadeDistance");
+const resolution = uniform("vec2", "resolution");
+const fadeRate = uniform("float", "fadeRate");
+const lineWidth = uniform("float", "lineWidth");
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
+const pColor = uniform("vec3", "pColor");
+const pOpacity = uniform("float", "pOpacity");
+const positionNode = vec4(positionGeometry, float(fadeDistance).mul(10.0));
+
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(positionNode);
+
+const fragmentNode = (function () {
+  const x = float(round(positionNode.x));
+  const y = float(round(positionNode.y));
+  const z = float(round(positionNode.z));
+  const p = vec4(
+    cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(x, y, z, 1.0))
+  );
+  const pp = vec2(p.xy.div(p.w));
+  const px = vec2(
+    pp.x.div(2).add(0.5).mul(resolution.x),
+    pp.y.div(2).add(0.5).oneMinus().mul(resolution.y)
+  );
+  const p1 = vec4(
+    cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(x.add(1.0), y, z, 1.0))
+  );
+  const pp1 = vec2(p1.xy.div(p1.w));
+  const px1 = vec2(
+    pp1.x.div(2).add(0.5).mul(resolution.x),
+    pp1.y.div(2).add(0.5).oneMinus().mul(resolution.y)
+  );
+  const p2 = vec4(
+    cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(x, y.add(1.0), z, 1.0))
+  );
+  const pp2 = vec2(p2.xy.div(p2.w));
+  const px2 = vec2(
+    pp2.x.div(2).add(0.5).mul(resolution.x),
+    pp2.y.div(2).add(0.5).oneMinus().mul(resolution.y)
+  );
+  const dist = float(max(abs(x), abs(y)));
+  const alphaFade = decay(dist.sub(fadeDistance), fadeRate);
+  const alpha1 = frag_line_dist_alpha(
+    px,
+    px1,
+    lineWidth.div(2.0),
+    viewportCoordinate.xy
+  ).mul(alphaFade);
+  const alpha2 = frag_line_dist_alpha(
+    px,
+    px2,
+    lineWidth.div(2.0),
+    viewportCoordinate.xy
+  ).mul(alphaFade);
+
+  return cnode(x, y, alpha1, alpha2, pColor, pOpacity, color, opacity);
+})();
+
 interface GridProps {
   lineWidth?: number;
   fadeDistance?: number;
@@ -122,142 +183,49 @@ export default function Grid({
   color = "rgba(255,0,0,0.1)",
   principleColor = color,
 }: GridProps) {
-  const ctx = useContext(ThreeContext);
+  const bindings = useBindings({
+    resolution: "vec2",
+    lineWidth: "float",
+    fadeDistance: "uint",
+    fadeRate: "float",
+    opacity: "float",
+    color: "vec3",
+    pOpacity: "float",
+    pColor: "vec3",
+  });
 
-  const uniforms = useUniforms(
-    {
-      resolution: uniform(new Vector2(ctx.size[0], ctx.size[1])),
-      lineWidth: uniform(lineWidth),
-      fadeDistance: uniform(fadeDistance),
-      fadeRate: uniform(fadeRate),
-      opacity: uniform(0),
-      color: uniform(new Vector3(0, 0, 0)),
-      pOpacity: uniform(0),
-      pColor: uniform(new Vector3(0, 0, 0)),
-    },
-    () => ({ lineWidth, fadeDistance, fadeRate }),
-    [lineWidth, fadeDistance, fadeRate]
+  useEffect(() => {
+    bindings.updates.lineWidth([lineWidth]);
+  }, [lineWidth]);
+
+  useEffect(() => {
+    bindings.updates.fadeDistance([fadeDistance]);
+  }, [fadeDistance]);
+
+  useEffect(() => {
+    bindings.updates.fadeRate([fadeRate]);
+  }, [fadeRate]);
+
+  useEffect(() => {
+    const { opacity, array } = parseColor(color);
+    bindings.updates.opacity([opacity]);
+    bindings.updates.color(array);
+  }, [color]);
+
+  useEffect(() => {
+    const { opacity, array } = parseColor(principleColor);
+    bindings.updates.pOpacity([opacity]);
+    bindings.updates.pColor(array);
+  }, [principleColor]);
+
+  return (
+    <RenderObject
+      bindings={bindings.resources}
+      vertexNode={vertexNode}
+      fragmentNode={fragmentNode}
+      vertexCount={quad.vertexCount}
+      vertex={quad.vertex}
+      index={quad.index}
+    />
   );
-
-  useUniforms(
-    uniforms,
-    () => {
-      const cc = new Color(color);
-      const opacity = cc.alpha();
-      const colorArr = cc
-        .rgb()
-        .array()
-        .slice(0, 3)
-        .map((c) => c / 255);
-
-      return {
-        opacity: opacity,
-        color: new Vector3(...colorArr),
-      };
-    },
-    [color]
-  );
-
-  useUniforms(
-    uniforms,
-    () => {
-      const cc = new Color(principleColor);
-      const opacity = cc.alpha();
-
-      const colorArr = cc
-        .rgb()
-        .array()
-        .slice(0, 3)
-        .map((c) => c / 255);
-
-      return {
-        pOpacity: opacity,
-        pColor: new Vector3(...colorArr),
-      };
-    },
-    [principleColor]
-  );
-
-  const { geometry, material } = useMemo(() => {
-    const geometry = new PlaneGeometry(1, 1);
-
-    const material = new MeshBasicNodeMaterial();
-
-    material.transparent = true;
-
-    const gridSize = float(uniforms.fadeDistance).mul(10.0);
-    const position = positionGeometry.mul(gridSize);
-
-    const vPosition = varying(position);
-
-    material.positionNode = position;
-
-    const x = float(round(vPosition.x));
-    const y = float(round(vPosition.y));
-    const z = float(round(vPosition.z));
-
-    const p = vec4(
-      cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(x, y, z, 1.0))
-    );
-    const pp = vec2(p.xy.div(p.w));
-    const px = vec2(
-      pp.x.div(2).add(0.5).mul(uniforms.resolution.x),
-      pp.y.div(2).add(0.5).oneMinus().mul(uniforms.resolution.y)
-    );
-
-    const p1 = vec4(
-      cameraProjectionMatrix
-        .mul(modelViewMatrix)
-        .mul(vec4(x.add(1.0), y, z, 1.0))
-    );
-    const pp1 = vec2(p1.xy.div(p1.w));
-    const px1 = vec2(
-      pp1.x.div(2).add(0.5).mul(uniforms.resolution.x),
-      pp1.y.div(2).add(0.5).oneMinus().mul(uniforms.resolution.y)
-    );
-
-    const p2 = vec4(
-      cameraProjectionMatrix
-        .mul(modelViewMatrix)
-        .mul(vec4(x, y.add(1.0), z, 1.0))
-    );
-    const pp2 = vec2(p2.xy.div(p2.w));
-    const px2 = vec2(
-      pp2.x.div(2).add(0.5).mul(uniforms.resolution.x),
-      pp2.y.div(2).add(0.5).oneMinus().mul(uniforms.resolution.y)
-    );
-
-    const dist = float(max(abs(x), abs(y)));
-
-    const alphaFade = decay(dist.sub(uniforms.fadeDistance), uniforms.fadeRate);
-
-    const alpha1 = frag_line_dist_alpha(
-      px,
-      px1,
-      uniforms.lineWidth.div(2.0),
-      viewportCoordinate.xy
-    ).mul(alphaFade);
-
-    const alpha2 = frag_line_dist_alpha(
-      px,
-      px2,
-      uniforms.lineWidth.div(2.0),
-      viewportCoordinate.xy
-    ).mul(alphaFade);
-
-    material.colorNode = cnode(
-      x,
-      y,
-      alpha1,
-      alpha2,
-      uniforms.pColor,
-      uniforms.pOpacity,
-      uniforms.color,
-      uniforms.opacity
-    );
-
-    return { geometry, material };
-  }, []);
-
-  return <Mesh geometry={geometry} material={material as any} />;
 }

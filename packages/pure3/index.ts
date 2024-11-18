@@ -1,10 +1,10 @@
 /// <reference types="@webgpu/types" />
 
 import texture, { dataTexture } from "./accessors/texture/index";
-import modelWorldMatrix from "./accessors/modelWorldMatrix";
+
 import uniform from "./core/uniform";
 
-export { texture, dataTexture, uniform, modelWorldMatrix };
+export { texture, dataTexture, uniform };
 
 export type { Node, WGSLValueType } from "./core/types";
 
@@ -24,14 +24,6 @@ export {
   ivec4,
   uvec4,
 } from "./core/conv";
-
-import {
-  uv as _uv,
-  positionGeometry as _positionGeometry,
-  cameraProjectionMatrix as _cameraProjectionMatrix,
-  cameraViewMatrix as _cameraViewMatrix,
-  attribute as _attribute,
-} from "three/src/nodes/TSL.js";
 
 import { Matrix4 } from "three/src/Three.WebGPU.Nodes.js";
 
@@ -54,6 +46,8 @@ export {
   positionGeometry,
   cameraProjectionMatrix,
   cameraViewMatrix,
+  modelWorldMatrix,
+  modelViewMatrix,
   uv,
   attribute,
 } from "./misc/nodes";
