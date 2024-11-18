@@ -101,7 +101,10 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
   const s = useConst({
     prevJump: false as boolean,
     hasDashed: false as boolean,
-    disableDash: false as boolean,
+
+    maxDashJump: 2,
+
+    dashJump: 1,
 
     prevDash: false as boolean,
     isGrounded: true,
@@ -223,7 +226,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
             // reset dash flag
             dashLandSfx.play();
             s.hasDashed = false;
-            s.disableDash = false;
+            s.dashJump = s.maxDashJump;
             setHasDash(false);
           }
         }
@@ -342,11 +345,11 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
           }
 
           // dash
-          if (dash && !s.disableDash) {
+          if (dash && s.dashJump > 0) {
             dashSfx.play();
             onPlayerDash();
             s.hasDashed = true;
-            s.disableDash = true;
+            s.dashJump--;
             setHasDash(true);
 
             s.dashEffectTime = DASH_EFFECT_TIME;
@@ -538,7 +541,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
               );
 
               if (fruitCol || balloonCol) {
-                s.disableDash = false;
+                s.dashJump = Math.min(s.maxDashJump, s.dashJump + 1);
               }
             }}
           />
