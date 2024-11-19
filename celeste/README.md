@@ -81,5 +81,5 @@ run:
 - [x] title screen
 - [ ] flag & score & fruit record
 - [ ] orb
-- [ ] save and load system
+- [x] save and load system
 - [ ] alphaMap + textureColor

@@ -683,6 +683,7 @@ class CelesteLevel {
     const balloons: Array<[number, number]> = [];
     const platforms: Array<[number, number, number]> = [];
     const messages: Array<[number, number]> = [];
+    const bigChests: Array<[number, number]> = [];
 
     const { roomX, roomY } = this.getRoomCoords();
     for (let tx = 0; tx <= 15; tx++) {
@@ -714,6 +715,8 @@ class CelesteLevel {
           fakeWalls.push([x, -y]);
         } else if (tile === 86) {
           messages.push([x, -y]);
+        } else if (tile === 96) {
+          bigChests.push([x, -y]);
         }
       }
     }
@@ -735,6 +738,7 @@ class CelesteLevel {
       balloons,
       platforms,
       messages,
+      bigChests,
     };
   }
 
@@ -824,13 +828,13 @@ class CelesteLevel {
     if (this.isTitle()) {
       return "/sounds/title.mp3";
     }
-    if (this.level >= 29) {
+    if (this.level >= 22) {
+      return "/sounds/area3.mp3";
+    } else if (this.level >= 21) {
       return "/sounds/wind.mp3";
-    } else if (this.level >= 20) {
-      return "/sounds/wind.mp3";
-    } else if (this.level >= 11) {
+    } else if (this.level >= 12) {
       return "/sounds/area2.mp3";
-    } else if (this.level >= 10) {
+    } else if (this.level >= 11) {
       return "/sounds/wind.mp3";
     } else {
       return "/sounds/area1.mp3";

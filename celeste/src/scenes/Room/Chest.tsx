@@ -34,7 +34,7 @@ export default function Chest({ hasKey, onGetFruit }: Props) {
       <Animation
         config={animConfig}
         renderItem={(x) => (
-          <Relative translation={{ x, y: 0, z: 0 }}>
+          <Relative translation={{ x, y: 0 }}>
             <Sprite2D
               textureId="/images/atlas.png"
               clip={spr(20)}

@@ -24,6 +24,7 @@ import Chest from "./Chest";
 import Ballon from "./Balloon";
 import Platform from "./Platform";
 import Message from "./Message";
+import BigChest from "./BigChest";
 
 interface Props {
   tilemap: {
@@ -42,6 +43,7 @@ interface Props {
   balloons: Array<[number, number]>;
   platforms: Array<[number, number, number]>;
   messages: Array<[number, number]>;
+  bigChests: Array<[number, number]>;
 
   playerHasDashed: boolean;
 
@@ -64,6 +66,7 @@ export default function Room({
   balloons,
   platforms,
   messages,
+  bigChests,
   fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
@@ -167,7 +170,7 @@ export default function Room({
         ))}
       {/* chests */}
       {chests.map(([x, y], i) =>
-        fruitsGot[`chest_fruit_${i}`] ? null : (
+        fruitsGot.includes(`chest_fruit_${i}`) ? null : (
           <Relative translation={{ x: x, y: y - 4 }} key={i}>
             <Chest
               hasKey={hasKey}
@@ -185,6 +188,11 @@ export default function Room({
       {messages.map(([x, y], i) => (
         <Relative key={i} translation={{ x: x + 4, y }}>
           <Message />
+        </Relative>
+      ))}
+      {bigChests.map(([x, y], i) => (
+        <Relative key={i} translation={{ x, y }}>
+          <BigChest />
         </Relative>
       ))}
       {/* invisible wall */}

@@ -93,6 +93,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     balloons,
     platforms,
     messages,
+    bigChests,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
     ref.current.level = level;
@@ -173,7 +174,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setIntro(true);
 
     showToast(
-      `${formatDate(Date.now() - ref.current.startTime)} ${level * 100}M`
+      `${formatDate(Date.now() - ref.current.startTime)} ${(level + 1) * 100}M`
     );
   }
 
@@ -189,7 +190,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setIntro(true);
 
     showToast(
-      `${formatDate(Date.now() - ref.current.startTime)} ${level * 100}m`
+      `${formatDate(Date.now() - ref.current.startTime)} ${(level + 1) * 100}m`
     );
   }
 
@@ -284,13 +285,14 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         chests={chests}
         balloons={balloons}
         platforms={platforms}
+        messages={messages}
+        bigChests={bigChests}
         fruitsGot={currentFruitsGot}
         onPlayerGetFruit={onPlayerGetFruit}
         onPlayerSpike={onPlayerDeath}
         onPlayerFall={onPlayerDeath}
         onPlayerWin={goNextLevel}
         playerHasDashed={playerHasDashed}
-        messages={messages}
       />
 
       <SoundPlayer sourceId={bgm} loop volume={0.6} />

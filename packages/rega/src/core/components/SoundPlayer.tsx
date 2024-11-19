@@ -28,7 +28,7 @@ export default function SoundPlayer({
     } else {
       stop();
     }
-  }, [active]);
+  }, [active, sourceId]);
 
   return null;
 }
