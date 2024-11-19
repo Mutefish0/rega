@@ -102,7 +102,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
     prevJump: false as boolean,
     hasDashed: false as boolean,
 
-    maxDashJump: 2,
+    maxDashJump: 1,
 
     dashJump: 1,
 
@@ -227,6 +227,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
             dashLandSfx.play();
             s.hasDashed = false;
             s.dashJump = s.maxDashJump;
+
             setHasDash(false);
           }
         }
@@ -350,6 +351,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
             onPlayerDash();
             s.hasDashed = true;
             s.dashJump--;
+
             setHasDash(true);
 
             s.dashEffectTime = DASH_EFFECT_TIME;
