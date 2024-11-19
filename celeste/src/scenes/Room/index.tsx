@@ -45,7 +45,7 @@ interface Props {
 
   playerHasDashed: boolean;
 
-  fruitsGot: Record<string, boolean>;
+  fruitsGot: string[];
   onPlayerGetFruit: (id: string) => void;
   onPlayerSpike: (pos: Vector) => void;
   onPlayerFall: (pos: Vector) => void;
@@ -124,7 +124,7 @@ export default function Room({
       ))}
       {/* fake walls */}
       {fakeWalls.map(([x, y], i) =>
-        fruitsGot[`fake_wall_fruit_${i}`] ? null : (
+        fruitsGot.includes(`fake_wall_fruit_${i}`) ? null : (
           <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
             <FakeWall
               onGetFruit={() => onPlayerGetFruit(`fake_wall_fruit_${i}`)}
@@ -134,7 +134,7 @@ export default function Room({
       )}
       {/* fruits */}
       {fruits.map(([x, y], i) =>
-        fruitsGot[`fruit_${i}`] ? null : (
+        fruitsGot.includes(`fruit_${i}`) ? null : (
           <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
             <Fruit key={i} onGetFruit={() => onPlayerGetFruit(`fruit_${i}`)} />
           </Relative>
@@ -142,7 +142,7 @@ export default function Room({
       )}
       {/* fly fruits */}
       {flyFruits.map(([x, y], i) =>
-        fruitsGot[`fly_fruit_${i}`] ? null : (
+        fruitsGot.includes(`fly_fruit_${i}`) ? null : (
           <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
             <FlyFruit
               key={i}

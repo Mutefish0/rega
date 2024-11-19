@@ -14,9 +14,10 @@ import {
 import DeathParticle from "../DeathParticle";
 import Clouds from "../Clouds";
 import Snow from "../Snow";
+import PlayerIntro from "../Player/Intro";
 import Player, { PlayerState } from "../Player";
 import Room from "../Room";
-import { clamp } from "lodash";
+import { clamp, uniq } from "lodash";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 
@@ -26,18 +27,41 @@ interface Props {
   showToast: (msg: string) => void;
 }
 
+const INITIAL_STATE = {
+  // passed levels
+  totalFruitsGot: 0,
+  startTime: Date.now(),
+  level: 0,
+  // current level
+  currentLevelFruitsGot: [] as string[],
+
+  player: {
+    position: {
+      x: 0,
+      y: 0,
+    },
+  },
+};
+
+function formatDate(time: number) {
+  const seconds = Math.floor(time / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes % 60).padStart(
+    2,
+    "0"
+  )}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 const GAME_STATE_KEY = "__CELESTE_GAME_STATE__";
 
 export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
+  const ref = useRef(INITIAL_STATE);
+
   const [death, setDeath] = useState(false);
-  const [level, setLevel] = useState(initialLevel);
-  const [fruitsGot, setFruitsGot] = useState(0);
 
-  const [currentFruitsGot, setCurrentFruitsGot] = useState<
-    Record<string, boolean>
-  >({});
-
-  const currentFruitsGotRef = useRef<Record<string, boolean>>({});
+  const [intro, setIntro] = useState(true);
 
   const celesteLevel = useMemo(() => new CelesteLevel(), []);
 
@@ -47,22 +71,13 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
 
   const { list, emit } = useParticles<Vector>();
 
-  const gameStatekey = `${level}-${playerInstance}`;
-
-  const ref = useRef({
-    fruitsGot: 0,
-    level: 1,
-    player: {
-      position: {
-        x: 0,
-        y: 0,
-      },
-    },
-  });
-
-  // game state
   const [playerPosition, setPlayerPosition] = useState();
+  const [level, setLevel] = useState(initialLevel);
+  const [currentFruitsGot, setCurrentFruitsGot] = useState<string[]>([]);
+  const [totalFruitsGot, setTotalFruitsGot] = useState(0);
   const [playerHasDashed, setPlayerHasDashed] = useState(false);
+
+  const gameStatekey = `${level}-${playerInstance}`; // game state
 
   const {
     bgm,
@@ -103,7 +118,12 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   }
 
   function saveGame() {
+    ref.current.level = level;
+    ref.current.totalFruitsGot = totalFruitsGot;
+    ref.current.currentLevelFruitsGot = currentFruitsGot;
+
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
+
     console.log("saved: ", ref.current);
     showToast("GAME SAVED");
   }
@@ -112,18 +132,12 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     const str = localStorage.getItem(GAME_STATE_KEY);
     try {
       const state = JSON.parse(str);
-
-      ref.current.level = state.level;
-      ref.current.player = state.player;
-      ref.current.fruitsGot = state.fruitsGot;
+      ref.current = state;
 
       setLevel(ref.current.level);
-
-      setFruitsGot(ref.current.fruitsGot);
-      setCurrentFruitsGot({});
-      currentFruitsGotRef.current = {};
-
       setPlayerPosition(state.player.position);
+      setCurrentFruitsGot(state.currentLevelFruitsGot || []);
+      setTotalFruitsGot(state.totalFruitsGot || 0);
       setPlayerInstance((i) => i + 1);
 
       console.log("loaded: ", state);
@@ -153,24 +167,30 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   }
 
   function restartLevel() {
-    setCurrentFruitsGot(currentFruitsGotRef.current);
+    setCurrentFruitsGot([]);
     setPlayerPosition(undefined);
     setPlayerInstance((i) => i + 1);
+    setIntro(true);
+
+    showToast(
+      `${formatDate(Date.now() - ref.current.startTime)} ${level * 100}M`
+    );
   }
 
   function onPlayerGetFruit(id: string) {
-    currentFruitsGotRef.current[id] = true;
+    setCurrentFruitsGot(uniq([...currentFruitsGot, id]));
   }
 
   function goNextLevel() {
-    setFruitsGot(
-      (prev) => prev + Object.keys(currentFruitsGotRef.current).length
-    );
-    currentFruitsGotRef.current = {};
-    setCurrentFruitsGot({});
-
+    setCurrentFruitsGot([]);
     setPlayerPosition(undefined);
+    setTotalFruitsGot(totalFruitsGot + currentFruitsGot.length);
     setLevel((l) => (l + 1 === TITLE_SCREEN_LEVEL ? l + 2 : l + 1));
+    setIntro(true);
+
+    showToast(
+      `${formatDate(Date.now() - ref.current.startTime)} ${level * 100}m`
+    );
   }
 
   return (
@@ -216,20 +236,31 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
       ))}
       {!death && (
         <Order order={2}>
-          <Relative
-            translation={
-              playerPosition ?? { x: playerSpawn[0], y: playerSpawn[1] }
-            }
-          >
-            <Player
-              key={gameStatekey}
-              onPlayerUpdate={onPlayerUpdate}
-              onPlayerDash={() => {
-                setPlayerHasDashed(true);
+          {!!intro && (
+            <PlayerIntro
+              spwawn={{ x: playerSpawn[0], y: playerSpawn[1] }}
+              onFinished={() => {
+                setIntro(false);
                 onShake(200);
               }}
             />
-          </Relative>
+          )}
+          {!intro && (
+            <Relative
+              translation={
+                playerPosition ?? { x: playerSpawn[0], y: playerSpawn[1] }
+              }
+            >
+              <Player
+                key={gameStatekey}
+                onPlayerUpdate={onPlayerUpdate}
+                onPlayerDash={() => {
+                  setPlayerHasDashed(true);
+                  onShake(200);
+                }}
+              />
+            </Relative>
+          )}
         </Order>
       )}
 

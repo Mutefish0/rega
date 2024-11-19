@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { GamepadEvent, GamepadKey } from "../../io/input";
 import {
   gamepadEventSubject,
@@ -81,11 +81,15 @@ export function GamepadInput({
 }: GamepadInputProps) {
   const gp = useGamepadInput(label);
 
+  const ref = useRef({ onKeyChange });
+
+  ref.current.onKeyChange = onKeyChange;
+
   function keyHandler(e: GamepadEvent) {
     if (gp.index === e.index) {
       const keyVal = e.changedKeys[inputKey];
       if (typeof keyVal === "number") {
-        onKeyChange(keyVal);
+        ref.current.onKeyChange(keyVal);
       }
     }
   }

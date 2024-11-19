@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { KeyboardEvent, KeyboardKey } from "../../io/input";
 import { keyboardEventSubject, keyboardMap } from "./index";
 import { mergeInputValues } from "./utils";
@@ -21,12 +21,17 @@ function toVectorInput(min: number, max: number) {
 }
 
 export function KeyboardInput({ inputKey, onKeyChange }: KeyboardInputProps) {
+  const ref = useRef({ onKeyChange });
+
+  ref.current.onKeyChange = onKeyChange;
+
   function keyHandler(e: KeyboardEvent) {
     const keyVal = e.changedKeys[inputKey];
     if (typeof keyVal !== "undefined") {
-      onKeyChange(keyVal);
+      ref.current.onKeyChange(keyVal);
     }
   }
+
   useEffect(() => {
     const sub = keyboardEventSubject.subscribe(keyHandler);
     return () => {
