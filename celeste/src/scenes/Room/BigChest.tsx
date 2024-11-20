@@ -9,7 +9,7 @@ import {
   useParticles,
   Box2D,
   RigidBody2D,
-  Order,
+  ZIndex,
 } from "rega";
 import { spr } from "../utils";
 import { CollisionGroup } from "../../constants";
@@ -21,7 +21,7 @@ interface Props {
 
 export default function BigChest({ onBigChestOpen }: Props) {
   const [state, setState] = useState<"idle" | "opening" | "opened">("idle");
-  const refInterval = useRef<number | null>(null);
+  const refInterval = useRef(null);
 
   const sfx = useSoundPlayer("/sounds/big_chest.wav");
 
@@ -67,7 +67,7 @@ export default function BigChest({ onBigChestOpen }: Props) {
         <Relative translation={{ y: -4, x: 12 }}>
           <Smoke />
         </Relative>
-        <Order order={2}>
+        <ZIndex zIndex={2}>
           <Relative translation={{ y: -8 }}>
             <Sprite2D
               anchor="top-left"
@@ -84,7 +84,7 @@ export default function BigChest({ onBigChestOpen }: Props) {
               padding={0.05}
             />
           </Relative>
-        </Order>
+        </ZIndex>
         {state === "opening" &&
           list.map((p) => (
             <Relative translation={{ x: p.data.ox, y: -16 }}>
@@ -92,14 +92,14 @@ export default function BigChest({ onBigChestOpen }: Props) {
                 type="kinematic-velocity"
                 initialVelocity={{ x: 0, y: p.data.spd }}
               >
-                <Order order={1}>
+                <ZIndex zIndex={1}>
                   <Box2D
                     anchor="bottom"
                     key={p.id}
                     size={[2, p.data.h]}
                     color="#fff"
                   />
-                </Order>
+                </ZIndex>
               </RigidBody2D>
             </Relative>
           ))}

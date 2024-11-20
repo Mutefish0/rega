@@ -16,7 +16,7 @@ import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
 import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
-import Order from "./primitives/Order";
+import ZIndex from "./primitives/ZIndex";
 import useTransform from "./hooks/useTransform";
 
 import Camera from "./primitives/Camera";
@@ -103,7 +103,7 @@ export {
   Relative,
   Absolute,
   useTransform,
-  Order,
+  ZIndex,
 
   // colliders
   RigidBody2D,

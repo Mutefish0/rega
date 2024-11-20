@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import {
   Relative,
   SoundPlayer,
-  Order,
+  ZIndex,
   Vector,
   useSoundPlayer,
   useParticles,
@@ -240,7 +240,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         </Absolute>
       ))}
       {!death && (
-        <Order order={5}>
+        <ZIndex zIndex={1}>
           {!!intro && (
             <PlayerIntro
               spwawn={{ x: playerSpawn[0], y: playerSpawn[1] }}
@@ -266,18 +266,18 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
               />
             </Relative>
           )}
-        </Order>
+        </ZIndex>
       )}
 
-      <Order order={-4}>
+      <ZIndex zIndex={-1}>
         <Clouds />
-      </Order>
+      </ZIndex>
 
-      <Order order={10}>
+      <ZIndex zIndex={2}>
         <Snow />
-      </Order>
+      </ZIndex>
 
-      <Order order={0}>
+      <ZIndex zIndex={0}>
         <Room
           key={gameStatekey}
           tilemap={tilemap}
@@ -300,7 +300,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           onBigChestOpen={() => setMusicOn(false)}
           playerHasDashed={playerHasDashed}
         />
-      </Order>
+      </ZIndex>
 
       {!!musicOn && <SoundPlayer sourceId={bgm} loop volume={0.6} />}
     </>
