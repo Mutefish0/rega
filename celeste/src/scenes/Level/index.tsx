@@ -76,6 +76,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const [currentFruitsGot, setCurrentFruitsGot] = useState<string[]>([]);
   const [totalFruitsGot, setTotalFruitsGot] = useState(0);
   const [playerHasDashed, setPlayerHasDashed] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);
 
   const gameStatekey = `${level}-${playerInstance}`; // game state
 
@@ -140,6 +141,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
       setCurrentFruitsGot(state.currentLevelFruitsGot || []);
       setTotalFruitsGot(state.totalFruitsGot || 0);
       setPlayerInstance((i) => i + 1);
+      setMusicOn(true);
 
       console.log("loaded: ", state);
 
@@ -171,6 +173,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setCurrentFruitsGot([]);
     setPlayerPosition(undefined);
     setPlayerInstance((i) => i + 1);
+    setMusicOn(true);
     setIntro(true);
 
     showToast(
@@ -187,6 +190,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setPlayerPosition(undefined);
     setTotalFruitsGot(totalFruitsGot + currentFruitsGot.length);
     setLevel((l) => (l + 1 === TITLE_SCREEN_LEVEL ? l + 2 : l + 1));
+    setMusicOn(true);
     setIntro(true);
 
     showToast(
@@ -236,7 +240,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         </Absolute>
       ))}
       {!death && (
-        <Order order={2}>
+        <Order order={5}>
           {!!intro && (
             <PlayerIntro
               spwawn={{ x: playerSpawn[0], y: playerSpawn[1] }}
@@ -265,37 +269,40 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         </Order>
       )}
 
-      <Order order={0}>
+      <Order order={-4}>
         <Clouds />
       </Order>
 
-      <Order order={3}>
+      <Order order={10}>
         <Snow />
       </Order>
 
-      <Room
-        key={gameStatekey}
-        tilemap={tilemap}
-        springs={springs}
-        fallFloors={fallFloors}
-        fakeWalls={fakeWalls}
-        fruits={fruits}
-        flyFruits={flyFruits}
-        keys={keys}
-        chests={chests}
-        balloons={balloons}
-        platforms={platforms}
-        messages={messages}
-        bigChests={bigChests}
-        fruitsGot={currentFruitsGot}
-        onPlayerGetFruit={onPlayerGetFruit}
-        onPlayerSpike={onPlayerDeath}
-        onPlayerFall={onPlayerDeath}
-        onPlayerWin={goNextLevel}
-        playerHasDashed={playerHasDashed}
-      />
+      <Order order={0}>
+        <Room
+          key={gameStatekey}
+          tilemap={tilemap}
+          springs={springs}
+          fallFloors={fallFloors}
+          fakeWalls={fakeWalls}
+          fruits={fruits}
+          flyFruits={flyFruits}
+          keys={keys}
+          chests={chests}
+          balloons={balloons}
+          platforms={platforms}
+          messages={messages}
+          bigChests={bigChests}
+          fruitsGot={currentFruitsGot}
+          onPlayerGetFruit={onPlayerGetFruit}
+          onPlayerSpike={onPlayerDeath}
+          onPlayerFall={onPlayerDeath}
+          onPlayerWin={goNextLevel}
+          onBigChestOpen={() => setMusicOn(false)}
+          playerHasDashed={playerHasDashed}
+        />
+      </Order>
 
-      <SoundPlayer sourceId={bgm} loop volume={0.6} />
+      {!!musicOn && <SoundPlayer sourceId={bgm} loop volume={0.6} />}
     </>
   );
 }
