@@ -309,7 +309,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
 
       {/* background */}
       <ZIndex zIndex={-2}>
-        <Box2D size={[132, 132]} color="red" anchor="top-left" />
+        <Box2D size={[132, 132]} color="#000" anchor="top-left" />
       </ZIndex>
 
       {!!musicOn && <SoundPlayer sourceId={bgm} loop volume={0.6} />}
