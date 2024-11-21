@@ -10,6 +10,8 @@ import {
   Box2D,
   RigidBody2D,
   ZIndex,
+  smoothstep,
+  AnimConfig,
 } from "rega";
 import { spr } from "../utils";
 import { CollisionGroup } from "../../constants";
@@ -17,13 +19,14 @@ import Smoke from "../Smoke";
 import Orb from "./Orb";
 
 interface Props {
-  onBigChestOpen: () => void;
+  toggleMusic: (on: boolean) => void;
+  shake: (ms: number) => void;
 }
 
 function* emitParticles() {
   const dt = 33;
   let t = 0;
-  while (t < 2000) {
+  while (t < 1900) {
     const spd = (8 + Math.random() * 8) * 30;
     yield [
       { spd, ox: 1 + Math.random() * 14, h: 32 + Math.random() * 32 },
@@ -33,7 +36,12 @@ function* emitParticles() {
   }
 }
 
-export default function BigChest({ onBigChestOpen }: Props) {
+const animOrbLift: AnimConfig<number> = {
+  duration: 600,
+  steps: smoothstep(-12, 6, 20, "easeQuadIn"),
+};
+
+export default function BigChest({ shake, toggleMusic }: Props) {
   const [state, setState] = useState<"idle" | "opening" | "opened">("idle");
 
   const sfx = useSoundPlayer("/sounds/big_chest.wav");
@@ -77,7 +85,7 @@ export default function BigChest({ onBigChestOpen }: Props) {
               genFunc={emitParticles}
               onAnimationFrame={({ ox, spd, h }) => {
                 emit({
-                  lifetime: 2000,
+                  lifetime: 1800,
                   data: {
                     ox,
                     spd,
@@ -87,12 +95,11 @@ export default function BigChest({ onBigChestOpen }: Props) {
               }}
               onAnimationEnd={() => {
                 console.log("end!!");
-
                 setState("opened");
               }}
             />
             {list.map((p) => (
-              <Relative translation={{ x: p.data.ox, y: -16 }}>
+              <Relative key={p.id} translation={{ x: p.data.ox, y: -16 }}>
                 <RigidBody2D
                   type="kinematic-velocity"
                   initialVelocity={{ x: 0, y: p.data.spd }}
@@ -100,9 +107,8 @@ export default function BigChest({ onBigChestOpen }: Props) {
                   <ZIndex zIndex={1}>
                     <Box2D
                       anchor="bottom"
-                      key={p.id}
                       size={[2, p.data.h]}
-                      color="#fff"
+                      color="#fff1e8"
                     />
                   </ZIndex>
                 </RigidBody2D>
@@ -111,9 +117,14 @@ export default function BigChest({ onBigChestOpen }: Props) {
           </>
         )}
         {state === "opened" && (
-          <Relative translation={{ x: 4, y: 8 }}>
-            <Orb />
-          </Relative>
+          <Animation
+            config={animOrbLift}
+            renderItem={(y) => (
+              <Relative translation={{ x: 8, y }}>
+                <Orb />
+              </Relative>
+            )}
+          />
         )}
       </>
     );
@@ -134,8 +145,9 @@ export default function BigChest({ onBigChestOpen }: Props) {
           onCollisionChange={(cols) => {
             if (cols.find((col) => col?.userData?.type === "player")) {
               setState("opening");
-              onBigChestOpen();
+              toggleMusic(false);
               sfx.play();
+              shake(1800);
             }
           }}
         />

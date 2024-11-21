@@ -52,7 +52,11 @@ interface Props {
   onPlayerSpike: (pos: Vector) => void;
   onPlayerFall: (pos: Vector) => void;
   onPlayerWin: () => void;
-  onBigChestOpen: () => void;
+
+  //
+  toggleMusic: (on: boolean) => void;
+  shake: (ms: number) => void;
+  freeze: (ms: number) => void;
 }
 
 export default function Room({
@@ -74,7 +78,9 @@ export default function Room({
   onPlayerFall,
   onPlayerWin,
   playerHasDashed,
-  onBigChestOpen,
+  //
+  shake,
+  toggleMusic,
 }: Props) {
   const s = useConst({ hasSpike: false });
   const [hasKey, setHasKey] = useState(false);
@@ -186,7 +192,7 @@ export default function Room({
       ))}
       {bigChests.map(([x, y], i) => (
         <Relative key={i} translation={{ x, y }}>
-          <BigChest onBigChestOpen={onBigChestOpen} />
+          <BigChest shake={shake} toggleMusic={toggleMusic} />
         </Relative>
       ))}
       {/* invisible wall */}

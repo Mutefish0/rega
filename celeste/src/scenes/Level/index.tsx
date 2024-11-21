@@ -10,6 +10,7 @@ import {
   localStorage,
   KeyboardInput,
   GamepadInput,
+  Box2D,
 } from "rega";
 import DeathParticle from "../DeathParticle";
 import Clouds from "../Clouds";
@@ -195,6 +196,10 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     );
   }
 
+  function freeze() {
+    //
+  }
+
   return (
     <>
       <KeyboardInput
@@ -294,9 +299,17 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           onPlayerSpike={onPlayerDeath}
           onPlayerFall={onPlayerDeath}
           onPlayerWin={goNextLevel}
-          onBigChestOpen={() => setMusicOn(false)}
           playerHasDashed={playerHasDashed}
+          //
+          toggleMusic={setMusicOn}
+          shake={onShake}
+          freeze={freeze}
         />
+      </ZIndex>
+
+      {/* background */}
+      <ZIndex zIndex={-2}>
+        <Box2D size={[132, 132]} color="red" anchor="top-left" />
       </ZIndex>
 
       {!!musicOn && <SoundPlayer sourceId={bgm} loop volume={0.6} />}

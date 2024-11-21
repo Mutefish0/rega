@@ -70,6 +70,7 @@ interface Options {
   frontFace?: GPUFrontFace;
   cullMode?: GPUCullMode;
   topology?: GPUPrimitiveTopology;
+  depthWriteEnabled?: boolean;
 }
 
 const cahce = new Map<string, MaterialJSON>();
@@ -82,9 +83,19 @@ export default function createMaterial(
     frontFace: "ccw",
     cullMode: "none",
     topology: "triangle-list",
+    depthWriteEnabled: false,
   }
 ) {
-  const key = [vertexNode.uuid, fragmentNode.uuid].join(",");
+  const frontFace = options.frontFace || "ccw";
+  const cullMode = options.cullMode || "back";
+  const topology = options.topology || "triangle-list";
+  const depthWriteEnabled = options.depthWriteEnabled || false;
+
+  const key = [
+    vertexNode.uuid,
+    fragmentNode.uuid,
+    [frontFace, cullMode, topology, depthWriteEnabled].join("-"),
+  ].join("\n--\n");
 
   if (cahce.has(key)) {
     return cahce.get(key)!;
@@ -195,6 +206,7 @@ export default function createMaterial(
     frontFace: options.frontFace || "ccw",
     cullMode: options.cullMode || "back",
     topology: options.topology || "triangle-list",
+    depthWriteEnabled: options.depthWriteEnabled || false,
   };
 
   cahce.set(key, mat);

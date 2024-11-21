@@ -16,6 +16,7 @@ import {
   easeQuadInOut,
   easeExpOut,
   easeExpIn,
+  easeQuadIn,
 } from "d3-ease";
 import useFrame from "../../hooks/useFrame";
 import useConst from "../../hooks/useConst";
@@ -187,6 +188,7 @@ const funcMap = {
   easeQuadInOut,
   easeExpOut,
   easeExpIn,
+  easeQuadIn,
 };
 
 type SmoothType = keyof typeof funcMap;

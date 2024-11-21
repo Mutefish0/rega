@@ -36,6 +36,7 @@ interface Props {
 
   topology?: GPUPrimitiveTopology;
   cullMode?: GPUCullMode;
+  depthWriteEnabled?: boolean;
 }
 
 export default function RenderObject({
@@ -47,7 +48,8 @@ export default function RenderObject({
   bindings = {},
   zIndexEnabled,
   topology,
-  cullMode = "back",
+  cullMode,
+  depthWriteEnabled,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const zIndexCtx = useContext(ZIndexContext);
@@ -95,6 +97,7 @@ export default function RenderObject({
     return createMaterial(vertex, fragmentNode, getBindingLayout, {
       topology,
       cullMode,
+      depthWriteEnabled,
     });
   }, [vertexNode, fragmentNode, zIndexEnabled]);
 

@@ -70,6 +70,7 @@ export default React.memo(function Box2D({
         index={quad.index}
         bindings={bindings.resources}
         zIndexEnabled
+        depthWriteEnabled
       />
     </Relative>
   );

@@ -178,6 +178,7 @@ export default React.memo(function Sprite2D({
         index={quad.index}
         zIndexEnabled
         cullMode="none"
+        depthWriteEnabled
       />
     </Relative>
   );
