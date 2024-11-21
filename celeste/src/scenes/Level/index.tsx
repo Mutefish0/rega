@@ -32,8 +32,6 @@ const INITIAL_STATE = {
   totalFruitsGot: 0,
   startTime: Date.now(),
   level: 0,
-  // current level
-  currentLevelFruitsGot: [] as string[],
 
   player: {
     position: {
@@ -122,7 +120,6 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   function saveGame() {
     ref.current.level = level;
     ref.current.totalFruitsGot = totalFruitsGot;
-    ref.current.currentLevelFruitsGot = currentFruitsGot;
 
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
 
@@ -138,7 +135,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
 
       setLevel(ref.current.level);
       setPlayerPosition(state.player.position);
-      setCurrentFruitsGot(state.currentLevelFruitsGot || []);
+      setCurrentFruitsGot([]);
       setTotalFruitsGot(state.totalFruitsGot || 0);
       setPlayerInstance((i) => i + 1);
       setMusicOn(true);
@@ -186,9 +183,9 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   }
 
   function goNextLevel() {
-    setCurrentFruitsGot([]);
     setPlayerPosition(undefined);
     setTotalFruitsGot(totalFruitsGot + currentFruitsGot.length);
+    setCurrentFruitsGot([]);
     setLevel((l) => (l + 1 === TITLE_SCREEN_LEVEL ? l + 2 : l + 1));
     setMusicOn(true);
     setIntro(true);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Sprite2D,
   Animation,
@@ -14,48 +14,34 @@ import {
 import { spr } from "../utils";
 import { CollisionGroup } from "../../constants";
 import Smoke from "../Smoke";
+import Orb from "./Orb";
 
 interface Props {
   onBigChestOpen: () => void;
 }
 
+function* emitParticles() {
+  const dt = 33;
+  let t = 0;
+  while (t < 2000) {
+    const spd = (8 + Math.random() * 8) * 30;
+    yield [
+      { spd, ox: 1 + Math.random() * 14, h: 32 + Math.random() * 32 },
+      dt,
+    ] as const;
+    t += dt;
+  }
+}
+
 export default function BigChest({ onBigChestOpen }: Props) {
   const [state, setState] = useState<"idle" | "opening" | "opened">("idle");
-  const refInterval = useRef(null);
 
   const sfx = useSoundPlayer("/sounds/big_chest.wav");
 
   const { list, emit } = useParticles<{ ox: number; spd: number; h: number }>();
 
   useEffect(() => {
-    if (state === "opening") {
-      clearInterval(refInterval.current);
-
-      let count = 0;
-      refInterval.current = setInterval(() => {
-        const spd = (8 + Math.random() * 8) * 30;
-        emit({
-          lifetime: 800,
-          data: {
-            ox: 1 + Math.random() * 14,
-            spd,
-            h: 32 + Math.random() * 32,
-          },
-        });
-        // count++;
-        // if (count >= 50) {
-        //   clearInterval(refInterval.current);
-        // }
-      }, 50);
-
-      setTimeout(() => {
-        setState("opened");
-      }, 3000);
-
-      return () => {
-        clearInterval(refInterval.current);
-      };
-    }
+    //
   }, [state]);
 
   if (state === "opening" || state === "opened") {
@@ -85,24 +71,50 @@ export default function BigChest({ onBigChestOpen }: Props) {
             />
           </Relative>
         </ZIndex>
-        {state === "opening" &&
-          list.map((p) => (
-            <Relative translation={{ x: p.data.ox, y: -16 }}>
-              <RigidBody2D
-                type="kinematic-velocity"
-                initialVelocity={{ x: 0, y: p.data.spd }}
-              >
-                <ZIndex zIndex={1}>
-                  <Box2D
-                    anchor="bottom"
-                    key={p.id}
-                    size={[2, p.data.h]}
-                    color="#fff"
-                  />
-                </ZIndex>
-              </RigidBody2D>
-            </Relative>
-          ))}
+        {state === "opening" && (
+          <>
+            <Animation
+              genFunc={emitParticles}
+              onAnimationFrame={({ ox, spd, h }) => {
+                emit({
+                  lifetime: 2000,
+                  data: {
+                    ox,
+                    spd,
+                    h,
+                  },
+                });
+              }}
+              onAnimationEnd={() => {
+                console.log("end!!");
+
+                setState("opened");
+              }}
+            />
+            {list.map((p) => (
+              <Relative translation={{ x: p.data.ox, y: -16 }}>
+                <RigidBody2D
+                  type="kinematic-velocity"
+                  initialVelocity={{ x: 0, y: p.data.spd }}
+                >
+                  <ZIndex zIndex={1}>
+                    <Box2D
+                      anchor="bottom"
+                      key={p.id}
+                      size={[2, p.data.h]}
+                      color="#fff"
+                    />
+                  </ZIndex>
+                </RigidBody2D>
+              </Relative>
+            ))}
+          </>
+        )}
+        {state === "opened" && (
+          <Relative translation={{ x: 4, y: 8 }}>
+            <Orb />
+          </Relative>
+        )}
       </>
     );
   }
@@ -126,7 +138,6 @@ export default function BigChest({ onBigChestOpen }: Props) {
               sfx.play();
             }
           }}
-          userData={{ type: "fruit" }}
         />
       </Relative>
       <Sprite2D

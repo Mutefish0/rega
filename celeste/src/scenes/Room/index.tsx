@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import {
   RigidBody2D,
@@ -68,7 +68,7 @@ export default function Room({
   platforms,
   messages,
   bigChests,
-  fruitsGot,
+  // fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
   onPlayerFall,
@@ -128,35 +128,29 @@ export default function Room({
         </Relative>
       ))}
       {/* fake walls */}
-      {fakeWalls.map(([x, y], i) =>
-        fruitsGot.includes(`fake_wall_fruit_${i}`) ? null : (
-          <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
-            <FakeWall
-              onGetFruit={() => onPlayerGetFruit(`fake_wall_fruit_${i}`)}
-            />
-          </Relative>
-        )
-      )}
+      {fakeWalls.map(([x, y], i) => (
+        <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
+          <FakeWall
+            onGetFruit={() => onPlayerGetFruit(`fake_wall_fruit_${i}`)}
+          />
+        </Relative>
+      ))}
       {/* fruits */}
-      {fruits.map(([x, y], i) =>
-        fruitsGot.includes(`fruit_${i}`) ? null : (
-          <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
-            <Fruit key={i} onGetFruit={() => onPlayerGetFruit(`fruit_${i}`)} />
-          </Relative>
-        )
-      )}
+      {fruits.map(([x, y], i) => (
+        <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
+          <Fruit key={i} onGetFruit={() => onPlayerGetFruit(`fruit_${i}`)} />
+        </Relative>
+      ))}
       {/* fly fruits */}
-      {flyFruits.map(([x, y], i) =>
-        fruitsGot.includes(`fly_fruit_${i}`) ? null : (
-          <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
-            <FlyFruit
-              key={i}
-              onGetFruit={() => onPlayerGetFruit(`fly_fruit_${i}`)}
-              playerHasDashed={playerHasDashed}
-            />
-          </Relative>
-        )
-      )}
+      {flyFruits.map(([x, y], i) => (
+        <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
+          <FlyFruit
+            key={i}
+            onGetFruit={() => onPlayerGetFruit(`fly_fruit_${i}`)}
+            playerHasDashed={playerHasDashed}
+          />
+        </Relative>
+      ))}
       {/* balloons */}
       {balloons.map(([x, y], i) => (
         <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
@@ -171,16 +165,14 @@ export default function Room({
           </Relative>
         ))}
       {/* chests */}
-      {chests.map(([x, y], i) =>
-        fruitsGot.includes(`chest_fruit_${i}`) ? null : (
-          <Relative translation={{ x: x, y: y - 4 }} key={i}>
-            <Chest
-              hasKey={hasKey}
-              onGetFruit={() => onPlayerGetFruit(`chest_fruit_${i}`)}
-            />
-          </Relative>
-        )
-      )}
+      {chests.map(([x, y], i) => (
+        <Relative translation={{ x: x, y: y - 4 }} key={i}>
+          <Chest
+            hasKey={hasKey}
+            onGetFruit={() => onPlayerGetFruit(`chest_fruit_${i}`)}
+          />
+        </Relative>
+      ))}
       {/* spikes */}
       {spikes.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y }}>
