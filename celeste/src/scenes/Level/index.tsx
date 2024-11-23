@@ -1,8 +1,8 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Relative,
   SoundPlayer,
-  Order,
+  ZIndex,
   Vector,
   useSoundPlayer,
   useParticles,
@@ -10,6 +10,9 @@ import {
   localStorage,
   KeyboardInput,
   GamepadInput,
+  Box2D,
+  AnimConfig,
+  Animation,
 } from "rega";
 import DeathParticle from "../DeathParticle";
 import Clouds from "../Clouds";
@@ -21,6 +24,20 @@ import { clamp, uniq } from "lodash";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 
+const flashBackgroundAnim: AnimConfig<string> = {
+  duration: 1000,
+  steps: [
+    "#000",
+    "#1d2b53",
+    "#7e2553",
+    "#008751",
+    "#ab5236",
+    "#5f574f",
+    "#c2c3c7",
+  ],
+  loop: true,
+};
+
 interface Props {
   initialLevel?: number;
   onShake: (duration: number) => void;
@@ -30,10 +47,9 @@ interface Props {
 const INITIAL_STATE = {
   // passed levels
   totalFruitsGot: 0,
+  gotOrb: false,
   startTime: Date.now(),
   level: 0,
-  // current level
-  currentLevelFruitsGot: [] as string[],
 
   player: {
     position: {
@@ -59,6 +75,8 @@ const GAME_STATE_KEY = "__CELESTE_GAME_STATE__";
 export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const ref = useRef(INITIAL_STATE);
 
+  const [gotOrb, setGotOrb] = useState(false);
+
   const [death, setDeath] = useState(false);
 
   const [intro, setIntro] = useState(true);
@@ -76,6 +94,9 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const [currentFruitsGot, setCurrentFruitsGot] = useState<string[]>([]);
   const [totalFruitsGot, setTotalFruitsGot] = useState(0);
   const [playerHasDashed, setPlayerHasDashed] = useState(false);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [playerFreeze, setPlayerFreeze] = useState(false);
+  const [music, setMusic] = useState("");
 
   const gameStatekey = `${level}-${playerInstance}`; // game state
 
@@ -109,6 +130,10 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     };
   }, [level]);
 
+  useEffect(() => {
+    setMusic(bgm);
+  }, [bgm]);
+
   useMemo(() => {
     // reset states
     setPlayerHasDashed(false);
@@ -121,8 +146,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   function saveGame() {
     ref.current.level = level;
     ref.current.totalFruitsGot = totalFruitsGot;
-    ref.current.currentLevelFruitsGot = currentFruitsGot;
-
+    ref.current.gotOrb = gotOrb;
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
 
     console.log("saved: ", ref.current);
@@ -137,7 +161,8 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
 
       setLevel(ref.current.level);
       setPlayerPosition(state.player.position);
-      setCurrentFruitsGot(state.currentLevelFruitsGot || []);
+      setCurrentFruitsGot([]);
+      setGotOrb(!!state.gotOrb);
       setTotalFruitsGot(state.totalFruitsGot || 0);
       setPlayerInstance((i) => i + 1);
 
@@ -183,15 +208,29 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   }
 
   function goNextLevel() {
-    setCurrentFruitsGot([]);
     setPlayerPosition(undefined);
     setTotalFruitsGot(totalFruitsGot + currentFruitsGot.length);
+    setCurrentFruitsGot([]);
     setLevel((l) => (l + 1 === TITLE_SCREEN_LEVEL ? l + 2 : l + 1));
     setIntro(true);
 
     showToast(
       `${formatDate(Date.now() - ref.current.startTime)} ${(level + 1) * 100}m`
     );
+  }
+
+  function freeze(ms: number) {
+    setPlayerFreeze(true);
+    setTimeout(() => setPlayerFreeze(false), ms);
+  }
+
+  function flash(ms: number) {
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), ms);
+  }
+
+  function onGetOrb() {
+    setGotOrb(true);
   }
 
   return (
@@ -230,13 +269,17 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           }
         }}
       />
-      {list.map((p) => (
-        <Absolute key={p.id} translation={p.data}>
-          <DeathParticle />
-        </Absolute>
-      ))}
+
+      <ZIndex zIndex={1}>
+        {list.map((p) => (
+          <Absolute key={p.id} translation={p.data}>
+            <DeathParticle />
+          </Absolute>
+        ))}
+      </ZIndex>
+
       {!death && (
-        <Order order={2}>
+        <ZIndex zIndex={1}>
           {!!intro && (
             <PlayerIntro
               spwawn={{ x: playerSpawn[0], y: playerSpawn[1] }}
@@ -259,43 +302,70 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
                   setPlayerHasDashed(true);
                   onShake(200);
                 }}
+                freeze={playerFreeze}
+                gotOrb={gotOrb}
               />
             </Relative>
           )}
-        </Order>
+        </ZIndex>
       )}
 
-      <Order order={0}>
+      <ZIndex zIndex={-1}>
         <Clouds />
-      </Order>
+      </ZIndex>
 
-      <Order order={3}>
+      <ZIndex zIndex={2}>
         <Snow />
-      </Order>
+      </ZIndex>
 
-      <Room
-        key={gameStatekey}
-        tilemap={tilemap}
-        springs={springs}
-        fallFloors={fallFloors}
-        fakeWalls={fakeWalls}
-        fruits={fruits}
-        flyFruits={flyFruits}
-        keys={keys}
-        chests={chests}
-        balloons={balloons}
-        platforms={platforms}
-        messages={messages}
-        bigChests={bigChests}
-        fruitsGot={currentFruitsGot}
-        onPlayerGetFruit={onPlayerGetFruit}
-        onPlayerSpike={onPlayerDeath}
-        onPlayerFall={onPlayerDeath}
-        onPlayerWin={goNextLevel}
-        playerHasDashed={playerHasDashed}
-      />
+      <ZIndex zIndex={0}>
+        <Room
+          onGetOrb={onGetOrb}
+          key={gameStatekey}
+          tilemap={tilemap}
+          springs={springs}
+          fallFloors={fallFloors}
+          fakeWalls={fakeWalls}
+          fruits={fruits}
+          flyFruits={flyFruits}
+          keys={keys}
+          chests={chests}
+          balloons={balloons}
+          platforms={platforms}
+          messages={messages}
+          bigChests={bigChests}
+          fruitsGot={currentFruitsGot}
+          onPlayerGetFruit={onPlayerGetFruit}
+          onPlayerSpike={onPlayerDeath}
+          onPlayerFall={onPlayerDeath}
+          onPlayerWin={goNextLevel}
+          playerHasDashed={playerHasDashed}
+          //
+          setMusic={setMusic}
+          shake={onShake}
+          freeze={freeze}
+          flash={flash}
+        />
+      </ZIndex>
 
-      <SoundPlayer sourceId={bgm} loop volume={0.6} />
+      {/* background */}
+      <ZIndex zIndex={-2}>
+        {isFlashing ? (
+          <Animation
+            config={flashBackgroundAnim}
+            renderItem={(color) => (
+              <Box2D size={[132, 132]} color={color} anchor="top-left" />
+            )}
+          />
+        ) : (
+          <Box2D
+            size={[132, 132]}
+            color={gotOrb ? "#7e2553" : "#000"}
+            anchor="top-left"
+          />
+        )}
+      </ZIndex>
+      {!!music && <SoundPlayer sourceId={music} loop volume={0.6} />}
     </>
   );
 }

@@ -14,6 +14,7 @@ export default function createRenderPipeline(
     frontFace,
     cullMode,
     topology,
+    depthWriteEnabled,
   } = materialJSON;
 
   const shaderModuleVertex = device.createShaderModule({
@@ -90,7 +91,7 @@ export default function createRenderPipeline(
 
     depthStencil: {
       format: "depth24plus", // 与深度纹理的格式一致
-      depthWriteEnabled: true,
+      depthWriteEnabled,
       depthCompare: "less-equal",
     },
   });

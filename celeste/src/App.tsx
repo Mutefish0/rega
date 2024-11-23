@@ -46,6 +46,8 @@ export default function App() {
       "/sounds/fruit_fly.wav",
       "/sounds/start.wav",
       "/sounds/type.wav",
+      "/sounds/big_chest.wav",
+      "/sounds/orb.wav",
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 

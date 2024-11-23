@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useRef } from "react";
 import TransformContext from "./TransformContext";
 import RenderContext from "./RenderContext";
-import OrderContext from "./OrderContext";
+import { ZIndexContext } from "./ZIndex";
 import { RenderGroupContext } from "./RenderGroup";
 import {
   NamedBindingLayout,
@@ -36,6 +36,7 @@ interface Props {
 
   topology?: GPUPrimitiveTopology;
   cullMode?: GPUCullMode;
+  depthWriteEnabled?: boolean;
 }
 
 export default function RenderObject({
@@ -47,10 +48,11 @@ export default function RenderObject({
   bindings = {},
   zIndexEnabled,
   topology,
-  cullMode = "back",
+  cullMode,
+  depthWriteEnabled,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
-  const orderCtx = useContext(OrderContext);
+  const zIndexCtx = useContext(ZIndexContext);
   const rgCtx = useContext(RenderGroupContext);
   const renderCtx = useContext(RenderContext);
   const transform = useContext(TransformContext);
@@ -95,6 +97,7 @@ export default function RenderObject({
     return createMaterial(vertex, fragmentNode, getBindingLayout, {
       topology,
       cullMode,
+      depthWriteEnabled,
     });
   }, [vertexNode, fragmentNode, zIndexEnabled]);
 
@@ -103,7 +106,7 @@ export default function RenderObject({
     binds.updates.modelWorldMatrix(mat.elements);
   }, [transform]);
 
-  useEffect(() => binds.updates.zIndex([orderCtx.order]), [orderCtx]);
+  useEffect(() => binds.updates.zIndex([zIndexCtx.node.zValue]), [zIndexCtx]);
 
   useEffect(() => {
     const allBindings = {

@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from "react";
 import RenderObject from "../primitives/RenderObject";
 
 import {
+  Fn,
   uv,
   floor,
   uint,
@@ -58,6 +59,16 @@ const vertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
+const transparentDiscard = Fn(({ color }: any) => {
+  const result = color.toVar();
+
+  If(color.a.lessThanEqual(0.0), () => {
+    Discard();
+  });
+
+  return result;
+});
+
 const fragmentNode = (function () {
   const uvNode = uv();
 
@@ -89,7 +100,7 @@ const fragmentNode = (function () {
     return cNode.mul(color);
   });
 
-  return cnode();
+  return transparentDiscard({ color: cnode() });
 })();
 
 export default React.memo(function Tilemap({
@@ -188,6 +199,7 @@ export default React.memo(function Tilemap({
         vertexCount={quad.vertexCount}
         index={quad.index}
         zIndexEnabled
+        depthWriteEnabled
       />
     </Relative>
   );

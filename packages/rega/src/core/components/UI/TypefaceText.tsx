@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
-import Mesh from "../../primitives/Mesh";
 import { MeshBasicMaterial, Matrix4 } from "three/webgpu";
 import Relative from "../../primitives/Relative";
 import { Node, MeasureMode } from "yoga-layout";
@@ -218,21 +217,22 @@ export default function TypefaceText({ children, font, style }: TextProps) {
               {line.map((item, j) => {
                 let x = offsetX;
                 offsetX += item.glyph.ha * scale + letterSpacing;
-                return (
-                  <Relative
-                    key={`${item.glyph.o}:${i}:${j}`}
-                    translation={{
-                      x,
-                    }}
-                  >
-                    <Relative matrix={scaleMatrix}>
-                      <Mesh
-                        geometry={font.getGeometry(item.char)!}
-                        material={material}
-                      />
-                    </Relative>
-                  </Relative>
-                );
+                return null;
+                // return (
+                //   <Relative
+                //     key={`${item.glyph.o}:${i}:${j}`}
+                //     translation={{
+                //       x,
+                //     }}
+                //   >
+                //     <Relative matrix={scaleMatrix}>
+                //       <Mesh
+                //         geometry={font.getGeometry(item.char)!}
+                //         material={material}
+                //       />
+                //     </Relative>
+                //   </Relative>
+                // );
               })}
             </Relative>
           );

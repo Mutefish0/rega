@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 import {
   RigidBody2D,
@@ -25,6 +25,7 @@ import Ballon from "./Balloon";
 import Platform from "./Platform";
 import Message from "./Message";
 import BigChest from "./BigChest";
+import Orb from "./Orb";
 
 interface Props {
   tilemap: {
@@ -52,6 +53,13 @@ interface Props {
   onPlayerSpike: (pos: Vector) => void;
   onPlayerFall: (pos: Vector) => void;
   onPlayerWin: () => void;
+  onGetOrb: () => void;
+
+  //
+  setMusic: (src: string) => void;
+  shake: (ms: number) => void;
+  freeze: (ms: number) => void;
+  flash: (ms: number) => void;
 }
 
 export default function Room({
@@ -67,12 +75,18 @@ export default function Room({
   platforms,
   messages,
   bigChests,
-  fruitsGot,
+  // fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
   onPlayerFall,
   onPlayerWin,
+  onGetOrb,
   playerHasDashed,
+  //
+  shake,
+  setMusic,
+  flash,
+  freeze,
 }: Props) {
   const s = useConst({ hasSpike: false });
   const [hasKey, setHasKey] = useState(false);
@@ -126,35 +140,29 @@ export default function Room({
         </Relative>
       ))}
       {/* fake walls */}
-      {fakeWalls.map(([x, y], i) =>
-        fruitsGot.includes(`fake_wall_fruit_${i}`) ? null : (
-          <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
-            <FakeWall
-              onGetFruit={() => onPlayerGetFruit(`fake_wall_fruit_${i}`)}
-            />
-          </Relative>
-        )
-      )}
+      {fakeWalls.map(([x, y], i) => (
+        <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
+          <FakeWall
+            onGetFruit={() => onPlayerGetFruit(`fake_wall_fruit_${i}`)}
+          />
+        </Relative>
+      ))}
       {/* fruits */}
-      {fruits.map(([x, y], i) =>
-        fruitsGot.includes(`fruit_${i}`) ? null : (
-          <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
-            <Fruit key={i} onGetFruit={() => onPlayerGetFruit(`fruit_${i}`)} />
-          </Relative>
-        )
-      )}
+      {fruits.map(([x, y], i) => (
+        <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
+          <Fruit key={i} onGetFruit={() => onPlayerGetFruit(`fruit_${i}`)} />
+        </Relative>
+      ))}
       {/* fly fruits */}
-      {flyFruits.map(([x, y], i) =>
-        fruitsGot.includes(`fly_fruit_${i}`) ? null : (
-          <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
-            <FlyFruit
-              key={i}
-              onGetFruit={() => onPlayerGetFruit(`fly_fruit_${i}`)}
-              playerHasDashed={playerHasDashed}
-            />
-          </Relative>
-        )
-      )}
+      {flyFruits.map(([x, y], i) => (
+        <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
+          <FlyFruit
+            key={i}
+            onGetFruit={() => onPlayerGetFruit(`fly_fruit_${i}`)}
+            playerHasDashed={playerHasDashed}
+          />
+        </Relative>
+      ))}
       {/* balloons */}
       {balloons.map(([x, y], i) => (
         <Relative translation={{ x: x + 4, y: y - 4 }} key={i}>
@@ -169,16 +177,14 @@ export default function Room({
           </Relative>
         ))}
       {/* chests */}
-      {chests.map(([x, y], i) =>
-        fruitsGot.includes(`chest_fruit_${i}`) ? null : (
-          <Relative translation={{ x: x, y: y - 4 }} key={i}>
-            <Chest
-              hasKey={hasKey}
-              onGetFruit={() => onPlayerGetFruit(`chest_fruit_${i}`)}
-            />
-          </Relative>
-        )
-      )}
+      {chests.map(([x, y], i) => (
+        <Relative translation={{ x: x, y: y - 4 }} key={i}>
+          <Chest
+            hasKey={hasKey}
+            onGetFruit={() => onPlayerGetFruit(`chest_fruit_${i}`)}
+          />
+        </Relative>
+      ))}
       {/* spikes */}
       {spikes.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y }}>
@@ -192,7 +198,19 @@ export default function Room({
       ))}
       {bigChests.map(([x, y], i) => (
         <Relative key={i} translation={{ x, y }}>
-          <BigChest />
+          <BigChest
+            flash={flash}
+            shake={shake}
+            setMusic={setMusic}
+            freeze={freeze}
+          >
+            <Orb
+              shake={shake}
+              freeze={freeze}
+              onGetOrb={onGetOrb}
+              setMusic={setMusic}
+            />
+          </BigChest>
         </Relative>
       ))}
       {/* invisible wall */}

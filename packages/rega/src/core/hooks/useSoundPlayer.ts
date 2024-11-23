@@ -52,7 +52,7 @@ export default function useSoundPlayer(sourceId: string, opts: Options = {}) {
     };
   }, []);
 
-  function play() {
+  function play(cb: () => void = () => {}) {
     stop();
     const node = audioContext.createBufferSource();
     ref.current.sourceNode = node as any;
@@ -64,6 +64,8 @@ export default function useSoundPlayer(sourceId: string, opts: Options = {}) {
     // @ts-ignore
     node.loop = ref.current.loop;
     node.start();
+
+    node.addEventListener("ended", cb);
   }
 
   function stop() {

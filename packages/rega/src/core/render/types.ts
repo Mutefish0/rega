@@ -156,4 +156,5 @@ export interface MaterialJSON {
   cullMode: GPUCullMode;
 
   topology: GPUPrimitiveTopology;
+  depthWriteEnabled: boolean;
 }

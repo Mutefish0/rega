@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import Relative from "../../primitives/Relative";
 import Grid from "../Grid";
 import Camera from "../../primitives/Camera";
+import ZIndex from "../../primitives/ZIndex";
 import useWheels from "../../hooks/useWheels";
-import Order from "../../primitives/Order";
+import Order from "../../primitives/ZIndex";
 import PhysicsDebuger from "../../primitives/PhysicsDebuger";
 
 interface Props {
@@ -62,9 +63,9 @@ export default function Editor({
     <>
       {/* <Grid color="rgba(0,0,0,0.15)" principleColor="rgba(125,0,0,0.3)" /> */}
       {!!showPhysicDebuger && (
-        <Order order={1000}>
+        <ZIndex zIndex={1000}>
           <PhysicsDebuger />
-        </Order>
+        </ZIndex>
       )}
       {/* {!!showIteractiveCamera && (
         <>

@@ -80,6 +80,6 @@ run:
 - [x] fake wall
 - [x] title screen
 - [ ] flag & score & fruit record
-- [ ] orb
+- [x] orb
 - [x] save and load system
 - [ ] alphaMap + textureColor
