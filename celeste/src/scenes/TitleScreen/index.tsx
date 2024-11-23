@@ -9,6 +9,7 @@ import {
   KeyboardInput,
   GamepadInput,
   TextStyle,
+  GUIView,
 } from "rega";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "../Level/celesteLevel";
@@ -77,7 +78,7 @@ export default function TitleScreen({ onStart }: Props) {
           <>
             <Tilemap
               textureId="/images/atlas.png"
-              tiles={tiles.map(([x, y]) => [x, y - 8])}
+              tiles={tiles.map(([x, y]) => [x + 3, y])}
               coords={clips.map(([x, y]) => [x, y])}
               pixelPerTile={8}
               tileSize={8}
@@ -99,7 +100,7 @@ export default function TitleScreen({ onStart }: Props) {
                   marginBottom: 12,
                 }}
               >
-                x+c
+                c+x
               </Text>
               <Text style={{ ...textStyle, color }}>matt thorson</Text>
               <Text style={{ ...textStyle, color }}>noel berry</Text>
@@ -107,9 +108,10 @@ export default function TitleScreen({ onStart }: Props) {
           </>
         )}
       />
-
       <Snow />
       {!starting && <SoundPlayer sourceId={bgm} loop volume={0.6} />}
+
+      {/* TODO: add guide infomation */}
     </>
   );
 }

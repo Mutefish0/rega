@@ -14,6 +14,7 @@ import {
 import ShakeCamera from "./camera";
 import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
+import TitleScreen from "./scenes/TitleScreen";
 
 export default function App() {
   const [toast, setToast] = useState("");
@@ -22,7 +23,7 @@ export default function App() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png", "/images/test.png"];
+    const textures: string[] = ["/images/atlas.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
 
     const sounds: string[] = [
@@ -104,7 +105,10 @@ export default function App() {
       </RenderGroup>
 
       <RenderGroup target="GAME">
-        <Level initialLevel={0} onShake={onShake} showToast={showToast} />
+        {!started && <TitleScreen onStart={() => setStarted(true)} />}
+        {!!started && (
+          <Level initialLevel={0} onShake={onShake} showToast={showToast} />
+        )}
         {import.meta.env.DEV && (
           <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
