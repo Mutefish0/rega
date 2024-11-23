@@ -25,6 +25,7 @@ import Ballon from "./Balloon";
 import Platform from "./Platform";
 import Message from "./Message";
 import BigChest from "./BigChest";
+import Orb from "./Orb";
 
 interface Props {
   tilemap: {
@@ -52,11 +53,13 @@ interface Props {
   onPlayerSpike: (pos: Vector) => void;
   onPlayerFall: (pos: Vector) => void;
   onPlayerWin: () => void;
+  onGetOrb: () => void;
 
   //
-  toggleMusic: (on: boolean) => void;
+  setMusic: (src: string) => void;
   shake: (ms: number) => void;
   freeze: (ms: number) => void;
+  flash: (ms: number) => void;
 }
 
 export default function Room({
@@ -77,10 +80,13 @@ export default function Room({
   onPlayerSpike,
   onPlayerFall,
   onPlayerWin,
+  onGetOrb,
   playerHasDashed,
   //
   shake,
-  toggleMusic,
+  setMusic,
+  flash,
+  freeze,
 }: Props) {
   const s = useConst({ hasSpike: false });
   const [hasKey, setHasKey] = useState(false);
@@ -192,7 +198,19 @@ export default function Room({
       ))}
       {bigChests.map(([x, y], i) => (
         <Relative key={i} translation={{ x, y }}>
-          <BigChest shake={shake} toggleMusic={toggleMusic} />
+          <BigChest
+            flash={flash}
+            shake={shake}
+            setMusic={setMusic}
+            freeze={freeze}
+          >
+            <Orb
+              shake={shake}
+              freeze={freeze}
+              onGetOrb={onGetOrb}
+              setMusic={setMusic}
+            />
+          </BigChest>
         </Relative>
       ))}
       {/* invisible wall */}

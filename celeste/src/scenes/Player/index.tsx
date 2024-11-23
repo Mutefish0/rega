@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   RigidBody2D,
   RigidBodyRef,
@@ -76,13 +76,20 @@ export interface PlayerState {
 interface Props {
   onPlayerUpdate: (state: PlayerState) => void;
   onPlayerDash: () => void;
+  freeze: boolean;
+  gotOrb: boolean;
 }
 
-export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
+export default function Player({
+  onPlayerUpdate,
+  onPlayerDash,
+  freeze,
+  gotOrb,
+}: Props) {
   const [flipX, setFlipX] = useState(false);
   const [sprite, setSprite] = useState(1);
   const [hasDash, setHasDash] = useState(false);
-  const [hairColor, setHairColor] = useState("#fe014c"); // #fe014c #29adff
+  const [hairColor, setHairColor] = useState("#fe014c");
 
   const dashSfx = useSoundPlayer("/sounds/dash.wav");
   const jumpSfx = useSoundPlayer("/sounds/jump.wav");
@@ -101,8 +108,6 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
   const s = useConst({
     prevJump: false as boolean,
     hasDashed: false as boolean,
-
-    maxDashJump: 1,
 
     dashJump: 1,
 
@@ -126,7 +131,11 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
     dashParticle: null as Particle<ParticleData> | null,
     slideParticle: null as Particle<ParticleData> | null,
 
-    spriteAnimTime: 0,
+    spriteRunningAnimTime: 0,
+    lastRunningSprite: 1,
+
+    spriteFlashAnimTime: 0,
+    lastFlashSprite: 0,
 
     platformVx: 0,
 
@@ -147,10 +156,18 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
     y: { min: "ArrowDown", max: "ArrowUp" },
   });
 
+  useEffect(() => {
+    s.dashJump = 2;
+  }, [gotOrb]);
+
   const rbRef = useRef<RigidBodyRef>(null);
 
   useBeforePhysicsFrame(
     (deltaTime, time) => {
+      if (freeze) {
+        return;
+      }
+
       const rb = rbRef.current;
       if (rb) {
         onPlayerUpdate({
@@ -226,7 +243,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
             // reset dash flag
             dashLandSfx.play();
             s.hasDashed = false;
-            s.dashJump = s.maxDashJump;
+            s.dashJump = gotOrb ? 2 : 1;
 
             setHasDash(false);
           }
@@ -447,39 +464,104 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
         }
 
         // update hair color
-        if (s.hasDashed) {
-          setHairColor("#29adff");
-        } else {
-          setHairColor("#fe014c");
+        // if (s.hasDashed) {
+        //   setHairColor("#29adff"); // blue
+        // } else {
+        //   setHairColor("#fe014c"); // red
+        // }
+
+        let hairColor = "#fe014c";
+        let baseSprite = 1;
+        let spriteOffset = 0; // 0: red 128: blue 144: green 160: white
+
+        if (isSliding) {
+          baseSprite = 5;
+        } else if (!s.isGrounded) {
+          baseSprite = 3;
+        } else if (inputY > 0) {
+          baseSprite = 7;
+        } else if (inputY < 0) {
+          baseSprite = 6;
+        } else if (Math.abs(s.vx) > 0) {
+          if (s.spriteRunningAnimTime < 120) {
+            s.spriteRunningAnimTime += deltaTime;
+            baseSprite = s.lastRunningSprite;
+          } else {
+            s.spriteRunningAnimTime = 0;
+            baseSprite = s.lastRunningSprite + 1;
+            if (baseSprite > 4) {
+              baseSprite = 1;
+            }
+          }
+          s.lastRunningSprite = baseSprite;
         }
 
-        // update sprite
-        if (s.hasDashed) {
-          setSprite(130);
-        } else if (isSliding) {
-          setSprite(5);
-        } else if (!s.isGrounded) {
-          setSprite(3);
-        } else if (inputY > 0) {
-          setSprite(7);
-        } else if (inputY < 0) {
-          setSprite(6);
-        } else if (Math.abs(s.vx) > 0) {
-          if (s.spriteAnimTime < 120) {
-            s.spriteAnimTime += deltaTime;
+        if (gotOrb) {
+          if (s.hasDashed) {
+            if (s.dashJump > 0) {
+              // red
+              spriteOffset = 0;
+              hairColor = "#ff004d"; // red
+            } else {
+              // blue
+              spriteOffset = 128;
+              hairColor = "#29adff"; // blue
+            }
           } else {
-            s.spriteAnimTime = 0;
-            setSprite((s) => {
-              if (s >= 4) {
-                return 1;
-              } else {
-                return s + 1;
-              }
-            });
+            // flash
+            // 144: green 160: white
+            if (s.spriteFlashAnimTime < 120) {
+              s.spriteFlashAnimTime += deltaTime;
+            } else {
+              s.spriteFlashAnimTime = 0;
+              s.lastFlashSprite = s.lastFlashSprite > 0 ? 0 : 1;
+            }
+            spriteOffset = s.lastFlashSprite > 0 ? 160 : 144;
+            hairColor = s.lastFlashSprite ? "#fff1e8" : "#00e436";
           }
         } else {
-          setSprite(1);
+          if (s.hasDashed) {
+            spriteOffset = 128; // blue
+            hairColor = "#29adff"; // blue
+          } else {
+            spriteOffset = 0;
+            hairColor = "#ff004d"; // red
+          }
         }
+
+        // {0xff, 0xf1, 0xe8}, // white
+        // {0x00, 0xe4, 0x36}, // green
+
+        setSprite(baseSprite + spriteOffset);
+        setHairColor(hairColor);
+
+        // update sprite
+        // if (s.hasDashed) {
+        //   setSprite(130);
+        // } else if (isSliding) {
+        //   setSprite(5);
+        // } else if (!s.isGrounded) {
+        //   setSprite(3);
+        // } else if (inputY > 0) {
+        //   setSprite(7);
+        // } else if (inputY < 0) {
+        //   setSprite(6);
+        // } else if (Math.abs(s.vx) > 0) {
+        //   if (s.spriteAnimTime < 120) {
+        //     s.spriteAnimTime += deltaTime;
+        //   } else {
+        //     s.spriteAnimTime = 0;
+        //     setSprite((s) => {
+        //       if (s >= 4) {
+        //         return 1;
+        //       } else {
+        //         return s + 1;
+        //       }
+        //     });
+        //   }
+        // } else {
+        //   setSprite(1);
+        // }
 
         if (s.coyoteTime > 0) {
           s.coyoteTime -= dt;
@@ -499,7 +581,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
         });
       }
     },
-    [onPlayerUpdate]
+    [onPlayerUpdate, freeze, gotOrb]
   );
 
   return (
@@ -543,7 +625,7 @@ export default function Player({ onPlayerUpdate, onPlayerDash }: Props) {
               );
 
               if (fruitCol || balloonCol) {
-                s.dashJump = Math.min(s.maxDashJump, s.dashJump + 1);
+                s.dashJump = gotOrb ? 2 : 1;
               }
             }}
           />

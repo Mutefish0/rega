@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import {
   Sprite2D,
   Animation,
@@ -10,17 +10,17 @@ import {
   Box2D,
   RigidBody2D,
   ZIndex,
-  smoothstep,
-  AnimConfig,
 } from "rega";
 import { spr } from "../utils";
 import { CollisionGroup } from "../../constants";
 import Smoke from "../Smoke";
-import Orb from "./Orb";
 
 interface Props {
-  toggleMusic: (on: boolean) => void;
+  setMusic: (src: string) => void;
   shake: (ms: number) => void;
+  flash: (ms: number) => void;
+  freeze: (ms: number) => void;
+  children: ReactNode;
 }
 
 function* emitParticles() {
@@ -36,12 +36,13 @@ function* emitParticles() {
   }
 }
 
-const animOrbLift: AnimConfig<number> = {
-  duration: 600,
-  steps: smoothstep(-12, 6, 20, "easeQuadIn"),
-};
-
-export default function BigChest({ shake, toggleMusic }: Props) {
+export default function BigChest({
+  shake,
+  flash,
+  freeze,
+  setMusic,
+  children,
+}: Props) {
   const [state, setState] = useState<"idle" | "opening" | "opened">("idle");
 
   const sfx = useSoundPlayer("/sounds/big_chest.wav");
@@ -94,7 +95,6 @@ export default function BigChest({ shake, toggleMusic }: Props) {
                 });
               }}
               onAnimationEnd={() => {
-                console.log("end!!");
                 setState("opened");
               }}
             />
@@ -116,16 +116,7 @@ export default function BigChest({ shake, toggleMusic }: Props) {
             ))}
           </>
         )}
-        {state === "opened" && (
-          <Animation
-            config={animOrbLift}
-            renderItem={(y) => (
-              <Relative translation={{ x: 8, y }}>
-                <Orb />
-              </Relative>
-            )}
-          />
-        )}
+        {state === "opened" && children}
       </>
     );
   }
@@ -145,9 +136,11 @@ export default function BigChest({ shake, toggleMusic }: Props) {
           onCollisionChange={(cols) => {
             if (cols.find((col) => col?.userData?.type === "player")) {
               setState("opening");
-              toggleMusic(false);
+              setMusic("");
               sfx.play();
               shake(1800);
+              flash(1800);
+              freeze(1800);
             }
           }}
         />
