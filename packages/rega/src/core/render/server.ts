@@ -1,12 +1,12 @@
 import { TransferObject, TransferRenderTarget } from "./types";
+// @ts-ignore
+import RenderWorker from "./worker?worker";
 
 class RenderServer {
   private worker: Worker;
 
   constructor() {
-    const worker = new Worker(import.meta.resolve("./worker.ts"), {
-      type: "module",
-    });
+    const worker = new RenderWorker();
     this.worker = worker;
   }
 

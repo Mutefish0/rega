@@ -474,3 +474,5 @@ async function start() {
 
   render();
 }
+
+export default {} as any;

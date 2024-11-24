@@ -122,22 +122,10 @@ export default function Camera({
     renderTarget.bindings["cameraProjectionMatrix"]
   );
 
-  // const bCameraProjectionMatrix = useTargetBindingView(
-  //   targetId,
-  //   "cameraProjectionMatrix",
-  //   "mat4"
-  // );
-
   const bCameraViewMatrix = useBindingView(
     "mat4",
     renderTarget.bindings["cameraViewMatrix"]
   );
-
-  // const bCameraViewMatrix = useTargetBindingView(
-  //   targetId,
-  //   "cameraViewMatrix",
-  //   "mat4"
-  // );
 
   useEffect(() => {
     bCameraProjectionMatrix.update(projectionMatrix.elements);

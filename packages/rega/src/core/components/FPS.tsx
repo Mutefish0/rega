@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import GUIView from "./UI/GUIView";
 import Text, { TextStyle } from "./UI/Text";
 import View from "./UI/View";
 import useFrame from "../hooks/useFrame";
@@ -24,10 +23,8 @@ export default function FPS({ style }: Props) {
   }, []);
 
   return (
-    <GUIView>
-      <View style={{ flexDirection: "row" }}>
-        <Text style={style}>{`FPS ${fps}`}</Text>
-      </View>
-    </GUIView>
+    <View style={{ flexDirection: "row" }}>
+      <Text style={style}>{`FPS ${fps}`}</Text>
+    </View>
   );
 }

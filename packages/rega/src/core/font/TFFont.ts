@@ -1,5 +1,6 @@
 /** Typeface font */
-import { BufferGeometry, ShapePath, ExtrudeGeometry } from "three/webgpu";
+import { ShapePath, ExtrudeGeometry } from "three/webgpu";
+import { createVertexBinding } from "../../core/render/vertex";
 
 export interface GlyphData {
   ha: number;
@@ -82,7 +83,29 @@ function createGeometry(glyph: GlyphData) {
 
   const shapes = path.toShapes() as any;
 
-  return new ExtrudeGeometry(shapes);
+  const g = new ExtrudeGeometry(shapes);
+
+  const pos = g.getAttribute("position");
+
+  const n = g.getAttribute("normal");
+  const u = g.getAttribute("uv");
+
+  const vertexCount = pos.count as number;
+
+  const position = createVertexBinding("vec3", vertexCount).update(pos.array);
+  const uv = createVertexBinding("vec2", vertexCount).update(u.array);
+  const normal = createVertexBinding("vec3", vertexCount).update(n.array);
+
+  const vertex = {
+    position,
+    uv,
+    normal,
+  };
+
+  return {
+    vertexCount,
+    vertex,
+  };
 }
 
 export default class TFFont {
@@ -93,7 +116,7 @@ export default class TFFont {
   public fontSize: number;
 
   private glyphs: Record<string, GlyphData>;
-  private geometries: Record<string, BufferGeometry>;
+  private geometries: Record<string, ReturnType<typeof createGeometry>>;
 
   constructor(data: TypefaceData) {
     this.resolution = data.resolution;
@@ -109,7 +132,7 @@ export default class TFFont {
     return this.glyphs[char];
   }
 
-  public getGeometry(char: string): BufferGeometry | undefined {
+  public getGeometry(char: string) {
     if (!this.geometries[char]) {
       const glyph = this.getGlyph(char);
       if (glyph) {

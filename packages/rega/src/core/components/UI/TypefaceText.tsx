@@ -1,12 +1,22 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { MeshBasicMaterial, Matrix4 } from "three/webgpu";
 import Relative from "../../primitives/Relative";
+import {
+  uniform,
+  Matrix4,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+  modelWorldMatrix,
+  positionGeometry,
+  vec4,
+} from "pure3";
 import { Node, MeasureMode } from "yoga-layout";
 import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
 import TFFont, { GlyphData } from "../../font/TFFont";
 import { parseColor } from "../../tools/color";
+import RenderObject from "../../primitives/RenderObject";
+import useBindings from "../../hooks/useBingdings";
 
 interface TextProps {
   font: TFFont;
@@ -23,6 +33,16 @@ interface ViewLayout {
   left: number;
   top: number;
 }
+
+const color = uniform("vec3", "color");
+const opacity = uniform("float", "opacity");
+
+const vertexNode = cameraProjectionMatrix
+  .mul(cameraViewMatrix)
+  .mul(modelWorldMatrix)
+  .mul(vec4(positionGeometry, 1));
+
+const fragmentNode = vec4(color, opacity);
 
 function splitText(
   glyphs: Array<{ ha: number }>,
@@ -76,14 +96,16 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     };
   }, [font, fontSize]);
 
-  const material = useMemo(() => new MeshBasicMaterial(), []);
+  const bindings = useBindings({
+    opacity: "float",
+    color: "vec3",
+  });
 
   useEffect(() => {
-    const { opacity, array } = parseColor(color);
-    material.color.setRGB(array[0], array[1], array[2]);
-    material.opacity = opacity;
-    material.needsUpdate = true;
-  }, [color]);
+    const { opacity, array } = parseColor(color || "#fff");
+    bindings.updates.opacity([opacity]);
+    bindings.updates.color(array);
+  }, [color, opacity]);
 
   const [layout, setLayout] = useState<{
     textLayout: TextLayout;
@@ -217,22 +239,27 @@ export default function TypefaceText({ children, font, style }: TextProps) {
               {line.map((item, j) => {
                 let x = offsetX;
                 offsetX += item.glyph.ha * scale + letterSpacing;
-                return null;
-                // return (
-                //   <Relative
-                //     key={`${item.glyph.o}:${i}:${j}`}
-                //     translation={{
-                //       x,
-                //     }}
-                //   >
-                //     <Relative matrix={scaleMatrix}>
-                //       <Mesh
-                //         geometry={font.getGeometry(item.char)!}
-                //         material={material}
-                //       />
-                //     </Relative>
-                //   </Relative>
-                // );
+                const { vertex, vertexCount } = font.getGeometry(item.char);
+
+                return (
+                  <Relative
+                    key={`${item.glyph.o}:${i}:${j}`}
+                    translation={{
+                      x,
+                    }}
+                  >
+                    <Relative matrix={scaleMatrix}>
+                      <RenderObject
+                        bindings={bindings.resources}
+                        vertexNode={vertexNode}
+                        fragmentNode={fragmentNode}
+                        vertex={vertex}
+                        vertexCount={vertexCount}
+                        zIndexEnabled
+                      />
+                    </Relative>
+                  </Relative>
+                );
               })}
             </Relative>
           );
