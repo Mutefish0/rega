@@ -9,12 +9,14 @@ import {
   RenderGroup,
   RenderTarget,
   GUICamera,
+  GUIView,
 } from "rega";
 
 import ShakeCamera from "./camera";
 import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
+import Guide from "./scenes/Guide";
 
 export default function App() {
   const [toast, setToast] = useState("");
@@ -101,7 +103,19 @@ export default function App() {
       <RenderTarget id="GUI" camera={<GUICamera />} />
 
       <RenderGroup target="GUI">
+        <GUIView>
+          <FPS
+            style={{
+              marginLeft: "auto",
+              marginTop: 12,
+              marginRight: 12,
+              fontFamily: "celeste",
+              fontSize: 12,
+            }}
+          />
+        </GUIView>
         {!!toast && <Toast>{toast}</Toast>}
+        {!started && <Guide />}
       </RenderGroup>
 
       <RenderGroup target="GAME">

@@ -1,7 +1,6 @@
 import React, { useCallback } from "react";
 import Relative from "../../primitives/Relative";
 import YogaNode, { Node } from "../YogaFlex/YogaNode";
-import { Edge } from "yoga-layout";
 import Box2D from "../Box2D";
 
 import { FlexStyle } from "../YogaFlex/FlexStyle";

@@ -157,7 +157,11 @@ export default function Player({
   });
 
   useEffect(() => {
-    s.dashJump = 2;
+    if (gotOrb) {
+      s.dashJump = 2;
+    } else {
+      s.dashJump = 1;
+    }
   }, [gotOrb]);
 
   const rbRef = useRef<RigidBodyRef>(null);
