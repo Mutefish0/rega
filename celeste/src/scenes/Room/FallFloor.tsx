@@ -63,7 +63,8 @@ export default function FallFloor() {
               ActiveCollisionTypes.DEFAULT |
               ActiveCollisionTypes.KINEMATIC_FIXED
             }
-            onCollisionChange={() => {
+            onCollisionChange={(cols) => {
+              console.log("fallfloor collision change", cols);
               breakSfx.play();
               setState("breaking");
             }}
