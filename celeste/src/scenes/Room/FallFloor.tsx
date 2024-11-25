@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sprite2D,
   ShapeCollider2D,
@@ -19,13 +19,25 @@ const breakingAnim = {
   duration: 500,
 };
 
-export default function FallFloor() {
+interface Props {
+  breaking?: boolean;
+  onBroken?: () => void;
+}
+
+export default function FallFloor({ onBroken, breaking }: Props) {
   const [state, setState] = useState<"idle" | "breaking" | "hiding">("idle");
 
   const { emit, list } = useParticles<void>();
 
   const renewSfx = useSoundPlayer("/sounds/renew.wav");
   const breakSfx = useSoundPlayer("/sounds/break_fall_floor.wav");
+
+  useEffect(() => {
+    if (breaking) {
+      breakSfx.play();
+      setState("breaking");
+    }
+  }, [breaking]);
 
   return (
     <>
@@ -49,6 +61,7 @@ export default function FallFloor() {
               renewSfx.play();
               setState("idle");
             }, 2000);
+            onBroken && onBroken();
           }}
         />
       )}
@@ -63,8 +76,7 @@ export default function FallFloor() {
               ActiveCollisionTypes.DEFAULT |
               ActiveCollisionTypes.KINEMATIC_FIXED
             }
-            onCollisionChange={(cols) => {
-              console.log("fallfloor collision change", cols);
+            onCollisionChange={() => {
               breakSfx.play();
               setState("breaking");
             }}

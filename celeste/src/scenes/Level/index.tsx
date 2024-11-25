@@ -115,6 +115,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     platforms,
     messages,
     bigChests,
+    springFallFloors,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
     ref.current.level = level;
@@ -325,6 +326,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           tilemap={tilemap}
           springs={springs}
           fallFloors={fallFloors}
+          springFallFloors={springFallFloors}
           fakeWalls={fakeWalls}
           fruits={fruits}
           flyFruits={flyFruits}

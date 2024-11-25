@@ -5,12 +5,15 @@ import {
   ActiveCollisionTypes,
   Relative,
   useSoundPlayer,
-  RigidBody2D,
 } from "rega";
 import { CollisionGroup } from "../../constants";
 import { spr } from "../utils";
 
-export default function Spring() {
+interface Props {
+  onShrink?: () => void;
+}
+
+export default function Spring({ onShrink }: Props) {
   const [state, setState] = useState<"idle" | "shrink">("idle");
 
   const sfx = useSoundPlayer("/sounds/spring.wav");
@@ -38,6 +41,7 @@ export default function Spring() {
               setState("shrink");
               sfx.play();
               setTimeout(() => setState("idle"), 333);
+              onShrink && onShrink();
             }
           }}
         />
@@ -48,13 +52,10 @@ export default function Spring() {
           size={[8, 3]}
           userData={{ type: "spring" }}
           collisionGroup={CollisionGroup.Solid}
-          collisionMask={CollisionGroup.Player | CollisionGroup.Sensor}
+          collisionMask={CollisionGroup.Player}
           activeCollisionTypes={
             ActiveCollisionTypes.DEFAULT | ActiveCollisionTypes.KINEMATIC_FIXED
           }
-          onCollisionChange={(cols) => {
-            console.log(cols);
-          }}
         />
       </Relative>
     </>

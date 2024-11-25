@@ -684,6 +684,7 @@ class CelesteLevel {
     const platforms: Array<[number, number, number]> = [];
     const messages: Array<[number, number]> = [];
     const bigChests: Array<[number, number]> = [];
+    const springFallFloors: Array<[number, number]> = [];
 
     const { roomX, roomY } = this.getRoomCoords();
     for (let tx = 0; tx <= 15; tx++) {
@@ -726,10 +727,25 @@ class CelesteLevel {
       playerSpawn[1] += 0.1;
     }
 
+    for (let i = 0; i < springs.length; i++) {
+      const spring = springs[i];
+      for (let j = 0; j < fallFloors.length; j++) {
+        const fallFloor = fallFloors[j];
+        if (spring[0] === fallFloor[0] && spring[1] === fallFloor[1] + 8) {
+          springFallFloors.push(fallFloor);
+          springs.splice(i, 1);
+          fallFloors.splice(j, 1);
+          i--;
+          j--;
+        }
+      }
+    }
+
     return {
       playerSpawn,
       springs,
       fallFloors,
+      springFallFloors,
       fakeWalls,
       fruits,
       flyFruits,

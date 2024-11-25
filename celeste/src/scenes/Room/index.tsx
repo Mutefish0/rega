@@ -16,6 +16,7 @@ import { CollisionGroup } from "../../constants";
 import Spike from "./Spike";
 import Spring from "./Spring";
 import FallFloor from "./FallFloor";
+import SpringFallFloor from "./SpringFallFloor";
 import FakeWall from "./FakeWall";
 import Fruit from "./Fruit";
 import FlyFruit from "./FlyFruit";
@@ -45,6 +46,7 @@ interface Props {
   platforms: Array<[number, number, number]>;
   messages: Array<[number, number]>;
   bigChests: Array<[number, number]>;
+  springFallFloors: Array<[number, number]>;
 
   playerHasDashed: boolean;
 
@@ -75,6 +77,7 @@ export default function Room({
   platforms,
   messages,
   bigChests,
+  springFallFloors,
   // fruitsGot,
   onPlayerGetFruit,
   onPlayerSpike,
@@ -108,7 +111,7 @@ export default function Room({
   }
 
   return (
-    <RigidBody2D type="fixed" mass={1000}>
+    <>
       <Tilemap
         textureId="/images/atlas.png"
         tiles={tiles}
@@ -116,11 +119,13 @@ export default function Room({
         pixelPerTile={8}
         tileSize={8}
       />
-      <TilemapCollider2D
-        tiles={solids}
-        tileSize={8}
-        collisionGroup={CollisionGroup.Solid}
-      />
+      <RigidBody2D type="fixed" mass={1000}>
+        <TilemapCollider2D
+          tiles={solids}
+          tileSize={8}
+          collisionGroup={CollisionGroup.Solid}
+        />
+      </RigidBody2D>
       {/* platforms */}
       {platforms.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y: y - 3 }}>
@@ -137,6 +142,11 @@ export default function Room({
       {fallFloors.map(([x, y], i) => (
         <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
           <FallFloor />
+        </Relative>
+      ))}
+      {springFallFloors.map(([x, y], i) => (
+        <Relative key={i} translation={{ x: x + 4, y: y - 4 }}>
+          <SpringFallFloor />
         </Relative>
       ))}
       {/* fake walls */}
@@ -274,6 +284,6 @@ export default function Room({
           }}
         />
       </Relative>
-    </RigidBody2D>
+    </>
   );
 }

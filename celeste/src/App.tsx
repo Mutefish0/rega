@@ -123,7 +123,7 @@ export default function App() {
         {!!started && (
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
         )}
-        {import.meta.env.DEV && (
+        {import.meta.env.DEV && !!started && (
           <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
         )}
       </RenderGroup>
