@@ -22,7 +22,7 @@ const vertexNode = cameraProjectionMatrix
 const fragmentNode = attribute("vec4", "color");
 
 // max debug vertices
-const MAX_POINTS = 1000;
+const MAX_POINTS = 5000;
 
 export default React.memo(function PhysicsDebuger() {
   const ctx = useContext(PhysicsContext);

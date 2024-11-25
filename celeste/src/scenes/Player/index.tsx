@@ -76,6 +76,7 @@ export interface PlayerState {
 interface Props {
   onPlayerUpdate: (state: PlayerState) => void;
   onPlayerDash: () => void;
+  onPlayerSpike: (pos: { x: number; y: number }) => void;
   freeze: boolean;
   gotOrb: boolean;
 }
@@ -85,6 +86,7 @@ export default function Player({
   onPlayerDash,
   freeze,
   gotOrb,
+  onPlayerSpike,
 }: Props) {
   const [flipX, setFlipX] = useState(false);
   const [sprite, setSprite] = useState(1);
@@ -321,6 +323,7 @@ export default function Player({
           if (!s.isGrounded) {
             s.vy = approch(s.vy, maxFall, gravity * dt);
           } else if (isSpring) {
+            s.vx = s.vx * 0.2;
             s.vy = SPRING_SPEED;
           }
 
@@ -467,13 +470,6 @@ export default function Player({
           setFlipX(true);
         }
 
-        // update hair color
-        // if (s.hasDashed) {
-        //   setHairColor("#29adff"); // blue
-        // } else {
-        //   setHairColor("#fe014c"); // red
-        // }
-
         let hairColor = "#fe014c";
         let baseSprite = 1;
         let spriteOffset = 0; // 0: red 128: blue 144: green 160: white
@@ -501,7 +497,7 @@ export default function Player({
         }
 
         if (gotOrb) {
-          if (s.hasDashed) {
+          if (s.hasDashed && s.dashJump < 2) {
             if (s.dashJump > 0) {
               // red
               spriteOffset = 0;
@@ -533,39 +529,8 @@ export default function Player({
           }
         }
 
-        // {0xff, 0xf1, 0xe8}, // white
-        // {0x00, 0xe4, 0x36}, // green
-
         setSprite(baseSprite + spriteOffset);
         setHairColor(hairColor);
-
-        // update sprite
-        // if (s.hasDashed) {
-        //   setSprite(130);
-        // } else if (isSliding) {
-        //   setSprite(5);
-        // } else if (!s.isGrounded) {
-        //   setSprite(3);
-        // } else if (inputY > 0) {
-        //   setSprite(7);
-        // } else if (inputY < 0) {
-        //   setSprite(6);
-        // } else if (Math.abs(s.vx) > 0) {
-        //   if (s.spriteAnimTime < 120) {
-        //     s.spriteAnimTime += deltaTime;
-        //   } else {
-        //     s.spriteAnimTime = 0;
-        //     setSprite((s) => {
-        //       if (s >= 4) {
-        //         return 1;
-        //       } else {
-        //         return s + 1;
-        //       }
-        //     });
-        //   }
-        // } else {
-        //   setSprite(1);
-        // }
 
         if (s.coyoteTime > 0) {
           s.coyoteTime -= dt;
@@ -630,6 +595,23 @@ export default function Player({
 
               if (fruitCol || balloonCol) {
                 s.dashJump = gotOrb ? 2 : 1;
+              }
+
+              const spikeCol = cols.find(
+                (c) => c.type === "enter" && c.userData?.type === "spike"
+              );
+
+              if (spikeCol) {
+                //dir 1-top 2-bottom 3-left 4-right
+                const dir = spikeCol.userData.dir;
+                if (
+                  (dir === 1 && s.vy <= 0) ||
+                  (dir === 2 && s.vy >= 0) ||
+                  (dir === 3 && s.vx >= 0) ||
+                  (dir === 4 && s.vx <= 0)
+                ) {
+                  onPlayerSpike(spikeCol.contactData!.solverContacts[0]);
+                }
               }
             }}
           />

@@ -9,7 +9,6 @@ import {
   ActiveCollisionTypes,
   useSoundPlayer,
   Vector,
-  useConst,
 } from "rega";
 
 import { CollisionGroup } from "../../constants";
@@ -52,7 +51,6 @@ interface Props {
 
   fruitsGot: string[];
   onPlayerGetFruit: (id: string) => void;
-  onPlayerSpike: (pos: Vector) => void;
   onPlayerFall: (pos: Vector) => void;
   onPlayerWin: () => void;
   onGetOrb: () => void;
@@ -80,7 +78,7 @@ export default function Room({
   springFallFloors,
   // fruitsGot,
   onPlayerGetFruit,
-  onPlayerSpike,
+
   onPlayerFall,
   onPlayerWin,
   onGetOrb,
@@ -91,7 +89,6 @@ export default function Room({
   flash,
   freeze,
 }: Props) {
-  const s = useConst({ hasSpike: false });
   const [hasKey, setHasKey] = useState(false);
   const getKeySfx = useSoundPlayer("/sounds/get_key.wav");
 
@@ -100,14 +97,6 @@ export default function Room({
   function onPlayerGetKey() {
     getKeySfx.play();
     setHasKey(true);
-  }
-
-  function handleSpike(pos: Vector) {
-    if (s.hasSpike) {
-      return;
-    }
-    s.hasSpike = true;
-    onPlayerSpike(pos);
   }
 
   return (
@@ -198,7 +187,7 @@ export default function Room({
       {/* spikes */}
       {spikes.map(([x, y, d], i) => (
         <Relative key={i} translation={{ x, y }}>
-          <Spike dir={d} onSpike={handleSpike} />
+          <Spike dir={d} />
         </Relative>
       ))}
       {messages.map(([x, y], i) => (

@@ -305,6 +305,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
                 }}
                 freeze={playerFreeze}
                 gotOrb={gotOrb}
+                onPlayerSpike={onPlayerDeath}
               />
             </Relative>
           )}
@@ -338,7 +339,6 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           bigChests={bigChests}
           fruitsGot={currentFruitsGot}
           onPlayerGetFruit={onPlayerGetFruit}
-          onPlayerSpike={onPlayerDeath}
           onPlayerFall={onPlayerDeath}
           onPlayerWin={goNextLevel}
           playerHasDashed={playerHasDashed}

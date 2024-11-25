@@ -124,7 +124,7 @@ export default function App() {
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
         )}
         {import.meta.env.DEV && !!started && (
-          <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
+          <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
       </RenderGroup>
     </>

@@ -75,7 +75,7 @@ run:
 - [x] clouds
 - [x] snow
 - [x] camera shaking
-- [ ] break spring
+- [x] break spring
 - [x] spawn animation
 - [x] fake wall
 - [x] title screen
