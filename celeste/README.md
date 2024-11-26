@@ -79,7 +79,5 @@ run:
 - [x] spawn animation
 - [x] fake wall
 - [x] title screen
-- [ ] flag & score & fruit record
+- [x] flag & score & fruit record
 - [x] orb
-- [x] save and load system
-- [ ] alphaMap + textureColor

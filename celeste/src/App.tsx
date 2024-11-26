@@ -16,6 +16,7 @@ import ShakeCamera from "./camera";
 import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
+import AreaTitle from "./scenes/AreaTitle";
 import Guide from "./scenes/Guide";
 
 export default function App() {
@@ -51,13 +52,15 @@ export default function App() {
       "/sounds/type.wav",
       "/sounds/big_chest.wav",
       "/sounds/orb.wav",
+      "/sounds/flag.wav",
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 
     const p3 = FontManager.add("celeste", {
       type: "bitmap",
       url: "/fonts/font.bmp",
-      charSize: [8, 8],
+      charSize: [3, 5],
+      stepSize: [8, 8],
     });
 
     const p4 = FontManager.add("Arial", {
@@ -120,12 +123,13 @@ export default function App() {
 
       <RenderGroup target="GAME">
         {!started && <TitleScreen onStart={() => setStarted(true)} />}
-        {!!started && (
+        {/* {!!started && (
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
-        )}
+        )} */}
         {import.meta.env.DEV && !!started && (
           <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
+        <AreaTitle level={8} />
       </RenderGroup>
     </>
   );

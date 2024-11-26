@@ -6,10 +6,11 @@ import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
 import BMPFont from "../../font/BMPFont";
+import ZIndex from "../../primitives/ZIndex";
 
 interface SpriteTextProps {
   font: BMPFont;
-  children: string;
+  children: string | number;
   style: TextStyle;
 }
 
@@ -73,7 +74,11 @@ function splitText(
   return result;
 }
 
-export default function SpriteText({ children, font, style }: SpriteTextProps) {
+export default function SpriteText({
+  children: _children,
+  font,
+  style,
+}: SpriteTextProps) {
   const {
     fontSize,
     letterSpacing = 0,
@@ -85,6 +90,8 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
     textLayout: TextLayout;
     viewLayout: ViewLayout;
   }>();
+
+  const children = useMemo(() => _children + "", [_children]);
 
   const clips = useMemo(() => {
     const codes = children
@@ -206,51 +213,58 @@ export default function SpriteText({ children, font, style }: SpriteTextProps) {
         measureFunc={handleMeasure}
       />
       {!!layout && !!backgroundColor && (
-        <Relative
-          translation={{ x: layout.viewLayout.left, y: -layout.viewLayout.top }}
-        >
-          <Box2D
-            anchor="top-left"
-            size={[layout.viewLayout.width, layout.viewLayout.height]}
-            color={backgroundColor}
-          />
-        </Relative>
-      )}
-      {!!layout &&
-        layout.textLayout.segments.map((line, i) => (
+        <ZIndex zIndex={0}>
           <Relative
-            key={i}
             translation={{
               x: layout.viewLayout.left,
-              y: -i * lineHeight - layout.viewLayout.top,
-              z: 0,
+              y: -layout.viewLayout.top,
             }}
           >
-            {line.map((clip, j) => (
-              <Relative
-                key={`${clip.code}:${i}:${j}`}
-                translation={{
-                  x:
-                    layout.viewLayout.paddingLeft +
-                    j * charWidth +
-                    (j === line.length ? 0 : j * letterSpacing),
-                  y: -layout.viewLayout.paddingTop,
-                  z: 0,
-                }}
-              >
-                <Sprite2D
-                  anchor="top-left"
-                  textureId={font.textureId}
-                  clip={clip.clip}
-                  size={[charWidth, fontSize]}
-                  padding={0.1}
-                  color={color}
-                  alphaTextureId={font.textureId}
-                />
-              </Relative>
-            ))}
+            <Box2D
+              anchor="top-left"
+              size={[layout.viewLayout.width, layout.viewLayout.height]}
+              color={backgroundColor}
+            />
           </Relative>
-        ))}
+        </ZIndex>
+      )}
+      <ZIndex zIndex={1}>
+        {!!layout &&
+          layout.textLayout.segments.map((line, i) => (
+            <Relative
+              key={i}
+              translation={{
+                x: layout.viewLayout.left,
+                y: -i * lineHeight - layout.viewLayout.top,
+                z: 0,
+              }}
+            >
+              {line.map((clip, j) => (
+                <Relative
+                  key={`${clip.code}:${i}:${j}`}
+                  translation={{
+                    x:
+                      layout.viewLayout.paddingLeft +
+                      j * charWidth +
+                      (j === line.length ? 0 : j * letterSpacing),
+                    y: -layout.viewLayout.paddingTop,
+                    z: 0,
+                  }}
+                >
+                  <Sprite2D
+                    anchor="top-left"
+                    textureId={font.textureId}
+                    clip={clip.clip}
+                    size={[charWidth, fontSize]}
+                    padding={0.1}
+                    color={color}
+                    alphaTextureId={font.textureId}
+                  />
+                </Relative>
+              ))}
+            </Relative>
+          ))}
+      </ZIndex>
     </>
   );
 }

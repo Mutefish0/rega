@@ -20,7 +20,10 @@ import Snow from "../Snow";
 import PlayerIntro from "../Player/Intro";
 import Player, { PlayerState } from "../Player";
 import Room from "../Room";
+import AreaTitle from "../AreaTitle";
+import Scoreboard from "../Scoreboard";
 import { clamp, uniq } from "lodash";
+import { formatTimeDuration } from "../utils";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 
@@ -48,9 +51,9 @@ const INITIAL_STATE = {
   // passed levels
   totalFruitsGot: 0,
   gotOrb: false,
-  startTime: Date.now(),
+  timeElapsed: 0,
+  deaths: 0,
   level: 0,
-
   player: {
     position: {
       x: 0,
@@ -59,21 +62,15 @@ const INITIAL_STATE = {
   },
 };
 
-function formatDate(time: number) {
-  const seconds = Math.floor(time / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes % 60).padStart(
-    2,
-    "0"
-  )}:${String(seconds % 60).padStart(2, "0")}`;
-}
-
 const GAME_STATE_KEY = "__CELESTE_GAME_STATE__";
 
 export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   const ref = useRef(INITIAL_STATE);
+
+  const [showScore, setShowScore] = useState(false);
+
+  const [deaths, setDeaths] = useState(0);
+  const [startTime, setStartTime] = useState(() => Date.now());
 
   const [gotOrb, setGotOrb] = useState(false);
 
@@ -116,6 +113,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     messages,
     bigChests,
     springFallFloors,
+    flags,
   } = useMemo(() => {
     celesteLevel.setLevel(level);
     ref.current.level = level;
@@ -148,6 +146,8 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     ref.current.level = level;
     ref.current.totalFruitsGot = totalFruitsGot;
     ref.current.gotOrb = gotOrb;
+    ref.current.timeElapsed = Date.now() - startTime;
+    ref.current.deaths = deaths;
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(ref.current));
 
     console.log("saved: ", ref.current);
@@ -166,6 +166,8 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
       setGotOrb(!!state.gotOrb);
       setTotalFruitsGot(state.totalFruitsGot || 0);
       setPlayerInstance((i) => i + 1);
+      setStartTime(Date.now() - state.timeElapsed);
+      setDeaths(state.deaths || 0);
 
       console.log("loaded: ", state);
 
@@ -178,7 +180,6 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   function onPlayerDeath(pos: Vector) {
     deathSfx.play();
     onShake(330);
-
     emit({
       lifetime: 333,
       data: {
@@ -187,6 +188,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
       },
     });
     setDeath(true);
+    setDeaths((d) => d + 1);
     setTimeout(() => {
       setDeath(false);
       restartLevel();
@@ -198,9 +200,8 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setPlayerPosition(undefined);
     setPlayerInstance((i) => i + 1);
     setIntro(true);
-
     showToast(
-      `${formatDate(Date.now() - ref.current.startTime)} ${(level + 1) * 100}M`
+      `${formatTimeDuration(Date.now() - startTime)} ${(level + 1) * 100}M`
     );
   }
 
@@ -216,7 +217,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setIntro(true);
 
     showToast(
-      `${formatDate(Date.now() - ref.current.startTime)} ${(level + 1) * 100}m`
+      `${formatTimeDuration(Date.now() - startTime)} ${(level + 1) * 100}m`
     );
   }
 
@@ -306,6 +307,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
                 freeze={playerFreeze}
                 gotOrb={gotOrb}
                 onPlayerSpike={onPlayerDeath}
+                onPlayerGetFlag={() => setShowScore(true)}
               />
             </Relative>
           )}
@@ -337,7 +339,8 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           platforms={platforms}
           messages={messages}
           bigChests={bigChests}
-          fruitsGot={currentFruitsGot}
+          flags={flags}
+          //
           onPlayerGetFruit={onPlayerGetFruit}
           onPlayerFall={onPlayerDeath}
           onPlayerWin={goNextLevel}
@@ -348,6 +351,20 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
           freeze={freeze}
           flash={flash}
         />
+      </ZIndex>
+
+      <ZIndex zIndex={1}>
+        {!!showScore && (
+          <Scoreboard
+            deaths={deaths}
+            fruitsGot={totalFruitsGot}
+            startTime={startTime}
+          />
+        )}
+      </ZIndex>
+
+      <ZIndex zIndex={1}>
+        <AreaTitle level={level} />
       </ZIndex>
 
       {/* background */}

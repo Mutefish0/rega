@@ -1,12 +1,14 @@
 import React, { useCallback } from "react";
 import Relative from "../../primitives/Relative";
 import YogaNode, { Node } from "../YogaFlex/YogaNode";
+import Image from "./Image";
 import Box2D from "../Box2D";
 
 import { FlexStyle } from "../YogaFlex/FlexStyle";
 
 export interface ViewStyle extends FlexStyle {
   backgroundColor?: string;
+  backgroundImage?: string;
 }
 
 interface ViewProps {
@@ -41,6 +43,12 @@ export default function View({ children = null, style = {} }: ViewProps) {
               anchor="top-left"
               size={[layout.width, layout.height]}
               color={style.backgroundColor}
+            />
+          )}
+          {!!style.backgroundImage && (
+            <Image
+              size={[layout.width, layout.height]}
+              src={style.backgroundImage}
             />
           )}
           {children}

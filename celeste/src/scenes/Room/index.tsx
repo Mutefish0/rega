@@ -26,6 +26,7 @@ import Platform from "./Platform";
 import Message from "./Message";
 import BigChest from "./BigChest";
 import Orb from "./Orb";
+import Flag from "./Flag";
 
 interface Props {
   tilemap: {
@@ -46,10 +47,10 @@ interface Props {
   messages: Array<[number, number]>;
   bigChests: Array<[number, number]>;
   springFallFloors: Array<[number, number]>;
+  flags: Array<[number, number]>;
 
   playerHasDashed: boolean;
 
-  fruitsGot: string[];
   onPlayerGetFruit: (id: string) => void;
   onPlayerFall: (pos: Vector) => void;
   onPlayerWin: () => void;
@@ -76,9 +77,9 @@ export default function Room({
   messages,
   bigChests,
   springFallFloors,
-  // fruitsGot,
-  onPlayerGetFruit,
+  flags,
 
+  onPlayerGetFruit,
   onPlayerFall,
   onPlayerWin,
   onGetOrb,
@@ -210,6 +211,11 @@ export default function Room({
               setMusic={setMusic}
             />
           </BigChest>
+        </Relative>
+      ))}
+      {flags.map(([x, y], i) => (
+        <Relative key={i} translation={{ x, y }}>
+          <Flag />
         </Relative>
       ))}
       {/* invisible wall */}

@@ -1,6 +1,7 @@
 import { useContext, useMemo, useEffect, useRef } from "react";
 import Yoga, { MeasureFunction, Direction, Node } from "yoga-layout";
 import YogaContext from "./YogaContext";
+import YogaConfigContext from "./YogaConfigContext";
 
 import { applyStyle, FlexStyle, FlexStyleNames } from "./FlexStyle";
 
@@ -85,9 +86,11 @@ export default function YogaNode({
 }: Props) {
   const ref = useRef({ tmo: 0 as any, style: {} });
 
+  const configCtx = useContext(YogaConfigContext);
+
   const parentCtx = useContext(YogaContext);
 
-  const node = useMemo(() => Yoga.Node.create(), []);
+  const node = useMemo(() => Yoga.Node.create(configCtx.config), []);
 
   const layoutCallbacks = useMemo(() => new Set<() => void>(), []);
 
@@ -150,6 +153,7 @@ export default function YogaNode({
         parentCtx.node.removeChild(node);
         ctx.drive();
       }
+      node.free();
     };
   }, []);
 

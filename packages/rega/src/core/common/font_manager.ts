@@ -28,6 +28,7 @@ export default class FontManager {
       ? {
           type: T;
           url: string;
+          stepSize: [number, number];
           charSize: [number, number];
           fontWeight?: FontWeight;
           fontStyle?: FontStyle;
@@ -41,7 +42,7 @@ export default class FontManager {
       }`;
       this.fonts.set(key, {
         type: opts.type,
-        fontObject: new BMPFont(opts.url, opts.charSize),
+        fontObject: new BMPFont(opts.url, opts.stepSize, opts.charSize),
       });
     } else if (opts.type === "typeface") {
       const fontData = await fetchBufferData(opts.url);

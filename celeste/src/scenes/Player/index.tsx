@@ -77,6 +77,7 @@ interface Props {
   onPlayerUpdate: (state: PlayerState) => void;
   onPlayerDash: () => void;
   onPlayerSpike: (pos: { x: number; y: number }) => void;
+  onPlayerGetFlag: () => void;
   freeze: boolean;
   gotOrb: boolean;
 }
@@ -84,6 +85,7 @@ interface Props {
 export default function Player({
   onPlayerUpdate,
   onPlayerDash,
+  onPlayerGetFlag,
   freeze,
   gotOrb,
   onPlayerSpike,
@@ -585,6 +587,10 @@ export default function Player({
             anchor="top-left"
             userData={{ type: "player", hasDash }}
             onCollisionChange={(cols) => {
+              const flagCol = cols.find(
+                (c) => c.type === "enter" && c.userData?.type === "flag"
+              );
+
               const fruitCol = cols.find(
                 (c) => c.type === "enter" && c.userData?.type === "fruit"
               );
@@ -612,6 +618,10 @@ export default function Player({
                 ) {
                   onPlayerSpike(spikeCol.contactData!.solverContacts[0]);
                 }
+              }
+
+              if (flagCol) {
+                onPlayerGetFlag();
               }
             }}
           />

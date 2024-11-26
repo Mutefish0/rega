@@ -20,7 +20,7 @@ import useBindings from "../../hooks/useBingdings";
 
 interface TextProps {
   font: TFFont;
-  children: string;
+  children: string | number;
   style: TextStyle;
 }
 
@@ -77,7 +77,13 @@ function splitText(
   return result;
 }
 
-export default function TypefaceText({ children, font, style }: TextProps) {
+export default function TypefaceText({
+  children: _children,
+  font,
+  style,
+}: TextProps) {
+  const children = useMemo(() => _children + "", [_children]);
+
   const {
     fontSize,
     letterSpacing = 0,
