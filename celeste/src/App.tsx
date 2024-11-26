@@ -113,23 +113,24 @@ export default function App() {
               marginTop: 12,
               marginRight: 12,
               fontFamily: "celeste",
-              fontSize: 12,
+              fontSize: 8,
+              letterSpacing: 2,
             }}
           />
         </GUIView>
+
         {!!toast && <Toast>{toast}</Toast>}
         {!started && <Guide />}
       </RenderGroup>
 
       <RenderGroup target="GAME">
         {!started && <TitleScreen onStart={() => setStarted(true)} />}
-        {/* {!!started && (
+        {!!started && (
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
-        )} */}
+        )}
         {import.meta.env.DEV && !!started && (
           <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
         )}
-        <AreaTitle level={8} />
       </RenderGroup>
     </>
   );

@@ -15,9 +15,10 @@ interface SpriteTextProps {
 }
 
 interface TextLayout {
-  segments: Array<
-    Array<{ clip: [number, number, number, number]; code: number }>
-  >;
+  segments: Array<{
+    clips: Array<{ clip: [number, number, number, number]; code: number }>;
+    width: number;
+  }>;
 }
 interface ViewLayout {
   width: number;
@@ -29,13 +30,27 @@ interface ViewLayout {
   paddingTop: number;
 }
 
+const PRECISION = 6;
+const ERROR = 1 / Math.pow(10, PRECISION);
+
+function ceil(w: number) {
+  let i = 0;
+  for (; i < PRECISION; i++) {
+    w *= 10;
+    if (w % 1 === 0) {
+      return Math.ceil(w) / Math.pow(10, i + 1);
+    }
+  }
+  return Math.ceil(w) / Math.pow(10, i);
+}
+
 function splitText(
   charWidth: number,
   letterSpacing: number,
   codes: number[],
   maxWidth: number
-): Array<[number, number]> {
-  const result: Array<[number, number]> = [];
+): Array<[number, number, number]> {
+  const result: Array<[number, number, number]> = [];
   let currentWidth = 0;
   let startIndex = 0;
   const charCount = codes.length;
@@ -47,7 +62,7 @@ function splitText(
     if (charCode === 10) {
       // '\n' 的 Unicode 编码是 10
       // 遇到换行符，强制结束当前行
-      result.push([startIndex, i]);
+      result.push([startIndex, i, currentWidth]);
       startIndex = i + 1; // 新行从换行符后开始
       currentWidth = 0; // 重置宽度
       continue;
@@ -56,9 +71,9 @@ function splitText(
     // 计算当前字符的宽度，只在不是第一字符时才考虑间距
     const charTotalWidth = charWidth + (i > startIndex ? letterSpacing : 0);
 
-    if (currentWidth + charTotalWidth > maxWidth && currentWidth > 0) {
+    if (currentWidth + charTotalWidth > maxWidth + ERROR && currentWidth > 0) {
       // 当前行超出宽度限制，分割
-      result.push([startIndex, i]);
+      result.push([startIndex, i, currentWidth]);
       startIndex = i;
       currentWidth = charWidth; // 新行开始，重置宽度
     } else {
@@ -68,7 +83,7 @@ function splitText(
 
   // 添加最后一行
   if (startIndex < charCount) {
-    result.push([startIndex, charCount]);
+    result.push([startIndex, charCount, currentWidth]);
   }
 
   return result;
@@ -85,6 +100,7 @@ export default function SpriteText({
     color = "white",
     lineHeight = fontSize,
     backgroundColor,
+    textAlign = "start",
   } = style;
   const [layout, setLayout] = useState<{
     textLayout: TextLayout;
@@ -105,10 +121,10 @@ export default function SpriteText({
     return clips;
   }, [children]);
 
-  const charWidth = useMemo(
-    () => fontSize * font.aspectRatio,
-    [font.aspectRatio, fontSize]
-  );
+  const charWidth = useMemo(() => {
+    let w = fontSize * font.aspectRatio;
+    return ceil(w);
+  }, [font.aspectRatio, fontSize]);
 
   const textStyle = useMemo(() => {
     return {
@@ -121,6 +137,9 @@ export default function SpriteText({
     if (node.hasNewLayout()) {
       const viewLayout = node.getComputedLayout();
 
+      viewLayout.width = ceil(viewLayout.width);
+      viewLayout.height = ceil(viewLayout.height);
+
       const paddingLeft = node.getComputedPadding(Edge.Left);
       const paddingTop = node.getComputedPadding(Edge.Top);
 
@@ -132,7 +151,10 @@ export default function SpriteText({
       );
 
       const textLayout = {
-        segments: lines.map((line) => clips.slice(line[0], line[1])),
+        segments: lines.map((line) => ({
+          clips: clips.slice(line[0], line[1]),
+          width: line[2],
+        })),
       };
 
       setLayout({
@@ -234,19 +256,27 @@ export default function SpriteText({
             <Relative
               key={i}
               translation={{
-                x: layout.viewLayout.left,
+                x:
+                  textAlign === "end"
+                    ? layout.viewLayout.left +
+                      layout.viewLayout.width -
+                      line.width
+                    : textAlign === "center"
+                    ? layout.viewLayout.left +
+                      (layout.viewLayout.width - line.width) / 2
+                    : layout.viewLayout.left,
                 y: -i * lineHeight - layout.viewLayout.top,
                 z: 0,
               }}
             >
-              {line.map((clip, j) => (
+              {line.clips.map((clip, j) => (
                 <Relative
                   key={`${clip.code}:${i}:${j}`}
                   translation={{
                     x:
                       layout.viewLayout.paddingLeft +
                       j * charWidth +
-                      (j === line.length ? 0 : j * letterSpacing),
+                      (j === line.clips.length ? 0 : j * letterSpacing),
                     y: -layout.viewLayout.paddingTop,
                     z: 0,
                   }}

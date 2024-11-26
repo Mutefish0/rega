@@ -363,9 +363,9 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         )}
       </ZIndex>
 
-      <ZIndex zIndex={1}>
+      {/* <ZIndex zIndex={1}>
         <AreaTitle level={level} />
-      </ZIndex>
+      </ZIndex> */}
 
       {/* background */}
       <ZIndex zIndex={-2}>

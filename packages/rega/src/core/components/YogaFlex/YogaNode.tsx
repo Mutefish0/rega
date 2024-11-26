@@ -84,7 +84,7 @@ export default function YogaNode({
   style = {},
   onLayout,
 }: Props) {
-  const ref = useRef({ tmo: 0 as any, style: {} });
+  const ref = useRef({ tmo: 0 as any, style: {}, freed: false });
 
   const configCtx = useContext(YogaConfigContext);
 
@@ -102,8 +102,10 @@ export default function YogaNode({
         : () => {
             clearTimeout(ref.current.tmo);
             ref.current.tmo = setTimeout(() => {
-              node.calculateLayout(undefined, undefined, Direction.LTR);
-              layoutCallbacks.forEach((cb) => cb());
+              if (!ref.current.freed) {
+                node.calculateLayout(undefined, undefined, Direction.LTR);
+                layoutCallbacks.forEach((cb) => cb());
+              }
             }, 0);
           },
       layoutCallbacks: parentCtx ? parentCtx.layoutCallbacks : layoutCallbacks,
@@ -116,15 +118,16 @@ export default function YogaNode({
       node.setMeasureFunc(measureFunc);
       node.markDirty();
       ctx.drive();
-    }
-    return () => {
+    } else {
       node.unsetMeasureFunc();
-    };
+    }
   }, [measureFunc]);
 
   useEffect(() => {
     if (onLayout) {
-      const cb = () => onLayout(node);
+      const cb = () => {
+        onLayout(node);
+      };
       ctx.layoutCallbacks.add(cb);
       //node.markDirty();
       ctx.drive();
@@ -153,6 +156,7 @@ export default function YogaNode({
         parentCtx.node.removeChild(node);
         ctx.drive();
       }
+      ref.current.freed = true;
       node.free();
     };
   }, []);

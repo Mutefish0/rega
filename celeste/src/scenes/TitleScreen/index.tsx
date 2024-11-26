@@ -9,7 +9,6 @@ import {
   KeyboardInput,
   GamepadInput,
   TextStyle,
-  GUIView,
 } from "rega";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "../Level/celesteLevel";
@@ -21,9 +20,10 @@ interface Props {
 
 const textStyle: TextStyle = {
   fontFamily: "celeste",
-  fontSize: 7,
-  letterSpacing: -3,
+  fontSize: 4,
+  letterSpacing: 1,
   color: "#5f574f",
+  lineHeight: 5,
 };
 
 function* idleAnimation() {
@@ -97,10 +97,10 @@ export default function TitleScreen({ onStart }: Props) {
                   ...textStyle,
                   color,
                   marginTop: 80,
-                  marginBottom: 12,
+                  marginBottom: 8,
                 }}
               >
-                c+x
+                x+c
               </Text>
               <Text style={{ ...textStyle, color }}>matt thorson</Text>
               <Text style={{ ...textStyle, color }}>noel berry</Text>

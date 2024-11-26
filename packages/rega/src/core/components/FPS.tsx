@@ -24,7 +24,7 @@ export default function FPS({ style }: Props) {
 
   return (
     <View style={{ flexDirection: "row" }}>
-      <Text style={style}>{`FPS ${fps}`}</Text>
+      <Text style={style}>{`fps ${fps}`}</Text>
     </View>
   );
 }

@@ -4,18 +4,19 @@ import ThreeContext from "../../primitives/ThreeContext";
 import YogaConfigContext from "../YogaFlex/YogaConfigContext";
 import Absolute from "../../primitives/Absolute";
 import { emptyMatrix4 } from "pure3";
-import View from "./View";
+import View, { ViewStyle } from "./View";
 
 interface GUIViewProps {
   children: React.ReactNode;
+  style?: ViewStyle;
 }
 
-export default function GUIView({ children }: GUIViewProps) {
+export default function GUIView({ children, style }: GUIViewProps) {
   const ctx = useContext(ThreeContext);
 
   const configCtx = useMemo(() => {
     const config = Yoga.Config.create();
-    config.setPointScaleFactor(ctx.pixelRatio);
+    config.setPointScaleFactor(Math.floor(ctx.pixelRatio));
     return { config };
   }, [ctx.pixelRatio]);
 
@@ -30,6 +31,7 @@ export default function GUIView({ children }: GUIViewProps) {
       <YogaConfigContext.Provider value={configCtx}>
         <View
           style={{
+            ...style,
             width: ctx.size[0] / ctx.pixelRatio,
             height: ctx.size[1] / ctx.pixelRatio,
           }}

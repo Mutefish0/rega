@@ -2,9 +2,42 @@ import { GUIView, View, Text } from "rega";
 
 const baseTextStyle = {
   fontFamily: "celeste",
-  fontSize: 12,
-  letterSpacing: -4,
+  fontSize: 10,
+  letterSpacing: 3,
 };
+
+const styles = {
+  row: {
+    flexDirection: "row",
+    marginTop: 8,
+  },
+
+  th1: { ...baseTextStyle, flexBasis: "20%" },
+  th2: { ...baseTextStyle, flexBasis: "40%", textAlign: "end" },
+  th3: { ...baseTextStyle, flexBasis: "40%", textAlign: "end" },
+
+  col1: {
+    ...baseTextStyle,
+    flexBasis: "20%",
+  },
+  col2: {
+    ...baseTextStyle,
+    flexBasis: "40%",
+    textAlign: "end",
+  },
+  col3: {
+    ...baseTextStyle,
+    flexBasis: "40%",
+    textAlign: "end",
+  },
+} as const;
+
+const rows = [
+  ["jump", "c", "b"],
+  ["dash", "x", "a"],
+  ["save", "j", "lb"],
+  ["load", "k", "rb"],
+];
 
 export default function Guide() {
   return (
@@ -12,37 +45,22 @@ export default function Guide() {
       <View
         style={{
           backgroundColor: "rgba(255, 255, 255, 0.1)",
+          padding: 12,
           width: 240,
-          marginLeft: 12,
-          marginTop: 12,
-          padding: 8,
         }}
       >
         <View style={{ flexDirection: "row" }}>
-          <Text style={{ ...baseTextStyle, flexBasis: "30%" }}> </Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>keyboard</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>joystick</Text>
+          <Text style={styles.th1}> </Text>
+          <Text style={styles.th2}>keyboard</Text>
+          <Text style={styles.th3}>joystick</Text>
         </View>
-        <View style={{ flexDirection: "row" }}>
-          <Text style={{ ...baseTextStyle, flexBasis: "30%" }}>jump</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>c</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>b</Text>
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <Text style={{ ...baseTextStyle, flexBasis: "30%" }}>dash</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>x</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>a</Text>
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <Text style={{ ...baseTextStyle, flexBasis: "30%" }}>save</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>j</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>LB</Text>
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <Text style={{ ...baseTextStyle, flexBasis: "30%" }}>load</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>k</Text>
-          <Text style={{ ...baseTextStyle, flexBasis: "40%" }}>RB</Text>
-        </View>
+        {rows.map((row, i) => (
+          <View key={i} style={styles.row}>
+            <Text style={styles.col1}>{row[0]}</Text>
+            <Text style={styles.col2}>{row[1]}</Text>
+            <Text style={styles.col3}>{row[2]}</Text>
+          </View>
+        ))}
       </View>
     </GUIView>
   );
