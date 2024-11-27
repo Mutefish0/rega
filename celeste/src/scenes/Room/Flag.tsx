@@ -27,11 +27,17 @@ export default function Flag() {
       <Animation
         config={animWave}
         renderItem={(clip) => (
-          <Sprite2D textureId="/images/atlas.png" clip={clip} padding={0.05} />
+          <Sprite2D
+            anchor="top-left"
+            textureId="/images/atlas.png"
+            clip={clip}
+            padding={0.05}
+          />
         )}
       />
       {state === "idle" && (
         <ShapeCollider2D
+          anchor="top-left"
           shape="cuboid"
           size={[8, 8]}
           collisionGroup={CollisionGroup.Sensor}

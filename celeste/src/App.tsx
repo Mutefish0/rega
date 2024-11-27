@@ -25,7 +25,7 @@ export default function App() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png"];
+    const textures: string[] = ["/images/atlas.png", "/images/fruit.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
 
     const sounds: string[] = [
@@ -127,7 +127,7 @@ export default function App() {
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
         )}
         {import.meta.env.DEV && !!started && (
-          <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
+          <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
         )}
       </RenderGroup>
     </>

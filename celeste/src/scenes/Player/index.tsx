@@ -499,17 +499,15 @@ export default function Player({
         }
 
         if (gotOrb) {
-          if (s.hasDashed && s.dashJump < 2) {
-            if (s.dashJump > 0) {
-              // red
-              spriteOffset = 0;
-              hairColor = "#ff004d"; // red
-            } else {
-              // blue
-              spriteOffset = 128;
-              hairColor = "#29adff"; // blue
-            }
-          } else {
+          if (s.dashJump === 0) {
+            // blue
+            spriteOffset = 128;
+            hairColor = "#29adff"; // blue
+          } else if (s.dashJump === 1) {
+            // red
+            spriteOffset = 0;
+            hairColor = "#ff004d"; // red
+          } else if (s.dashJump === 2) {
             // flash
             // 144: green 160: white
             if (s.spriteFlashAnimTime < 120) {
@@ -522,7 +520,7 @@ export default function Player({
             hairColor = s.lastFlashSprite ? "#fff1e8" : "#00e436";
           }
         } else {
-          if (s.hasDashed) {
+          if (s.dashJump === 0) {
             spriteOffset = 128; // blue
             hairColor = "#29adff"; // blue
           } else {

@@ -92,6 +92,7 @@ export function addObjectGPUBuffer(
       usage,
       mappedAtCreation: true,
     });
+
     console.debug(
       `[buffer ${uuid}] create, <${usageToString("buffer", usage)}>, ${size}`
     );
@@ -292,10 +293,10 @@ export function updateGPUTexture(device: GPUDevice, textreId: string) {
       );
       record.version = version;
 
-      console.debug(
-        `[mutable_texture ${textreId}] write <${gpuTexture.label}>`,
-        `v${version}`
-      );
+      // console.debug(
+      //   `[mutable_texture ${textreId}] write <${gpuTexture.label}>`,
+      //   `v${version}`
+      // );
     }
   }
 }
@@ -355,10 +356,10 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
   if (record.version < version) {
     record.version = version;
     device.queue.writeBuffer(record.gpuBuffer, 0, record.dataView, 0);
-    console.debug(
-      `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
-      `v${version}`
-    );
+    // console.debug(
+    //   `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
+    //   `v${version}`
+    // );
   }
 
   return record.gpuBuffer;

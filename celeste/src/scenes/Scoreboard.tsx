@@ -10,7 +10,10 @@ interface Props {
 
 const textStyle = {
   fontFamily: "celeste",
-  fontSize: 12,
+  fontSize: 5,
+  lineHeight: 8,
+  color: "#fff",
+  letterSpacing: 1,
 };
 
 export default function Scoreboard({ deaths, startTime, fruitsGot }: Props) {
@@ -20,15 +23,38 @@ export default function Scoreboard({ deaths, startTime, fruitsGot }: Props) {
   );
 
   return (
-    <View>
-      <View>
-        <Text style={textStyle}>x{fruitsGot}</Text>
-      </View>
-      <View>
+    <View
+      style={{
+        width: 128,
+        height: 128,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "center",
+      }}
+    >
+      <View
+        style={{
+          marginTop: 2,
+          width: 60,
+          paddingTop: 2,
+          paddingBottom: 2,
+          alignItems: "center",
+          backgroundColor: "rgba(0,0,0,0.85)",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              backgroundImage: "/images/fruit.png",
+              width: 7,
+              height: 7,
+              marginRight: 1,
+            }}
+          />
+          <Text style={textStyle}>x{fruitsGot}</Text>
+        </View>
         <Text style={textStyle}>{timeDaration}</Text>
-      </View>
-      <View>
-        <Text style={textStyle}>Deaths: {deaths}</Text>
+        <Text style={textStyle}>deaths:{deaths}</Text>
       </View>
     </View>
   );

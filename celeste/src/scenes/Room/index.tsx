@@ -214,7 +214,7 @@ export default function Room({
         </Relative>
       ))}
       {flags.map(([x, y], i) => (
-        <Relative key={i} translation={{ x, y }}>
+        <Relative key={i} translation={{ x: x + 4, y }}>
           <Flag />
         </Relative>
       ))}

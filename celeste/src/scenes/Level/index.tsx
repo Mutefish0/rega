@@ -307,7 +307,7 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
       )}
 
       <ZIndex zIndex={-1}>
-        <Clouds />
+        <Clouds newBg={gotOrb} />
       </ZIndex>
 
       <ZIndex zIndex={2}>

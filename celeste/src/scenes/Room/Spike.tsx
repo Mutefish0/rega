@@ -17,14 +17,14 @@ export default function Spike({ dir }: Props) {
   if (dir === 1) {
     trans = {
       x: -1,
-      y: -2,
+      y: -3,
     };
   } else if (dir === 2) {
-    trans = { x: 0, y: 0 };
+    trans = { x: 0, y: 1 };
   } else if (dir === 3) {
-    trans = { x: 5, y: 0 };
+    trans = { x: 6, y: 0 };
   } else if (dir === 4) {
-    trans = { x: -2, y: 0 };
+    trans = { x: -3, y: 0 };
   }
 
   return (

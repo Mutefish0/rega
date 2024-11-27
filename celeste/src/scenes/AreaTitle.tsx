@@ -24,7 +24,7 @@ export default function AreaTitle({ level, startTime }: Props) {
 
   useEffect(() => {
     setShow(true);
-    const tmo = setTimeout(() => setShow(false), 2000);
+    const tmo = setTimeout(() => setShow(false), 1000);
     return () => clearTimeout(tmo);
   }, [level]);
 

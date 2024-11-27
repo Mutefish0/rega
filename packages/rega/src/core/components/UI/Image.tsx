@@ -48,9 +48,10 @@ export default function Image({ src, size, opacity = 1 }: Props) {
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
+    const matT = new Matrix4();
     mat.makeScale(size[0], size[1], 1);
-    mat.makeTranslation(size[0] / 2, -size[1] / 2, 0);
-    return mat;
+    matT.makeTranslation(size[0] / 2, -size[1] / 2, 0);
+    return mat.premultiply(matT);
   }, [size.join(",")]);
 
   return (
