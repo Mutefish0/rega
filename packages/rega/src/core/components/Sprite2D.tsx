@@ -75,7 +75,7 @@ export default React.memo(function Sprite2D({
   anchor = "center",
   flipX = false,
   flipY = false,
-  opacity: opacityValue,
+  opacity: opacityValue = 1,
   padding = 0,
   color: colorValue,
   size,
@@ -104,7 +104,7 @@ export default React.memo(function Sprite2D({
 
   useEffect(() => {
     const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
-    bindings.updates.opacity([opacityValue ?? opacity1]);
+    bindings.updates.opacity([opacityValue * opacity1]);
     bindings.updates.color(array);
   }, [colorValue, opacityValue]);
 

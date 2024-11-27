@@ -23,6 +23,7 @@ interface Props {
   size: [number, number];
   anchor?: AnchorType;
   color?: string;
+  opacity?: number;
 }
 
 const color = uniform("vec3", "color");
@@ -39,6 +40,7 @@ export default React.memo(function Box2D({
   size,
   anchor = "center",
   color = "white",
+  opacity: opacityValue = 1,
 }: Props) {
   const bindings = useBindings({
     opacity: "float",
@@ -47,9 +49,9 @@ export default React.memo(function Box2D({
 
   useEffect(() => {
     const { opacity, array } = parseColor(color || "#fff");
-    bindings.updates.opacity([opacity]);
+    bindings.updates.opacity([opacityValue * opacity]);
     bindings.updates.color(array);
-  }, [color, opacity]);
+  }, [color, opacityValue]);
 
   const anchorMatrix = useAnchor(anchor, size);
 

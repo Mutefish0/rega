@@ -1,28 +1,25 @@
-import { GUIView, View, Text } from "rega";
+import { GUIView, Text } from "rega";
 
 export default function Toast({ children }: { children: string }) {
   return (
     <GUIView>
-      <View
+      <Text
         style={{
-          flexDirection: "row",
+          position: "absolute",
+          left: 12,
+          bottom: 12,
+          fontFamily: "celeste",
+          fontSize: 14,
+          lineHeight: 24,
+          color: "#fff",
+          letterSpacing: 4,
+          paddingLeft: 8,
+          paddingRight: 8,
+          backgroundColor: "rgba(0,0,0,0.85)",
         }}
       >
-        <Text
-          style={{
-            paddingLeft: 12,
-            paddingTop: 10,
-            fontFamily: "celeste",
-            fontSize: 28,
-            backgroundColor: "#000",
-            color: "#fff",
-            margin: 16,
-            letterSpacing: -12,
-          }}
-        >
-          {children}
-        </Text>
-      </View>
+        {children}
+      </Text>
     </GUIView>
   );
 }

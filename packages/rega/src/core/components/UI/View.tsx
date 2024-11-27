@@ -1,12 +1,16 @@
-import React, { useCallback } from "react";
+import React, { useState, useCallback, useContext, useMemo } from "react";
 import Relative from "../../primitives/Relative";
 import YogaNode, { Node } from "../YogaFlex/YogaNode";
+import Image from "./Image";
 import Box2D from "../Box2D";
+import BlockContext from "./BlockContext";
 
 import { FlexStyle } from "../YogaFlex/FlexStyle";
 
 export interface ViewStyle extends FlexStyle {
   backgroundColor?: string;
+  backgroundImage?: string;
+  opacity?: number;
 }
 
 interface ViewProps {
@@ -15,7 +19,17 @@ interface ViewProps {
 }
 
 export default function View({ children = null, style = {} }: ViewProps) {
-  const [layout, setLayout] = React.useState({
+  const parantBlockContext = useContext(BlockContext);
+
+  const blockContext = useMemo(() => {
+    const opacity = style.opacity ?? 1;
+    return {
+      ...parantBlockContext,
+      opacity: opacity * parantBlockContext.opacity,
+    };
+  }, [parantBlockContext, style.opacity]);
+
+  const [layout, setLayout] = useState({
     width: 0,
     height: 0,
     left: 0,
@@ -41,9 +55,19 @@ export default function View({ children = null, style = {} }: ViewProps) {
               anchor="top-left"
               size={[layout.width, layout.height]}
               color={style.backgroundColor}
+              opacity={blockContext.opacity}
             />
           )}
-          {children}
+          {!!style.backgroundImage && (
+            <Image
+              size={[layout.width, layout.height]}
+              src={style.backgroundImage}
+              opacity={blockContext.opacity}
+            />
+          )}
+          <BlockContext.Provider value={blockContext}>
+            {children}
+          </BlockContext.Provider>
         </Relative>
       )}
     </YogaNode>

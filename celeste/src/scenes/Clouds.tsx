@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import { Box2D, Relative, RigidBody2D } from "rega";
 import { times } from "lodash";
 
-export default function Clouds() {
+interface Props {
+  newBg: boolean;
+}
+
+export default function Clouds({ newBg }: Props) {
   const clouds = useMemo(
     () =>
       times(17).map(() => {
@@ -35,7 +39,7 @@ export default function Clouds() {
             <Box2D
               anchor="top-left"
               size={[cloud.width, cloud.height]}
-              color="#1d2b53"
+              color={newBg ? "#ff77a8" : "#1d2b53"}
             />
           </RigidBody2D>
         </Relative>

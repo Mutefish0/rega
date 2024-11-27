@@ -25,7 +25,7 @@ export default function App() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    const textures: string[] = ["/images/atlas.png"];
+    const textures: string[] = ["/images/atlas.png", "/images/fruit.png"];
     const p1 = Promise.all(textures.map(TextureManager.add));
 
     const sounds: string[] = [
@@ -51,13 +51,15 @@ export default function App() {
       "/sounds/type.wav",
       "/sounds/big_chest.wav",
       "/sounds/orb.wav",
+      "/sounds/flag.wav",
     ];
     const p2 = Promise.all(sounds.map(SoundManager.add));
 
     const p3 = FontManager.add("celeste", {
       type: "bitmap",
       url: "/fonts/font.bmp",
-      charSize: [8, 8],
+      charSize: [3, 5],
+      stepSize: [8, 8],
     });
 
     const p4 = FontManager.add("Arial", {
@@ -110,7 +112,8 @@ export default function App() {
               marginTop: 12,
               marginRight: 12,
               fontFamily: "celeste",
-              fontSize: 12,
+              fontSize: 8,
+              letterSpacing: 2,
             }}
           />
         </GUIView>
@@ -124,7 +127,7 @@ export default function App() {
           <Level initialLevel={0} onShake={onShake} showToast={showToast} />
         )}
         {import.meta.env.DEV && !!started && (
-          <Editor showIteractiveCamera={false} showPhysicDebuger={false} />
+          <Editor showIteractiveCamera={false} showPhysicDebuger={true} />
         )}
       </RenderGroup>
     </>

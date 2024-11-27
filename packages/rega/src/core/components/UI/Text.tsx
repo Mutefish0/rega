@@ -13,10 +13,11 @@ export interface TextStyle extends FlexStyle {
   color?: string;
   letterSpacing?: number;
   backgroundColor?: string;
+  textAlign?: "start" | "end" | "center";
 }
 
 interface TextProps {
-  children: string;
+  children: string | number | Array<string | number>;
   style: TextStyle;
 }
 
