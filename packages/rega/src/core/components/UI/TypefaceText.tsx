@@ -20,7 +20,7 @@ import useBindings from "../../hooks/useBingdings";
 
 interface TextProps {
   font: TFFont;
-  children: string | number;
+  children: string | number | Array<string | number>;
   style: TextStyle;
 }
 
@@ -82,7 +82,13 @@ export default function TypefaceText({
   font,
   style,
 }: TextProps) {
-  const children = useMemo(() => _children + "", [_children]);
+  const children = useMemo(() => {
+    if (Array.isArray(_children)) {
+      return _children.join("");
+    } else {
+      return _children + "";
+    }
+  }, [_children]);
 
   const {
     fontSize,

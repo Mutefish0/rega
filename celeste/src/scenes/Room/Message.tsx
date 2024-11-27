@@ -3,10 +3,9 @@ import {
   ShapeCollider2D,
   ActiveCollisionTypes,
   useSoundPlayer,
-  GUIView,
-  RenderGroup,
   View,
   Text,
+  Absolute,
 } from "rega";
 import { CollisionGroup } from "../../constants";
 
@@ -41,33 +40,41 @@ export default function Message() {
   return (
     <>
       {state === "showing" && (
-        <RenderGroup target="GUI">
-          <GUIView>
+        <Absolute translation={{ x: 0, y: 0 }}>
+          <View
+            style={{
+              width: 128,
+              height: 128,
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
             <View
               style={{
-                marginTop: 380,
-                marginLeft: "auto",
-                marginRight: "auto",
+                marginTop: 92,
                 flexDirection: "row",
-                width: 464,
+                width: 120,
+                height: 28,
               }}
             >
               <Text
                 style={{
-                  paddingLeft: 10,
-                  paddingTop: 10,
+                  paddingTop: 4,
+                  paddingLeft: 4,
+                  paddingRight: 4,
+                  lineHeight: 8,
                   fontFamily: "celeste",
-                  fontSize: 28,
+                  fontSize: 5,
                   color: "#000",
                   backgroundColor: "#fff1e8",
-                  letterSpacing: -8,
+                  letterSpacing: 2,
                 }}
               >
                 {text}
               </Text>
             </View>
-          </GUIView>
-        </RenderGroup>
+          </View>
+        </Absolute>
       )}
       <ShapeCollider2D
         shape="cuboid"

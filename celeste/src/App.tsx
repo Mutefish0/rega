@@ -16,7 +16,6 @@ import ShakeCamera from "./camera";
 import Toast from "./gui/Toast";
 import Level from "./scenes/Level";
 import TitleScreen from "./scenes/TitleScreen";
-import AreaTitle from "./scenes/AreaTitle";
 import Guide from "./scenes/Guide";
 
 export default function App() {
@@ -118,7 +117,6 @@ export default function App() {
             }}
           />
         </GUIView>
-
         {!!toast && <Toast>{toast}</Toast>}
         {!started && <Guide />}
       </RenderGroup>

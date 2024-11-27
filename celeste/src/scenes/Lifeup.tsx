@@ -13,7 +13,14 @@ export default function Lifeup() {
         config={animConfig}
         renderItem={(color) => (
           <View style={{ height: 20 }}>
-            <Text style={{ fontFamily: "celeste", fontSize: 6, color }}>
+            <Text
+              style={{
+                fontFamily: "celeste",
+                fontSize: 5,
+                letterSpacing: 2,
+                color,
+              }}
+            >
               1000
             </Text>
           </View>

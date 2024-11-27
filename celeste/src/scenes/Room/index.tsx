@@ -193,7 +193,7 @@ export default function Room({
       ))}
       {messages.map(([x, y], i) => (
         <Relative key={i} translation={{ x: x + 4, y }}>
-          <Message />
+          <Message key={i} />
         </Relative>
       ))}
       {bigChests.map(([x, y], i) => (

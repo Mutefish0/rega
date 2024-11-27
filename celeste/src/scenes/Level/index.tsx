@@ -23,7 +23,6 @@ import Room from "../Room";
 import AreaTitle from "../AreaTitle";
 import Scoreboard from "../Scoreboard";
 import { clamp, uniq } from "lodash";
-import { formatTimeDuration } from "../utils";
 
 import CelesteLevel, { TITLE_SCREEN_LEVEL } from "./celesteLevel";
 
@@ -200,9 +199,6 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setPlayerPosition(undefined);
     setPlayerInstance((i) => i + 1);
     setIntro(true);
-    showToast(
-      `${formatTimeDuration(Date.now() - startTime)} ${(level + 1) * 100}M`
-    );
   }
 
   function onPlayerGetFruit(id: string) {
@@ -215,10 +211,6 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
     setCurrentFruitsGot([]);
     setLevel((l) => (l + 1 === TITLE_SCREEN_LEVEL ? l + 2 : l + 1));
     setIntro(true);
-
-    showToast(
-      `${formatTimeDuration(Date.now() - startTime)} ${(level + 1) * 100}m`
-    );
   }
 
   function freeze(ms: number) {
@@ -363,9 +355,9 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
         )}
       </ZIndex>
 
-      {/* <ZIndex zIndex={1}>
-        <AreaTitle level={level} />
-      </ZIndex> */}
+      <ZIndex zIndex={1}>
+        <AreaTitle key={gameStatekey} level={level} startTime={startTime} />
+      </ZIndex>
 
       {/* background */}
       <ZIndex zIndex={-2}>

@@ -2,8 +2,8 @@ import { GUIView, View, Text } from "rega";
 
 const baseTextStyle = {
   fontFamily: "celeste",
-  fontSize: 10,
-  letterSpacing: 3,
+  fontSize: 6,
+  letterSpacing: 2,
 };
 
 const styles = {
@@ -45,8 +45,10 @@ export default function Guide() {
       <View
         style={{
           backgroundColor: "rgba(255, 255, 255, 0.1)",
+          marginLeft: 12,
+          marginTop: 12,
           padding: 12,
-          width: 240,
+          width: 180,
         }}
       >
         <View style={{ flexDirection: "row" }}>

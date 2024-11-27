@@ -17,7 +17,7 @@ export interface TextStyle extends FlexStyle {
 }
 
 interface TextProps {
-  children: string | number;
+  children: string | number | Array<string | number>;
   style: TextStyle;
 }
 

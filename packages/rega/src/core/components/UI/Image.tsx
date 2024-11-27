@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Relative from "../../primitives/Relative";
 import {
   positionGeometry,
@@ -8,6 +8,7 @@ import {
   cameraProjectionMatrix,
   cameraViewMatrix,
   Matrix4,
+  uniform,
 } from "pure3";
 
 import quad from "../../render/geometry/quad";
@@ -17,23 +18,33 @@ import useBindings from "../../hooks/useBingdings";
 import RenderObject from "../../primitives/RenderObject";
 
 const tex = texture("tex");
+const opacity = uniform("float", "opacity");
 
 const vertexNode = cameraProjectionMatrix
   .mul(cameraViewMatrix)
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
-const fragmentNode = tex;
+const fragmentNode = vec4(tex.rgb, tex.a.mul(opacity));
 
 interface Props {
   size: [number, number];
   src: string;
+  opacity?: number;
 }
 
-export default function Image({ src, size }: Props) {
-  const bindings = useBindings({ tex: "texture_2d" }, (init) => {
-    init.tex(src);
-  });
+export default function Image({ src, size, opacity = 1 }: Props) {
+  const bindings = useBindings(
+    { tex: "texture_2d", opacity: "float" },
+    (init) => {
+      init.tex(src);
+      init.opacity([opacity]);
+    }
+  );
+
+  useEffect(() => {
+    bindings.updates.opacity([opacity]);
+  }, [opacity]);
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
