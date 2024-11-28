@@ -39,18 +39,21 @@ export default function App() {
           <Text
             style={{
               fontSize: 32,
-              lineHeight: 32,
+              letterSpacing: 2,
+              lineHeight: 64,
+              paddingLeft: 12,
+              paddingRight: 12,
               fontFamily: "arial",
               color: "#fff",
               backgroundColor: "red",
             }}
           >
-            hello world
+            {"Helllo world"}
           </Text>
           <View
             style={{
               width: 64,
-              height: 32,
+              height: 64,
               marginLeft: 12,
               marginRight: 12,
               backgroundColor: "blue",
@@ -59,13 +62,16 @@ export default function App() {
           <Text
             style={{
               fontSize: 32,
-              lineHeight: 32,
+              letterSpacing: 2,
+              lineHeight: 64,
+              paddingLeft: 12,
+              paddingRight: 12,
               fontFamily: "pixel",
               color: "#fff",
               backgroundColor: "red",
             }}
           >
-            hello world
+            {"hello wor\nld"}
           </Text>
         </GUIView>
       </RenderGroup>

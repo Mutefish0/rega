@@ -116,7 +116,7 @@ export default class TFFont {
   public fontSize: number;
 
   private glyphs: Record<string, GlyphData>;
-  private geometries: Record<string, ReturnType<typeof createGeometry>>;
+  private geometries: Record<number, ReturnType<typeof createGeometry>>;
 
   constructor(data: TypefaceData) {
     this.resolution = data.resolution;
@@ -128,17 +128,17 @@ export default class TFFont {
     this.fontSize = this.ascender - this.descender;
   }
 
-  public getGlyph(char: string): GlyphData | undefined {
-    return this.glyphs[char];
+  public getGlyph(code: number): GlyphData | undefined {
+    return this.glyphs[String.fromCharCode(code)];
   }
 
-  public getGeometry(char: string) {
-    if (!this.geometries[char]) {
-      const glyph = this.getGlyph(char);
+  public getGeometry(code: number) {
+    if (!this.geometries[code]) {
+      const glyph = this.getGlyph(code);
       if (glyph) {
-        this.geometries[char] = createGeometry(glyph);
+        this.geometries[code] = createGeometry(glyph);
       }
     }
-    return this.geometries[char];
+    return this.geometries[code];
   }
 }
