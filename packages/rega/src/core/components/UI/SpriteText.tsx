@@ -138,7 +138,7 @@ export default function SpriteText({
     return ceil(w);
   }, [font.aspectRatio, fontSize]);
 
-  const lineOffset = useMemo(
+  const lineSpacing = useMemo(
     () => (lineHeight - fontSize) / 2,
     [fontSize, lineHeight]
   );
@@ -278,13 +278,13 @@ export default function SpriteText({
               )}
               {line.clips.map((clip, j) => (
                 <Relative
-                  key={`${clip.code}:${i}:${j}`}
+                  key={clip.code}
                   translation={{
                     x:
                       j * charWidth +
                       paddingLeft +
                       (j === line.clips.length ? 0 : j * letterSpacing),
-                    y: -lineOffset,
+                    y: -lineSpacing,
                   }}
                 >
                   <ZIndex zIndex={1}>

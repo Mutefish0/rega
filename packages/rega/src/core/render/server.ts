@@ -72,6 +72,10 @@ class RenderServer {
       objectId,
     });
   }
+
+  destroy() {
+    this.worker.terminate();
+  }
 }
 
 export default RenderServer;

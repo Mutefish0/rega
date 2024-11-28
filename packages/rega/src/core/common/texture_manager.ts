@@ -1,8 +1,3 @@
-import {
-  NearestFilter,
-  ClampToEdgeWrapping,
-  Texture as Texture3,
-} from "three/webgpu";
 import { getBytesPerTexel } from "../render/texture";
 
 import Image from "../io/image";

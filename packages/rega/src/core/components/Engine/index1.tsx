@@ -35,13 +35,7 @@ export interface EngineConfig {
 export default function CoreEngine(app: ReactElement, config: EngineConfig) {
   const { width, height } = config;
 
-  //const scene = new Scene();
-  //const guiScene = new Scene();
-  // const guiCamera = new OrthographicCamera(0, width, 0, -height, -1000, 1000);
-
   const gameState = { paused: false };
-
-  //scene.background = new Color().fromArray(c.array);
 
   let canvas = config.canvas;
 
@@ -100,15 +94,8 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
       );
     });
 
-  // (deltaTime, now) => {
-  //   ctx.removedCallbacks.forEach((cb) => {
-  //     ctx.frameCallbacks.delete(cb);
-  //   });
-  //   ctx.removedCallbacks.clear();
-  //   ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
-  // },
-
   let lastTime = performance.now();
+  let loopTimer: any = null;
 
   function loop() {
     const now = performance.now();
@@ -120,8 +107,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     });
     ctx.removedCallbacks.clear();
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
-
-    setTimeout(loop, 0);
+    loopTimer = setTimeout(loop, 0);
   }
 
   loop();
@@ -138,9 +124,16 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     gameState.paused = true;
   }
 
+  function destroy() {
+    clearTimeout(loopTimer);
+    reconciler.updateContainer(null, root);
+    renderServer.destroy();
+  }
+
   return {
     pause,
     resume,
     stop,
+    destroy,
   };
 }

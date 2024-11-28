@@ -10,6 +10,7 @@ import {
   vec4,
 } from "pure3";
 import { Node, MeasureMode } from "yoga-layout";
+import ZIndex from "../../primitives/ZIndex";
 import YogaNode from "../YogaFlex/YogaNode";
 import Box2D from "../Box2D";
 import { TextStyle } from "./Text";
@@ -224,58 +225,62 @@ export default function TypefaceText({
         <Relative
           translation={{ x: layout.viewLayout.left, y: -layout.viewLayout.top }}
         >
-          <Box2D
-            anchor="top-left"
-            size={[layout.viewLayout.width, layout.viewLayout.height]}
-            color={backgroundColor}
-          />
+          <ZIndex zIndex={0}>
+            <Box2D
+              anchor="top-left"
+              size={[layout.viewLayout.width, layout.viewLayout.height]}
+              color={backgroundColor}
+            />
+          </ZIndex>
         </Relative>
       )}
-      {!!layout &&
-        layout.textLayout.segments.map((line, i) => {
-          let offsetX = 0;
+      <ZIndex zIndex={1}>
+        {!!layout &&
+          layout.textLayout.segments.map((line, i) => {
+            let offsetX = 0;
 
-          return (
-            <Relative
-              key={i}
-              translation={{
-                x: layout.viewLayout.left,
-                y:
-                  -(i + 1) * lineHeight -
-                  layout.viewLayout.top -
-                  font.descender * scale +
-                  lineSpacing,
-                z: 0,
-              }}
-            >
-              {line.map((item, j) => {
-                let x = offsetX;
-                offsetX += item.glyph.ha * scale + letterSpacing;
-                const { vertex, vertexCount } = font.getGeometry(item.char);
+            return (
+              <Relative
+                key={i}
+                translation={{
+                  x: layout.viewLayout.left,
+                  y:
+                    -(i + 1) * lineHeight -
+                    layout.viewLayout.top -
+                    font.descender * scale +
+                    lineSpacing,
+                  z: 0,
+                }}
+              >
+                {line.map((item, j) => {
+                  let x = offsetX;
+                  offsetX += item.glyph.ha * scale + letterSpacing;
+                  const { vertex, vertexCount } = font.getGeometry(item.char);
 
-                return (
-                  <Relative
-                    key={`${item.glyph.o}:${i}:${j}`}
-                    translation={{
-                      x,
-                    }}
-                  >
-                    <Relative matrix={scaleMatrix}>
-                      <RenderObject
-                        bindings={bindings.resources}
-                        vertexNode={vertexNode}
-                        fragmentNode={fragmentNode}
-                        vertex={vertex}
-                        vertexCount={vertexCount}
-                        zIndexEnabled
-                      />
+                  return (
+                    <Relative
+                      key={`${item.glyph.o}:${i}:${j}`}
+                      translation={{
+                        x,
+                      }}
+                    >
+                      <Relative matrix={scaleMatrix}>
+                        <RenderObject
+                          bindings={bindings.resources}
+                          vertexNode={vertexNode}
+                          fragmentNode={fragmentNode}
+                          vertex={vertex}
+                          vertexCount={vertexCount}
+                          zIndexEnabled
+                        />
+                      </Relative>
                     </Relative>
-                  </Relative>
-                );
-              })}
-            </Relative>
-          );
-        })}
+                  );
+                })}
+              </Relative>
+            );
+          })}
+      </ZIndex>
     </>
   );
 }

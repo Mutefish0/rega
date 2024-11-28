@@ -10,10 +10,6 @@ export default defineConfig({
 
   assetsInclude: [],
 
-  optimizeDeps: {
-    exclude: ["three"],
-  },
-
   base: "./",
 
   build: {
