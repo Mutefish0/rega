@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import FontManager from "../../common/font_manager";
+import FontManager from "../../../common/font_manager";
 import SpriteText from "./SpriteText";
 import TypefaceText from "./TypefaceText";
-import { FlexStyle } from "../YogaFlex/FlexStyle";
+import { FlexStyle } from "../../YogaFlex/FlexStyle";
 
 export interface TextStyle extends FlexStyle {
   fontFamily: string;

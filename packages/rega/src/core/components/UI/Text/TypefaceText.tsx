@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useContext } from "react";
-import BlockContext from "./BlockContext";
-import Relative from "../../primitives/Relative";
+import BlockContext from "../BlockContext";
+import Relative from "../../../primitives/Relative";
 import {
   uniform,
   Matrix4,
@@ -12,11 +12,11 @@ import {
 } from "pure3";
 
 import BaseText from "./BaseText";
-import { TextStyle } from "./Text";
-import TFFont from "../../font/TFFont";
-import { parseColor } from "../../tools/color";
-import RenderObject from "../../primitives/RenderObject";
-import useBindings from "../../hooks/useBingdings";
+import { TextStyle } from "./index";
+import TFFont from "../../../font/TFFont";
+import { parseColor } from "../../../tools/color";
+import RenderObject from "../../../primitives/RenderObject";
+import useBindings from "../../../hooks/useBingdings";
 
 interface TextProps {
   font: TFFont;
@@ -48,8 +48,8 @@ export default function TypefaceText({ children, font, style }: TextProps) {
   }, [font, fontSize]);
 
   const yOffset = useMemo(
-    () => -lineHeight - font.descender * scale,
-    [scale, font.descender, lineHeight]
+    () => -font.descender * scale,
+    [scale, font.descender]
   );
 
   const bindings = useBindings({

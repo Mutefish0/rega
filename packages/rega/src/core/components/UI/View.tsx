@@ -65,9 +65,11 @@ export default function View({ children = null, style = {} }: ViewProps) {
               opacity={blockContext.opacity}
             />
           )}
-          <BlockContext.Provider value={blockContext}>
-            {children}
-          </BlockContext.Provider>
+          {children ? (
+            <BlockContext.Provider value={blockContext}>
+              {children}
+            </BlockContext.Provider>
+          ) : null}
         </Relative>
       )}
     </YogaNode>

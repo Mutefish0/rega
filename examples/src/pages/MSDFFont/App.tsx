@@ -35,9 +35,16 @@ export default function App() {
     <>
       <RenderTarget camera={<GUICamera />} id="GUI" />
       <RenderGroup target="GUI">
-        <GUIView style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <GUIView
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            justifyContent: "flex-start",
+          }}
+        >
           <Text
             style={{
+              width: 100,
               fontSize: 32,
               letterSpacing: 2,
               lineHeight: 64,
@@ -59,20 +66,29 @@ export default function App() {
               backgroundColor: "blue",
             }}
           ></View>
-          <Text
+          <View
             style={{
-              fontSize: 32,
-              letterSpacing: 2,
-              lineHeight: 64,
-              paddingLeft: 12,
-              paddingRight: 12,
-              fontFamily: "pixel",
-              color: "#fff",
-              backgroundColor: "red",
+              backgroundColor: "yellow",
+              flexDirection: "row",
+              alignItems: "flex-start",
+              flexShrink: 1,
             }}
           >
-            {"hello wor\nld"}
-          </Text>
+            <Text
+              style={{
+                fontSize: 32,
+                letterSpacing: 10,
+                lineHeight: 64,
+                paddingLeft: 12,
+                paddingRight: 12,
+                fontFamily: "pixel",
+                color: "#fff",
+                backgroundColor: "red",
+              }}
+            >
+              {"hello world"}
+            </Text>
+          </View>
         </GUIView>
       </RenderGroup>
     </>
