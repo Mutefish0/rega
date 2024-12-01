@@ -6,6 +6,7 @@ import uniform from "./core/uniform";
 
 export { texture, dataTexture, uniform };
 
+import type { Node, WGSLValueType } from "./core/types";
 export type { Node, WGSLValueType } from "./core/types";
 
 export * from "three/src/nodes/TSL.js";
@@ -40,7 +41,8 @@ export {
 
 export const emptyMatrix4 = new Matrix4();
 
-export * from "./math/vector";
+export { max, min, sub, add, mul } from "./math/vector";
+export type { Vector3Like, Vector2Like, Vector4Like } from "./math/vector";
 
 export {
   positionGeometry,
@@ -51,5 +53,11 @@ export {
   uv,
   attribute,
 } from "./misc/nodes";
+
+import { Fn as _Fn } from "three/src/Three.WebGPU.Nodes.js";
+
+export const Fn = _Fn as <T extends any, Args extends any[]>(
+  fn: (...args: Args) => T
+) => (...args: Args) => T;
 
 export * from "./misc/zIndex";

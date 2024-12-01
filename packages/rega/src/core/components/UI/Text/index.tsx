@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import FontManager from "../../../common/font_manager";
 import SpriteText from "./SpriteText";
 import TypefaceText from "./TypefaceText";
+import MSDFText from "./MSDFText";
 import { FlexStyle } from "../../YogaFlex/FlexStyle";
 
 export interface TextStyle extends FlexStyle {
@@ -37,6 +38,8 @@ export default function Text(props: TextProps) {
       return <SpriteText font={font.fontObject} {...props} />;
     } else if (font.type === "typeface") {
       return <TypefaceText font={font.fontObject} {...props} />;
+    } else if (font.type === "msdf") {
+      return <MSDFText font={font.fontObject} {...props} />;
     }
   }
 

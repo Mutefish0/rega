@@ -12,11 +12,7 @@ interface SpriteTextProps {
   style: TextStyle;
 }
 
-export default function SpriteText2({
-  font,
-  children,
-  style,
-}: SpriteTextProps) {
+export default function SpriteText({ font, children, style }: SpriteTextProps) {
   const { color = "white", fontSize } = style;
 
   const blockContext = useContext(BlockContext);

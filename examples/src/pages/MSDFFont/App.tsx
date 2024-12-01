@@ -7,6 +7,10 @@ import {
   View,
   Text,
   FontManager,
+  SpriteMSDF,
+  Camera,
+  Box2D,
+  Relative,
 } from "rega";
 
 export default function App() {
@@ -24,6 +28,10 @@ export default function App() {
         charSize: [3, 5],
         stepSize: [8, 8],
       }),
+      FontManager.add("noto-sans", {
+        type: "msdf",
+        url: "/fonts/noto-sans/NotoSans-Regular.json",
+      }),
     ]).then(() => setLoading(false));
   }, []);
 
@@ -33,8 +41,21 @@ export default function App() {
 
   return (
     <>
-      <RenderTarget camera={<GUICamera />} id="GUI" />
-      <RenderGroup target="GUI">
+      {/* <RenderTarget camera={<GUICamera />} id="GUI" /> */}
+      <RenderTarget
+        id="MAIN"
+        camera={
+          <Relative translation={{ z: 100 }}>
+            <Camera
+              type="orthographic"
+              width={128}
+              height={128}
+              anchor="top-left"
+            />
+          </Relative>
+        }
+      />
+      {/* <RenderGroup target="GUI">
         <GUIView
           style={{
             flexDirection: "row",
@@ -44,12 +65,8 @@ export default function App() {
         >
           <Text
             style={{
-              width: 100,
-              fontSize: 32,
+              fontSize: 16,
               letterSpacing: 2,
-              lineHeight: 64,
-              paddingLeft: 12,
-              paddingRight: 12,
               fontFamily: "arial",
               color: "#fff",
               backgroundColor: "red",
@@ -66,30 +83,49 @@ export default function App() {
               backgroundColor: "blue",
             }}
           ></View>
-          <View
+          <Text
             style={{
-              backgroundColor: "yellow",
-              flexDirection: "row",
-              alignItems: "flex-start",
-              flexShrink: 1,
+              fontSize: 16,
+              letterSpacing: 2,
+              fontFamily: "pixel",
+              color: "#fff",
+              backgroundColor: "red",
             }}
           >
-            <Text
-              style={{
-                fontSize: 32,
-                letterSpacing: 10,
-                lineHeight: 64,
-                paddingLeft: 12,
-                paddingRight: 12,
-                fontFamily: "pixel",
-                color: "#fff",
-                backgroundColor: "red",
-              }}
-            >
-              {"hello world"}
-            </Text>
-          </View>
+            {"hello world"}
+          </Text>
+          <SpriteMSDF
+            atlasTextureId="/fonts/noto-sans/font.png"
+            clip={[0, 0, 64, 64]}
+            size={[40, 40]}
+          />
+          <Text
+            style={{
+              fontSize: 24,
+              letterSpacing: 2,
+              fontFamily: "noto-sans",
+              color: "green",
+            }}
+          >
+            WebGPU
+          </Text>
         </GUIView>
+      </RenderGroup> */}
+
+      <RenderGroup target="MAIN">
+        {/* <Box2D anchor="top-left" size={[120, 120]} color="red" /> */}
+        <View style={{ width: 128, height: 128 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              letterSpacing: 2,
+              fontFamily: "noto-sans",
+              color: "green",
+            }}
+          >
+            WebGPU
+          </Text>
+        </View>
       </RenderGroup>
     </>
   );

@@ -203,7 +203,12 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampler") {
         return {
           binding,
-          resource: addObjectGPUSampler(device, {}),
+          resource: addObjectGPUSampler(device, {
+            magFilter: resource.magFilter,
+            minFilter: resource.minFilter,
+            maxAnisotropy: resource.maxAnisotropy,
+            compare: resource.compare,
+          }),
         };
       } else {
         throw new Error("not supported uniform type");
@@ -300,7 +305,12 @@ self.addEventListener("message", async (event) => {
       } else if (resource.type === "sampler") {
         return {
           binding,
-          resource: addObjectGPUSampler(device, {}),
+          resource: addObjectGPUSampler(device, {
+            magFilter: resource.magFilter,
+            minFilter: resource.minFilter,
+            maxAnisotropy: resource.maxAnisotropy,
+            compare: resource.compare,
+          }),
         };
       } else {
         throw new Error("not supported uniform type");

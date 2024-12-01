@@ -2,8 +2,9 @@ import { fetchBufferData } from "./utils";
 import TextureManager from "./texture_manager";
 import BMPFont from "../font/BMPFont";
 import TFFont, { TypefaceData } from "../font/TFFont";
+import MSDFFontObj, { MSDFFontData } from "../font/MSDFFont";
 
-type FontType = "bitmap" | "typeface";
+type FontType = "bitmap" | "typeface" | "msdf";
 
 interface BitmapFont {
   type: "bitmap";
@@ -15,10 +16,15 @@ interface TypefaceFont {
   fontObject: TFFont;
 }
 
+interface MSDFFont {
+  type: "msdf";
+  fontObject: MSDFFontObj;
+}
+
 type FontWeight = "normal" | "bold" | "lighter";
 type FontStyle = "normal" | "italic";
 
-type Font = BitmapFont | TypefaceFont;
+type Font = BitmapFont | TypefaceFont | MSDFFont;
 
 export default class FontManager {
   static fonts = new Map<string, Font>();
@@ -33,6 +39,8 @@ export default class FontManager {
           fontWeight?: FontWeight;
           fontStyle?: FontStyle;
         }
+      : T extends "msdf"
+      ? { type: T; url: string; fontWeight?: FontWeight }
       : { type: T; url: string }
   ) {
     if (opts.type === "bitmap") {
@@ -55,6 +63,21 @@ export default class FontManager {
         this.fonts.set(key, {
           type: opts.type,
           fontObject: new TFFont(data),
+        });
+      }
+    } else if (opts.type === "msdf") {
+      const configData = await fetchBufferData(opts.url);
+      if (configData.contentType === "application/json") {
+        const config = JSON.parse(
+          new TextDecoder().decode(configData.buffer)
+        ) as MSDFFontData;
+        const { pages } = config;
+        const atlases = pages.map((page) => opts.url.replace(/[^/]+$/, page));
+        await Promise.all(atlases.map((atlas) => TextureManager.add(atlas)));
+        const key = `${fontFamily}-${opts.fontWeight || "normal"}-normal`;
+        this.fonts.set(key, {
+          type: opts.type,
+          fontObject: new MSDFFontObj(atlases, config),
         });
       }
     }

@@ -12,6 +12,7 @@ import useAnimation, {
 } from "./components/Animation/useAnimation";
 import AnimationPipe from "./components/Animation/AnimationPipe";
 
+import SpriteMSDF from "./components/SpriteMSDF";
 import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
 import Absolute from "./primitives/Absolute";
@@ -155,6 +156,7 @@ export {
   Tilemap,
   Box2D,
   Sprite2D,
+  SpriteMSDF,
 
   // ui
   FontManager,

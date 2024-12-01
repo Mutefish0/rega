@@ -54,12 +54,21 @@ interface BindingView<T extends UniformType> {
   get: Viewer<T>;
 }
 
+interface SmaplerOptions {
+  magFilter?: GPUFilterMode;
+  minFilter?: GPUFilterMode;
+  compare?: GPUCompareFunction;
+  maxAnisotropy?: number;
+}
+
 export type BindingUpdater<
   T extends UniformType,
   A = T extends WGSLValueType
     ? number[]
     : T extends "texture_2d" | "texture_2d<uint>" | "texture_2d<sint>"
     ? string
+    : T extends "sampler"
+    ? SmaplerOptions
     : void
 > = (values: A) => void;
 
@@ -137,10 +146,24 @@ export function createUniformBinding<T extends UniformType>(
       },
     } as BindingHandle<T>;
   } else if (type === "sampler") {
+    const resource: TransferResource = { type: "sampler" as const };
     return {
-      resource: { type: "sampler" as const },
-      update: () => {},
-    };
+      resource,
+      update: (opts: SmaplerOptions) => {
+        if (opts.magFilter) {
+          resource.magFilter = opts.magFilter;
+        }
+        if (opts.minFilter) {
+          resource.minFilter = opts.minFilter;
+        }
+        if (opts.compare) {
+          resource.compare = opts.compare;
+        }
+        if (opts.maxAnisotropy) {
+          resource.maxAnisotropy = opts.maxAnisotropy;
+        }
+      },
+    } as BindingHandle<T>;
   } else {
     return createUniformValueBinding(type) as BindingHandle<T>;
   }

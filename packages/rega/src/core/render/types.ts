@@ -83,6 +83,10 @@ export type TransferTextureResource = {
 
 export type TransferSamplerResource = {
   type: "sampler";
+  magFilter?: GPUFilterMode;
+  minFilter?: GPUFilterMode;
+  compare?: GPUCompareFunction;
+  maxAnisotropy?: number;
 };
 
 export type TransferUniformBufferResource = {
