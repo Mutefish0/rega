@@ -30,6 +30,7 @@ import useVertexBinding from "../hooks/useVertexBinding";
 interface Props {
   textureId: string;
   alphaTextureId?: string;
+  // x,y,width, height
   clip: [number, number, number, number];
   anchor?: AnchorType;
   flipX?: boolean;

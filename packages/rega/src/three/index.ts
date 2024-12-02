@@ -1,1 +1,1 @@
-export * from "three/webgpu";
+export * from "pure3";

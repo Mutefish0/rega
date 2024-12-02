@@ -12,6 +12,7 @@ import useAnimation, {
 } from "./components/Animation/useAnimation";
 import AnimationPipe from "./components/Animation/AnimationPipe";
 
+import SpriteMSDF from "./components/SpriteMSDF";
 import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
 import Absolute from "./primitives/Absolute";
@@ -51,6 +52,7 @@ import GUIView from "./components/UI/GUIView";
 import GUICamera from "./components/UI/GUICamera";
 import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
+import Br from "./components/UI/Text/Br";
 import { TextStyle } from "./components/UI/Text";
 
 import useTextureBinding from "./hooks/useTextureBinding";
@@ -155,11 +157,13 @@ export {
   Tilemap,
   Box2D,
   Sprite2D,
+  SpriteMSDF,
 
   // ui
   FontManager,
   View,
   Text,
+  Br,
   GUIView,
   GUICamera,
   localStorage,

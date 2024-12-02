@@ -133,6 +133,8 @@ export default function RenderObject({
             binding: layout.binding,
             resource: {
               type: "sampler",
+              magFilter: "nearest",
+              minFilter: "nearest",
             },
           });
         } else {

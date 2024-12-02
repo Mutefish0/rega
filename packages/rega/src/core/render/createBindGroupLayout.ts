@@ -19,8 +19,6 @@ export default function createBindGroupLayout(
     } else if (binding.type === "sampledTexture") {
       bindingGPU.texture = {};
     } else if (binding.type === "sintTexture") {
-      console.log("========= sintTexture");
-
       bindingGPU.texture = {
         sampleType: "sint",
       };

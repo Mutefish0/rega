@@ -5,10 +5,16 @@ import type { Node } from "../../core/types.ts";
 
 const _texture = nodeProxy(TextureNode);
 
-function texture(label: string) {
+function texture(
+  label: string,
+  opts?: {
+    sampler?: string;
+  }
+) {
   const t = _texture({
     isTexture: true,
     uuid: crypto.randomUUID(),
+    samplerName: opts?.sampler,
   });
   if (label) {
     t.label(label);

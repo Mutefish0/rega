@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import {
   TransferResource,
   UniformType,
-  TransferTextureResource,
 } from "../render";
 import { createUniformBinding, BindingUpdater } from "../render/binding";
 
@@ -23,12 +22,14 @@ export default function useBindings<T extends Record<string, UniformType>>(
       [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;
     };
 
-    const checkList: UniformType[] = [
+    const checkTypeList: UniformType[] = [
       "texture_2d",
       "texture_2d<sint>",
       "texture_2d<uint>",
+      "sampler",
     ];
-    const checkInits: string[] = [];
+
+    const checked = {} as Record<string, boolean>;
 
     for (const name in obj) {
       const type = obj[name];
@@ -37,19 +38,28 @@ export default function useBindings<T extends Record<string, UniformType>>(
       resources[name] = h.resource;
       updates[name] = h.update;
 
-      if (checkList.includes(t)) {
-        checkInits.push(name);
+      if (checkTypeList.includes(t)) {
+        checked[name] = false;
       }
     }
 
     if (initilizer) {
-      initilizer(updates);
+      const checkUpdates = {} as {
+        [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;
+      };
+      for (const name in updates) {
+        checkUpdates[name] = (...args) => {
+          checked[name] = true;
+          updates[name](...args);
+        };
+      }
+
+      initilizer(checkUpdates);
     }
 
-    for (const name of checkInits) {
-      const res = resources[name] as TransferTextureResource;
-      if (!res.textureId) {
-        throw new Error(`Initialization required for texture_2d: ${name}`);
+    for (const name in checked) {
+      if (!checked[name]) {
+        throw new Error(`Initialization required for ${obj[name]}: ${name}`);
       }
     }
 
