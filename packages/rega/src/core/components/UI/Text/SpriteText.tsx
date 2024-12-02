@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useCallback } from "react";
 import BaseText, { ceil, TextChildren } from "./BaseText";
 import Sprite2D from "../../Sprite2D";
+import Relative from "../../../primitives/Relative";
 import BlockContext from "../BlockContext";
 import { TextStyle } from "./index";
 
@@ -16,6 +17,12 @@ export default function SpriteText({ font, children, style }: SpriteTextProps) {
   const { color = "white", fontSize } = style;
 
   const blockContext = useContext(BlockContext);
+
+  let lineSpacing = 0;
+
+  if (style.lineHeight) {
+    lineSpacing = (style.lineHeight - fontSize) / 2;
+  }
 
   const charWidth = useMemo(() => {
     let w = fontSize * font.aspectRatio;
@@ -37,17 +44,19 @@ export default function SpriteText({ font, children, style }: SpriteTextProps) {
         }
 
         return (
-          <Sprite2D
-            key={code}
-            anchor="top-left"
-            textureId={font.textureId}
-            clip={clip}
-            size={[charWidth, fontSize]}
-            padding={0.1}
-            color={color}
-            alphaTextureId={font.textureId}
-            opacity={blockContext.opacity}
-          />
+          <Relative translation={{ y: -lineSpacing }}>
+            <Sprite2D
+              key={code}
+              anchor="top-left"
+              textureId={font.textureId}
+              clip={clip}
+              size={[charWidth, fontSize]}
+              padding={0.1}
+              color={color}
+              alphaTextureId={font.textureId}
+              opacity={blockContext.opacity}
+            />
+          </Relative>
         );
       }}
     >

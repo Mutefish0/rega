@@ -1,4 +1,4 @@
-import React, { useContext, useCallback } from "react";
+import React, { useContext, useCallback, useMemo } from "react";
 import Relative from "../../../primitives/Relative";
 import BaseText, { TextChildren } from "./BaseText";
 import SpriteMSDF from "../../SpriteMSDF";
@@ -21,7 +21,10 @@ export default function MSDFBMText({ font, children, style }: SpriteTextProps) {
 
   const lineHeight = font.lineHeight * scale;
 
-  const yOffsetCorrect = (font.lineHeight - font.fontSize) / 4;
+  let lineSpacing = 0;
+  if (style.lineHeight) {
+    lineSpacing = (style.lineHeight - lineHeight) / 2;
+  }
 
   const ha = useCallback(
     (code: number) => {
@@ -31,13 +34,18 @@ export default function MSDFBMText({ font, children, style }: SpriteTextProps) {
     [scale]
   );
 
+  const mergedStyle = useMemo(
+    () => ({ lineHeight, ...style }),
+    [style, lineHeight]
+  );
+
   // geometry size
-  // ha, style.fontSize
+  // ha, style.lineHeight,
   return (
     <BaseText
       verticalLayoutMethod="top"
       ha={ha}
-      style={{ lineHeight, ...style }}
+      style={mergedStyle}
       renderItem={(code) => {
         const glyph = font.getGlyph(code);
 
@@ -57,7 +65,7 @@ export default function MSDFBMText({ font, children, style }: SpriteTextProps) {
           <Relative
             translation={{
               x: xoffset * scale,
-              y: -(yoffset - yOffsetCorrect) * scale,
+              y: -(yoffset + font.yCorrect) * scale - lineSpacing,
             }}
           >
             <SpriteMSDF

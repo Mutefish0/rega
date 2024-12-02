@@ -35,7 +35,7 @@ const vertexNode = cameraProjectionMatrix
 const fragmentNode = vec4(color, opacity);
 
 export default function TypefaceText({ children, font, style }: TextProps) {
-  const { fontSize, color = "white", lineHeight = fontSize } = style;
+  const { fontSize, color = "white" } = style;
 
   const blockContext = useContext(BlockContext);
 
@@ -47,10 +47,20 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     };
   }, [font, fontSize]);
 
-  const yOffset = useMemo(
-    () => -font.descender * scale,
-    [scale, font.descender]
+  const lineHeight = font.lineHeight * scale;
+
+  let lineSpacing = 0;
+
+  if (style.lineHeight) {
+    lineSpacing = (style.lineHeight - lineHeight) / 2;
+  }
+
+  const mergedStyle = useMemo(
+    () => ({ lineHeight, ...style }),
+    [style, lineHeight]
   );
+
+  const yOffset = useMemo(() => font.ascender * scale, [scale, font.ascender]);
 
   const bindings = useBindings({
     opacity: "float",
@@ -75,13 +85,14 @@ export default function TypefaceText({ children, font, style }: TextProps) {
     <BaseText
       verticalLayoutMethod="bottom"
       ha={ha}
-      style={style}
+      style={mergedStyle}
       renderItem={(code) => {
         const { vertex, vertexCount } = font.getGeometry(code);
+
         return (
           <Relative
             translation={{
-              y: yOffset,
+              y: -yOffset - lineSpacing,
             }}
           >
             <Relative matrix={scaleMatrix}>

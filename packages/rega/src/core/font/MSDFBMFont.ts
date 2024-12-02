@@ -56,6 +56,8 @@ export default class MSDFFont {
   public lineHeight: number;
   public baseline: number;
 
+  public yCorrect: number;
+
   constructor(pages: string[], data: MSDFFontData) {
     this.pages = pages;
     this.fontSize = data.info.size;
@@ -66,6 +68,7 @@ export default class MSDFFont {
     data.chars.forEach((glyph) => {
       this.glyphs[glyph.id] = glyph;
     });
+    this.yCorrect = (this.lineHeight - this.baseline) / 4;
   }
 
   public getGlyph(code: number): GlyphData | undefined {

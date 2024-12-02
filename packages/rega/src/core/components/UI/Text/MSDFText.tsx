@@ -33,13 +33,18 @@ export default function MSDFText({ font, children, style }: SpriteTextProps) {
     [fontSize]
   );
 
+  const mergedStyle = useMemo(
+    () => ({ lineHeight, ...style }),
+    [style, lineHeight]
+  );
+
   // geometry size
   // ha, style.lineHeight
   return (
     <BaseText
       verticalLayoutMethod="top"
       ha={ha}
-      style={{ lineHeight, ...style }}
+      style={mergedStyle}
       renderItem={(code) => {
         const glyph = font.getGlyph(code);
 

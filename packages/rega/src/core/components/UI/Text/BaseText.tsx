@@ -69,7 +69,7 @@ export default function BaseText({
   const {
     letterSpacing = 0,
     fontSize,
-    lineHeight = fontSize * 1.5,
+    lineHeight = fontSize,
     backgroundColor,
     textAlign = "start",
     paddingLeft: _padLeft = 0,

@@ -78,6 +78,8 @@ interface Props {
   style?: FlexStyle;
 }
 
+// @TODO use React Host Element to
+// handle node mutation, fix wrong children order
 export default function YogaNode({
   children = null,
   measureFunc,
