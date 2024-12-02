@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useCallback } from "react";
-import BaseText, { ceil } from "./BaseText";
+import BaseText, { ceil, TextChildren } from "./BaseText";
 import Sprite2D from "../../Sprite2D";
 import BlockContext from "../BlockContext";
 import { TextStyle } from "./index";
@@ -8,7 +8,7 @@ import BMPFont from "../../../font/BMPFont";
 
 interface SpriteTextProps {
   font: BMPFont;
-  children: string | number | Array<string | number>;
+  children: TextChildren;
   style: TextStyle;
 }
 

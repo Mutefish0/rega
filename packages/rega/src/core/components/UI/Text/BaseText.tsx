@@ -1,4 +1,10 @@
-import React, { useMemo, useState, useCallback, ReactNode } from "react";
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+  ReactNode,
+  ReactElement,
+} from "react";
 
 import Relative from "../../../primitives/Relative";
 import { Node, MeasureMode } from "yoga-layout";
@@ -7,9 +13,10 @@ import Box2D from "../../Box2D";
 import { TextStyle } from "./index";
 import ZIndex from "../../../primitives/ZIndex";
 import { HA, splitText, ceil } from "./utils";
+import Br from "./Br";
 
 interface BaseTextProps {
-  children: string | number | Array<string | number>;
+  children: TextChildren;
   style: TextStyle;
   ha: HA;
   verticalLayoutMethod: "top" | "bottom";
@@ -32,6 +39,26 @@ interface ViewLayout {
 
 export { ceil };
 
+export type TextChildren =
+  | string
+  | number
+  | Array<string | number | ReactElement<void, typeof Br>>;
+
+function processChildren(_children: TextChildren) {
+  const children = Array.isArray(_children) ? _children : [_children];
+  const strArr = children.map((child) => {
+    if (typeof child === "object") {
+      if (child.type === Br) {
+        return "\n";
+      }
+      return "";
+    } else {
+      return child;
+    }
+  });
+  return strArr.join("");
+}
+
 export default function BaseText({
   children: _children,
   ha,
@@ -40,9 +67,9 @@ export default function BaseText({
   verticalLayoutMethod,
 }: BaseTextProps) {
   const {
-    fontSize,
     letterSpacing = 0,
-    lineHeight = fontSize,
+    fontSize,
+    lineHeight = fontSize * 1.5,
     backgroundColor,
     textAlign = "start",
     paddingLeft: _padLeft = 0,
@@ -57,25 +84,12 @@ export default function BaseText({
     viewLayout: ViewLayout;
   }>();
 
-  const children = useMemo(() => {
-    if (Array.isArray(_children)) {
-      return _children.join("");
-    } else {
-      return _children + "";
-    }
-  }, [_children]);
+  const children = useMemo(() => processChildren(_children), [_children]);
 
   const codes = useMemo(
     () => (children ? children.split("").map((c) => c.charCodeAt(0)) : []),
     [children]
   );
-
-  const yPos = useMemo(() => {
-    const lineSpacing = (lineHeight - fontSize) / 2;
-    return verticalLayoutMethod === "bottom"
-      ? -lineHeight + lineSpacing
-      : -lineSpacing;
-  }, [fontSize, lineHeight]);
 
   const textStyle = useMemo(() => {
     return {
@@ -221,7 +235,7 @@ export default function BaseText({
                     key={`${col.code}-${i}`}
                     translation={{
                       x: col.xPos,
-                      y: yPos,
+                      //y: yPos,
                     }}
                   >
                     {renderItem(col.code)}

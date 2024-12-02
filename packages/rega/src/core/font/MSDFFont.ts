@@ -1,69 +1,77 @@
-interface GlyphData {
-  id: number;
-  char: string;
+interface AtlasInfo {
+  distanceRange: number;
+  distanceRangeMiddle: number;
+  size: number;
   width: number;
   height: number;
-  xoffset: number;
-  yoffset: number;
-  xadvance: number;
-  chnl: number;
-  x: number;
-  y: number;
-  page: number;
+  yOrigin: "bottom" | "top";
 }
 
-interface FontInfo {
-  face: string;
-  size: number;
-  bold: 0 | 1;
-  italic: 0 | 1;
-}
-
-interface FontCommon {
+interface Metrics {
+  emSize: number;
   lineHeight: number;
-  base: number;
-  scaleW: number;
-  scaleH: number;
-  pages: number;
-  packed: 0 | 1;
-  alphaChnl: 0 | 1;
-  redChnl: 0 | 1;
-  greenChnl: 0 | 1;
-  blueChnl: 0 | 1;
+  ascender: number;
+  descender: number;
+  underlineY: number;
+  underlineThickness: number;
 }
 
-interface Kerning {
-  first: number;
-  second: number;
-  amount: number;
+export interface MSDFFontConfig {
+  atlas: AtlasInfo;
+  metrics: Metrics;
+  glyphs: Array<
+    {
+      unicode: number;
+    } & GlyphData
+  >;
 }
 
-export interface MSDFFontData {
-  pages: Array<string>;
-  info: FontInfo;
-  common: FontCommon;
-  chars: Array<GlyphData>;
-  kernings: Array<Kerning>;
+interface GlyphData {
+  advance: number;
+  planeBounds?: {
+    left: number;
+    bottom: number;
+    right: number;
+    top: number;
+  };
+  atlasBounds?: {
+    left: number;
+    bottom: number;
+    right: number;
+    top: number;
+  };
 }
 
 export default class MSDFFont {
   private glyphs: Record<number, GlyphData>;
-  public pages: string[];
+  public atlasTextureId: string;
 
-  public fontSize: number;
+  public pxRange: number;
+  public atlasYOrigin: "bottom" | "top";
+  public atlasHeight: number;
+  public atlasWidth: number;
 
-  //public atlas: AtlasInfo;
-  //public metrics: Metrics;
+  public lineHeight: number;
+  public ascender: number;
+  public descender: number;
 
-  constructor(pages: string[], data: MSDFFontData) {
-    this.pages = pages;
-    this.fontSize = data.info.size;
+  constructor(atlasTextureId: string, config: MSDFFontConfig) {
+    this.atlasTextureId = atlasTextureId;
     this.glyphs = {};
-    data.chars.forEach((glyph) => {
-      this.glyphs[glyph.id] = glyph;
+
+    config.glyphs.forEach((glyph) => {
+      this.glyphs[glyph.unicode] = glyph;
     });
-    //this.atlas = layout.atlas;
-    //this.metrics = layout.metrics;
+
+    const { ascender, descender, lineHeight } = config.metrics;
+
+    this.atlasYOrigin = config.atlas.yOrigin;
+    this.pxRange = config.atlas.distanceRange;
+    this.atlasHeight = config.atlas.height;
+    this.atlasWidth = config.atlas.width;
+    this.lineHeight = lineHeight;
+    this.ascender = ascender;
+    this.descender = descender;
   }
 
   public getGlyph(code: number): GlyphData | undefined {

@@ -37,8 +37,6 @@ interface Props {
   topology?: GPUPrimitiveTopology;
   cullMode?: GPUCullMode;
   depthWriteEnabled?: boolean;
-
-  frgamentCode?: string;
 }
 
 export default function RenderObject({
@@ -52,8 +50,6 @@ export default function RenderObject({
   topology,
   cullMode,
   depthWriteEnabled,
-
-  frgamentCode,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const zIndexCtx = useContext(ZIndexContext);
@@ -98,20 +94,12 @@ export default function RenderObject({
       vertex.uuid = vertexNode.uuid + "-zIndexEnabled";
     }
 
-    const mat = createMaterial(vertex, fragmentNode, getBindingLayout, {
+    return createMaterial(vertex, fragmentNode, getBindingLayout, {
       topology,
       cullMode,
       depthWriteEnabled,
     });
-
-    if (frgamentCode) {
-      mat.fragmentShader = frgamentCode;
-    }
-
-    return mat;
-  }, [vertexNode, fragmentNode, zIndexEnabled, frgamentCode]);
-
-  console.log(material.fragmentShader);
+  }, [vertexNode, fragmentNode, zIndexEnabled]);
 
   useEffect(() => {
     const mat = transform.leafMatrix;

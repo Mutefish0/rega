@@ -17,19 +17,12 @@ import {
   Node,
   max,
   min,
-  clamp,
-  uv,
   vec2,
-  dot,
   float,
   smoothstep,
   add,
   sub,
   attribute,
-  abs,
-  fwidth,
-  dFdx,
-  dFdy,
   dpdxFine,
   dpdyFine,
   length,
@@ -44,6 +37,7 @@ import useAnchor, { AnchorType } from "../hooks/useAnchor";
 
 interface Props {
   atlasTextureId: string;
+  pxRange: number;
   // x,y,width, height
   clip: [number, number, number, number];
   anchor?: AnchorType;
@@ -55,6 +49,7 @@ interface Props {
 const tex = texture("tex", {
   sampler: "linearSampler",
 });
+const pxRange = uniform("float", "pxRange");
 const texSize = uniform("vec2", "texSize");
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
@@ -68,8 +63,6 @@ const vertexNode = cameraProjectionMatrix
   .mul(vec4(positionGeometry, 1));
 
 const fragmentNode = (function () {
-  const pxRange = float(4.0);
-
   const dx = texSize.x.mul(
     //
     length(vec2(dpdxFine(texUv.x), dpdyFine(texUv.x)))
@@ -80,19 +73,39 @@ const fragmentNode = (function () {
     length(vec2(dpdxFine(texUv.y), dpdyFine(texUv.y)))
   );
 
-  const toPixels = pxRange.mul(
-    //
-    inverseSqrt(add(dx.mul(dx), dy.mul(dy)))
-  );
+  /**
+   * Here, `screenPxRange` represents the distance field range in output screen pixels. For example, if the pixel range was set to 2
+when generating a 32x32 distance field, and it is used to draw a quad that is 72x72 pixels on the screen,
+it should return 4.5 (because 72/32 * 2 = 4.5).
+**For 2D rendering, this can generally be replaced by a precomputed uniform value.**
+
+For rendering in a **3D perspective only**, where the texture scale varies across the screen,
+you may want to implement this function with fragment derivatives in the following way.
+I would suggest precomputing `unitRange` as a uniform variable instead of `pxRange` for better performance.
+
+```glsl
+uniform float pxRange; // set to distance field's pixel range
+
+float screenPxRange() {
+    vec2 unitRange = vec2(pxRange)/vec2(textureSize(msdf, 0));
+    vec2 screenTexSize = vec2(1.0)/fwidth(texCoord);
+    return max(0.5*dot(unitRange, screenTexSize), 1.0);
+}
+```
+
+`screenPxRange()` must never be lower than 1. If it is lower than 2, there is a high probability that the anti-aliasing will fail
+and you may want to re-generate your distance field with a wider range.
+   */
+  const screenPxRange = pxRange.mul(inverseSqrt(add(dx.mul(dx), dy.mul(dy))));
 
   const sigDist = sub(
     max(min(tex.r, tex.g), min(max(tex.r, tex.g), tex.b)),
     0.5
   );
 
-  const pxDist = sigDist.mul(toPixels);
+  const pxDist = sigDist.mul(screenPxRange);
 
-  const edgeWidth = float(0.5);
+  const edgeWidth = float(0.4);
 
   const alpha = smoothstep(edgeWidth.negate(), edgeWidth, pxDist);
 
@@ -111,6 +124,7 @@ const fragmentNode = (function () {
 export default function SpriteMSDF({
   clip,
   atlasTextureId,
+  pxRange: pxRangeValue,
   anchor = "center",
   size,
   opacity: opacityValue = 1,
@@ -128,7 +142,7 @@ export default function SpriteMSDF({
       opacity: "float",
       color: "vec3",
       texSize: "vec2",
-
+      pxRange: "float",
       linearSampler: "sampler",
     },
     (init) => {
@@ -141,16 +155,14 @@ export default function SpriteMSDF({
   );
 
   useEffect(() => {
+    bindings.updates.pxRange([pxRangeValue]);
+  }, [pxRangeValue]);
+
+  useEffect(() => {
     const { opacity, array } = parseColor(color || "#fff");
     bindings.updates.opacity([opacityValue * opacity]);
     bindings.updates.color(array);
   }, [color, opacityValue]);
-
-  //   useEffect(() => {
-  //     const { opacity: opacity1, array } = parseColor(colorValue || "#fff");
-  //     bindings.updates.opacity([opacityValue * opacity1]);
-  //     bindings.updates.color(array);
-  //   }, [colorValue, opacityValue]);
 
   useEffect(() => {
     const { width, height } = texture;
@@ -195,63 +207,6 @@ export default function SpriteMSDF({
         zIndexEnabled
         cullMode="none"
         depthWriteEnabled
-        //         frgamentCode={
-        //           /* wgsl */ `
-        //           // Three.js r170dev - Node System
-
-        // // global
-        // diagnostic( off, derivative_uniformity );
-
-        // // uniforms
-        // @binding( 0 ) @group( 0 ) var<uniform> color : vec3<f32>;
-        // @binding( 1 ) @group( 0 ) var<uniform> opacity : f32;
-        // @binding( 6 ) @group( 0 ) var tex_sampler : sampler;
-        // @binding( 2 ) @group( 0 ) var tex : texture_2d<f32>;
-        // @binding( 3 ) @group( 0 ) var<uniform> texSize : vec2<f32>;
-
-        // // structs
-
-        // struct OutputStruct {
-        // 	@location(0) color: vec4<f32>
-        // };
-        // var<private> output : OutputStruct;
-
-        // // codes
-
-        // @fragment
-        // fn main( @location( 0 ) nodeVarying0 : vec2<f32> ) -> OutputStruct {
-
-        //     // pxRange (AKA distanceRange) comes from the msdfgen tool. Don McCurdy's tool
-        //   // uses the default which is 4.
-        //   let texSize = vec2<f32>(512.0, 512.0);
-
-        //   let pxRange = 4.0;
-        //   let dx = texSize.x * length(vec2f(dpdxFine(nodeVarying0.x), dpdyFine(nodeVarying0.x)));
-        //   let dy = texSize.y * length(vec2f(dpdxFine(nodeVarying0.y), dpdyFine(nodeVarying0.y)));
-
-        //   let toPixels = pxRange * inverseSqrt(dx * dx + dy * dy);
-
-        //   let c = textureSample( tex, tex_sampler, nodeVarying0 );
-
-        //   let sigDist = max(min(c.r, c.g), min(max(c.r, c.g), c.b)) - 0.5;
-
-        //   let pxDist = sigDist * toPixels;
-
-        //   let edgeWidth = 0.5;
-
-        //   let alpha = smoothstep(-edgeWidth, edgeWidth, pxDist);
-
-        //   if (alpha < 0.99) {
-        //     //discard;
-        //     output.color = vec4f(1.0, 0.0, 0.0, 0.2);
-        //   }
-
-        //   output.color = vec4f(1.0, 1.0, 0.0, alpha);
-
-        //   return output;
-
-        // }`
-        //         }
       />
     </Relative>
   );

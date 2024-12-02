@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, ReactElement } from "react";
 import FontManager from "../../../common/font_manager";
 import SpriteText from "./SpriteText";
 import TypefaceText from "./TypefaceText";
+import MSDFBMText from "./MSDFBMText";
 import MSDFText from "./MSDFText";
 import { FlexStyle } from "../../YogaFlex/FlexStyle";
+import type { TextChildren } from "./BaseText";
 
 export interface TextStyle extends FlexStyle {
   fontFamily: string;
@@ -18,7 +20,7 @@ export interface TextStyle extends FlexStyle {
 }
 
 interface TextProps {
-  children: string | number | Array<string | number>;
+  children: TextChildren;
   style: TextStyle;
 }
 
@@ -38,6 +40,8 @@ export default function Text(props: TextProps) {
       return <SpriteText font={font.fontObject} {...props} />;
     } else if (font.type === "typeface") {
       return <TypefaceText font={font.fontObject} {...props} />;
+    } else if (font.type === "msdf-bmfont") {
+      return <MSDFBMText font={font.fontObject} {...props} />;
     } else if (font.type === "msdf") {
       return <MSDFText font={font.fontObject} {...props} />;
     }

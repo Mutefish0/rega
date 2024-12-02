@@ -4,13 +4,9 @@ import {
   RenderGroup,
   GUICamera,
   GUIView,
-  View,
   Text,
+  Br,
   FontManager,
-  SpriteMSDF,
-  Camera,
-  Box2D,
-  Relative,
 } from "rega";
 
 export default function App() {
@@ -29,8 +25,13 @@ export default function App() {
         stepSize: [8, 8],
       }),
       FontManager.add("noto-sans", {
+        type: "msdf-bmfont",
+        url: "/fonts/noto-sans/noto-sans-cjk-jp-msdf.json",
+      }),
+      FontManager.add("noto-sans-sc", {
         type: "msdf",
-        url: "/fonts/noto-sans/NotoSans-Regular.json",
+        configUrl: "/fonts/noto-sans/config.json",
+        atlasUrl: "/fonts/noto-sans/texture.png",
       }),
     ]).then(() => setLoading(false));
   }, []);
@@ -41,91 +42,61 @@ export default function App() {
 
   return (
     <>
-      {/* <RenderTarget camera={<GUICamera />} id="GUI" /> */}
-      <RenderTarget
-        id="MAIN"
-        camera={
-          <Relative translation={{ z: 100 }}>
-            <Camera
-              type="orthographic"
-              width={128}
-              height={128}
-              anchor="top-left"
-            />
-          </Relative>
-        }
-      />
-      {/* <RenderGroup target="GUI">
+      <RenderTarget camera={<GUICamera />} id="GUI" />
+      <RenderGroup target="GUI">
         <GUIView
           style={{
-            flexDirection: "row",
+            flexDirection: "column",
             alignItems: "flex-start",
             justifyContent: "flex-start",
+            gap: 12,
           }}
         >
           <Text
             style={{
-              fontSize: 16,
-              letterSpacing: 2,
+              fontSize: 24,
               fontFamily: "arial",
               color: "#fff",
-              backgroundColor: "red",
+              backgroundColor: "rgba(255,255,255,0.3)",
             }}
           >
-            {"Helllo world"}
+            WebGPU Afg
           </Text>
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              marginLeft: 12,
-              marginRight: 12,
-              backgroundColor: "blue",
-            }}
-          ></View>
-          <Text
-            style={{
-              fontSize: 16,
-              letterSpacing: 2,
-              fontFamily: "pixel",
-              color: "#fff",
-              backgroundColor: "red",
-            }}
-          >
-            {"hello world"}
-          </Text>
-          <SpriteMSDF
-            atlasTextureId="/fonts/noto-sans/font.png"
-            clip={[0, 0, 64, 64]}
-            size={[40, 40]}
-          />
           <Text
             style={{
               fontSize: 24,
               letterSpacing: 2,
-              fontFamily: "noto-sans",
-              color: "green",
+              fontFamily: "pixel",
+              color: "#fff",
+              backgroundColor: "rgba(255,255,255,0.3)",
             }}
           >
-            WebGPU
+            {"hello world"}
           </Text>
-        </GUIView>
-      </RenderGroup> */}
-
-      <RenderGroup target="MAIN">
-        {/* <Box2D anchor="top-left" size={[120, 120]} color="red" /> */}
-        <View style={{ width: 128, height: 128 }}>
           <Text
             style={{
-              fontSize: 12,
-              letterSpacing: 2,
+              fontSize: 24,
               fontFamily: "noto-sans",
-              color: "green",
+              color: "#fff",
+              backgroundColor: "rgba(255,255,255,0.3)",
             }}
           >
-            WebGPU
+            WebGPU Afg 日本語 キリン公園 ひらがな
           </Text>
-        </View>
+
+          <Text
+            style={{
+              fontSize: 24,
+              fontFamily: "noto-sans-sc",
+              color: "#fff",
+              backgroundColor: "rgba(255,255,255,0.3)",
+            }}
+          >
+            WebGPU Afg 你好世界
+            <Br />
+            哈哈
+          </Text>
+        </GUIView>
       </RenderGroup>
     </>
   );

@@ -1,5 +1,6 @@
 import React, { useContext, useMemo, useCallback } from "react";
-import BaseText, { ceil } from "./BaseText";
+import Relative from "../../../primitives/Relative";
+import BaseText, { ceil, TextChildren } from "./BaseText";
 import SpriteMSDF from "../../SpriteMSDF";
 import BlockContext from "../BlockContext";
 import { TextStyle } from "./index";
@@ -7,30 +8,38 @@ import MSDFFont from "../../../font/MSDFFont";
 
 interface SpriteTextProps {
   font: MSDFFont;
-  children: string | number | Array<string | number>;
+  children: TextChildren;
   style: TextStyle;
 }
 
-export default function SpriteText({ font, children, style }: SpriteTextProps) {
+export default function MSDFText({ font, children, style }: SpriteTextProps) {
   const { color = "white", fontSize } = style;
 
   const blockContext = useContext(BlockContext);
 
-  const scale = fontSize / font.fontSize;
+  const lineHeight = font.lineHeight * fontSize;
+
+  let lineSpacing = 0;
+
+  if (style.lineHeight) {
+    lineSpacing = (style.lineHeight - lineHeight) / 2;
+  }
 
   const ha = useCallback(
     (code: number) => {
       const glyph = font.getGlyph(code);
-      return glyph ? glyph.xadvance * scale : 0;
+      return glyph ? glyph.advance * fontSize : 0;
     },
     [fontSize]
   );
 
+  // geometry size
+  // ha, style.lineHeight
   return (
     <BaseText
       verticalLayoutMethod="top"
       ha={ha}
-      style={style}
+      style={{ lineHeight, ...style }}
       renderItem={(code) => {
         const glyph = font.getGlyph(code);
 
@@ -38,26 +47,44 @@ export default function SpriteText({ font, children, style }: SpriteTextProps) {
           return null;
         }
 
-        const atlas = font.pages[glyph.page];
+        const { planeBounds, atlasBounds } = glyph;
 
-        if (!atlas) {
+        if (!planeBounds || !atlasBounds) {
           return null;
         }
 
-        const { x, y, width, height } = glyph;
+        const { left, right, top, bottom } = planeBounds;
 
-        const aspectRatio = width / height;
-        const charWidth = ceil(fontSize * aspectRatio);
+        const width = (right - left) * fontSize;
+        const height = (top - bottom) * fontSize;
 
         return (
-          <SpriteMSDF
-            color={color}
-            key={code}
-            anchor="top-left"
-            clip={[x, y, width, height]}
-            atlasTextureId={atlas}
-            size={[charWidth, style.fontSize]}
-          />
+          <Relative
+            translation={{
+              x: left * fontSize,
+              y: -lineSpacing - (font.ascender - top) * fontSize,
+            }}
+          >
+            <SpriteMSDF
+              color={color}
+              key={code}
+              anchor="top-left"
+              clip={[
+                atlasBounds.left,
+                font.atlasYOrigin === "bottom"
+                  ? font.atlasHeight - atlasBounds.top
+                  : atlasBounds.top,
+                atlasBounds.right - atlasBounds.left,
+                font.atlasYOrigin === "bottom"
+                  ? atlasBounds.top - atlasBounds.bottom
+                  : atlasBounds.bottom - atlasBounds.top,
+              ]}
+              atlasTextureId={font.atlasTextureId}
+              pxRange={font.pxRange}
+              size={[width, height]}
+              opacity={blockContext.opacity}
+            />
+          </Relative>
         );
       }}
     >

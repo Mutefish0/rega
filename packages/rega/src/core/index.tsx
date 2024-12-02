@@ -52,6 +52,7 @@ import GUIView from "./components/UI/GUIView";
 import GUICamera from "./components/UI/GUICamera";
 import View, { ViewStyle } from "./components/UI/View";
 import Text from "./components/UI/Text";
+import Br from "./components/UI/Text/Br";
 import { TextStyle } from "./components/UI/Text";
 
 import useTextureBinding from "./hooks/useTextureBinding";
@@ -162,6 +163,7 @@ export {
   FontManager,
   View,
   Text,
+  Br,
   GUIView,
   GUICamera,
   localStorage,

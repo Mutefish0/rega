@@ -11,7 +11,7 @@ import {
   vec4,
 } from "pure3";
 
-import BaseText from "./BaseText";
+import BaseText, { TextChildren } from "./BaseText";
 import { TextStyle } from "./index";
 import TFFont from "../../../font/TFFont";
 import { parseColor } from "../../../tools/color";
@@ -20,7 +20,7 @@ import useBindings from "../../../hooks/useBingdings";
 
 interface TextProps {
   font: TFFont;
-  children: string | number | Array<string | number>;
+  children: TextChildren;
   style: TextStyle;
 }
 
