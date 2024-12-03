@@ -1,33 +1,96 @@
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority } from "react-reconciler/constants";
+
+import { YogaElement, YogaFragment, YogaSystem } from "../YogaFlex/system";
+import { RenderElement } from "../../render/system";
+
 // @ts-ignore
 const isDeno = typeof Deno !== "undefined";
 
-interface HostInstance {
-  type: "yoga" | "obj";
+interface Fragment<T> {
+  children: T[];
 }
+
+interface HostInstance {
+  yogaElement?: YogaElement;
+  yogaFragment?: YogaFragment;
+  renderElement?: RenderElement;
+}
+
+type HostType = "yoga" | "rend";
+
+// <rend>
+// <yoga>
 
 // dom
 // yoga
 
-const reconciler = Reconciler({
+const reconciler = Reconciler<
+  HostType,
+  {}, // props
+  {
+    // container
+    yogaSystem: YogaSystem;
+  },
+  HostInstance,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>({
   supportsMutation: true,
   supportsPersistence: false,
+  supportsHydration: false,
 
   clearContainer() {},
 
   createInstance(type, props, rootContainer) {
-    return { type, appendChild: () => {}, removeChild: () => {} };
+    if (type === "yoga") {
+      const el = new YogaElement(rootContainer.yogaSystem);
+      return {
+        yogaElement: el,
+      };
+    } else if (type === "rend") {
+      // TODO
+    }
+    return {};
   },
 
-  appendChild(parent, child) {
-    parent.children = parent.children || [];
-    parent.children.push(child);
+  appendChild(parent, child: HostInstance) {
+    //parent.children = parent.children || [];
+    //parent.children.push(child);
+
+    debugger;
   },
 
-  appendInitialChild(parent, child) {
-    parent.children = parent.children || [];
-    parent.children.push(child);
+  // bottom-up
+  appendInitialChild(parent, child: HostInstance) {
+    if (child.yogaElement) {
+      if (parent.yogaElement) {
+        parent.yogaElement.appendChild(child.yogaElement);
+      } else {
+        parent.yogaFragment = parent.yogaFragment || {
+          type: "yoga_fragment" as const,
+          children: [],
+        };
+        parent.yogaFragment.children.push(child.yogaElement);
+      }
+    } else if (child.yogaFragment) {
+      if (parent.yogaElement) {
+        parent.yogaElement.appendChild(child.yogaFragment);
+      } else {
+        parent.yogaFragment = parent.yogaFragment || {
+          type: "yoga_fragment",
+          children: [],
+        };
+        parent.yogaFragment.children.push(child.yogaFragment);
+      }
+    }
   },
 
   insertBefore(
@@ -43,9 +106,14 @@ const reconciler = Reconciler({
     debugger;
   },
 
-  appendChildToContainer(container: any, child: HostInstance) {
-    container.children = container.children || [];
-    container.children.push(child);
+  appendChildToContainer(container, child: HostInstance) {
+    if (child.yogaElement) {
+      container.yogaSystem.rootElement.appendChild(child.yogaElement);
+    }
+    //if (container.yogaSystem) {}
+    //if () {}
+    // container.children = container.children || [];
+    // container.children.push(child);
   },
 
   removeChildFromContainer(container: any, child: HostInstance) {},
@@ -62,7 +130,9 @@ const reconciler = Reconciler({
     return null;
   },
 
-  prepareUpdate() {},
+  prepareUpdate(instance, type, oldProps, newProps) {
+    debugger;
+  },
 
   commitUpdate(
     instance,
@@ -72,7 +142,7 @@ const reconciler = Reconciler({
     nextProps,
     internalHandle
   ) {
-    //
+    debugger;
   },
 
   // deprecated
@@ -91,8 +161,6 @@ const reconciler = Reconciler({
   detachDeletedInstance() {},
   // deprecated
   prepareScopeUpdate() {},
-
-  supportsHydration: false,
 
   getPublicInstance(instance) {
     return instance;
@@ -126,7 +194,15 @@ const reconciler = Reconciler({
 
   shouldSetTextContent: () => false,
 
-  finalizeInitialChildren: () => false,
+  finalizeInitialChildren: (
+    instance,
+    type,
+    props,
+    rootContainer,
+    hostContext
+  ) => {
+    return false;
+  },
 });
 
 // @ts-ignore

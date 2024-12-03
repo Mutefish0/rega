@@ -42,7 +42,7 @@ export default function View({ children = null, style = {} }: ViewProps) {
   }, []);
 
   return (
-    <YogaNode style={style} onLayout={onLayout}>
+    <>
       {layout && (
         <Relative
           translation={{
@@ -67,11 +67,15 @@ export default function View({ children = null, style = {} }: ViewProps) {
           )}
           {children ? (
             <BlockContext.Provider value={blockContext}>
-              {children}
+              <yoga style={style} onLayout={onLayout}>
+                {children}
+              </yoga>
+
+              {/* {children} */}
             </BlockContext.Provider>
           ) : null}
         </Relative>
       )}
-    </YogaNode>
+    </>
   );
 }

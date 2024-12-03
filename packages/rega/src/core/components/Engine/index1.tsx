@@ -10,6 +10,8 @@ import ThreeContext, {
 import RenderContext, {
   createRenderContext,
 } from "../../primitives/RenderContext";
+
+import { YogaSystem } from "../YogaFlex/system";
 import RenderServer from "../../render/server";
 
 // @ts-ignore
@@ -65,8 +67,12 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     pixelRatio,
   });
 
+  const container = { yogaSystem: new YogaSystem() };
+
+  (window as any).con = container;
+
   const root = reconciler.createContainer(
-    {},
+    container,
     1,
     null,
     false,

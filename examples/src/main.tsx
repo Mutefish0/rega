@@ -3,14 +3,14 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
 import MSDFFont from "./pages/MSDFFont";
-import PageB from "./pages/PageB";
+import LayoutExample from "./pages/Layout";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />}>
         <Route path="msdf-font" element={<MSDFFont />} />
-        <Route path="pageB" element={<PageB />} />
+        <Route path="layout" element={<LayoutExample />} />
       </Route>
     </Routes>
   </BrowserRouter>

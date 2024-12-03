@@ -6,10 +6,10 @@ function App() {
       <div>
         <div>
           <Link className="nav-link" to="/msdf-font">
-            MSDF Font
+            Font rendering example
           </Link>
-          <Link className="nav-link" to="/pageB">
-            Page B
+          <Link className="nav-link" to="/layout">
+            Layout example
           </Link>
         </div>
         <Outlet />

@@ -43,7 +43,7 @@ const DEFAULT_STYLE: FlexStyle = {
   borderBottomWidth: 0,
 };
 
-function diffStyle(styleOld: FlexStyle, styleNew: FlexStyle) {
+export function diffStyle(styleOld: FlexStyle, styleNew: FlexStyle) {
   const keys = new Set([...Object.keys(styleOld), ...Object.keys(styleNew)]);
 
   const diff: FlexStyle = {};
@@ -163,17 +163,5 @@ export default function YogaNode({
     };
   }, []);
 
-  return (
-    <YogaContext.Provider value={ctx}>
-      <>
-        <shape id="a">
-          <collider>
-            <shape id="b" />
-            <collider />
-          </collider>
-        </shape>
-      </>
-      {children}
-    </YogaContext.Provider>
-  );
+  return <YogaContext.Provider value={ctx}>{children}</YogaContext.Provider>;
 }
