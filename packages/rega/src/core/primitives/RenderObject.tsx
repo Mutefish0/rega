@@ -196,6 +196,7 @@ export default function RenderObject({
       },
       textures,
     });
+
     return () => {
       renderCtx.server.removeObject(id);
     };

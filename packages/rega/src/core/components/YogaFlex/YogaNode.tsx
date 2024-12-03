@@ -163,5 +163,17 @@ export default function YogaNode({
     };
   }, []);
 
-  return <YogaContext.Provider value={ctx}>{children}</YogaContext.Provider>;
+  return (
+    <YogaContext.Provider value={ctx}>
+      <>
+        <shape id="a">
+          <collider>
+            <shape id="b" />
+            <collider />
+          </collider>
+        </shape>
+      </>
+      {children}
+    </YogaContext.Provider>
+  );
 }

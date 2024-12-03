@@ -3,33 +3,78 @@ import { DefaultEventPriority } from "react-reconciler/constants";
 // @ts-ignore
 const isDeno = typeof Deno !== "undefined";
 
+interface HostInstance {
+  type: "yoga" | "obj";
+}
+
+// dom
+// yoga
+
 const reconciler = Reconciler({
+  supportsMutation: true,
+  supportsPersistence: false,
+
   clearContainer() {},
 
-  createInstance(type, props) {
-    return null;
+  createInstance(type, props, rootContainer) {
+    return { type, appendChild: () => {}, removeChild: () => {} };
   },
+
   appendChild(parent, child) {
-    return null;
+    parent.children = parent.children || [];
+    parent.children.push(child);
   },
 
-  appendChildToContainer() {},
+  appendInitialChild(parent, child) {
+    parent.children = parent.children || [];
+    parent.children.push(child);
+  },
 
-  removeChildFromContainer() {},
+  insertBefore(
+    parentInstance: HostInstance,
+    child: HostInstance,
+    beforeChild: HostInstance
+  ) {
+    //
+    debugger;
+  },
+
+  removeChild(parentInstance: HostInstance, child: HostInstance) {
+    debugger;
+  },
+
+  appendChildToContainer(container: any, child: HostInstance) {
+    container.children = container.children || [];
+    container.children.push(child);
+  },
+
+  removeChildFromContainer(container: any, child: HostInstance) {},
+
+  getChildHostContext: (parentHostContext) => parentHostContext,
+
+  insertInContainerBefore(
+    container: any,
+    child: HostInstance,
+    beforeChild: HostInstance
+  ) {},
 
   createTextInstance() {
     return null;
   },
 
-  supportsMutation: true,
-  supportsPersistence: false,
+  prepareUpdate() {},
 
-  appendInitialChild(parent, child) {
-    return null;
+  commitUpdate(
+    instance,
+    updatePayload,
+    type,
+    prevProps,
+    nextProps,
+    internalHandle
+  ) {
+    //
   },
 
-  // deprecated
-  prepareUpdate() {},
   // deprecated
   getInstanceFromNode() {
     return null;
@@ -78,8 +123,6 @@ const reconciler = Reconciler({
   prepareForCommit: () => null,
 
   resetAfterCommit: () => {},
-
-  getChildHostContext: () => {},
 
   shouldSetTextContent: () => false,
 
