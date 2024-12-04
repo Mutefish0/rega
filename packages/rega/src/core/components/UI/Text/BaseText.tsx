@@ -8,7 +8,6 @@ import React, {
 
 import Relative from "../../../primitives/Relative";
 import { Node, MeasureMode } from "yoga-layout";
-import YogaNode from "../../YogaFlex/YogaNode";
 import Box2D from "../../Box2D";
 import { TextStyle } from "./index";
 import ZIndex from "../../../primitives/ZIndex";
@@ -19,7 +18,6 @@ interface BaseTextProps {
   children: TextChildren;
   style: TextStyle;
   ha: HA;
-  verticalLayoutMethod: "top" | "bottom";
   renderItem: (code: number) => ReactNode;
 }
 
@@ -64,7 +62,6 @@ export default function BaseText({
   ha,
   style,
   renderItem,
-  verticalLayoutMethod,
 }: BaseTextProps) {
   const {
     letterSpacing = 0,
@@ -197,7 +194,7 @@ export default function BaseText({
 
   return (
     <>
-      <YogaNode
+      <yoga
         style={textStyle}
         onLayout={handleLayout}
         measureFunc={handleMeasure}

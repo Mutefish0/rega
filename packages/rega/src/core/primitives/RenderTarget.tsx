@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo } from "react";
 import ThreeContext from "./ThreeContext";
 import RenderContext from "./RenderContext";
-import YogaNode from "../components/YogaFlex/YogaNode";
 import { FlexStyle } from "../components/YogaFlex/FlexStyle";
 import { TransferResource, TransferBinding } from "../render";
 import TextureManager, { Texture } from "../common/texture_manager";
@@ -47,6 +46,9 @@ export default function RenderTarget(props: Props) {
             ...style,
             width: ctx.size[0] / ctx.pixelRatio,
             height: ctx.size[1] / ctx.pixelRatio,
+            position: "absolute" as const,
+            left: 0,
+            top: 0,
           }
         : style,
     [style]
@@ -141,22 +143,22 @@ export default function RenderTarget(props: Props) {
   }, []);
 
   return (
-    <YogaNode
-      style={_style}
-      onLayout={(node) => {
-        const layout = node.getComputedLayout();
-        view.set([
-          layout.left * ctx.pixelRatio,
-          layout.top * ctx.pixelRatio,
-          layout.width * ctx.pixelRatio,
-          layout.height * ctx.pixelRatio,
-        ]);
-      }}
-    >
-      <RenderTargetContext.Provider value={renderTargetCtx}>
-        {camera}
+    <RenderTargetContext.Provider value={renderTargetCtx}>
+      {camera}
+      <yoga
+        style={_style}
+        onLayout={(node) => {
+          const layout = node.getComputedLayout();
+          view.set([
+            layout.left * ctx.pixelRatio,
+            layout.top * ctx.pixelRatio,
+            layout.width * ctx.pixelRatio,
+            layout.height * ctx.pixelRatio,
+          ]);
+        }}
+      >
         {children}
-      </RenderTargetContext.Provider>
-    </YogaNode>
+      </yoga>
+    </RenderTargetContext.Provider>
   );
 }

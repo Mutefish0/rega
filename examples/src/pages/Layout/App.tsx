@@ -24,18 +24,21 @@ export default function App() {
             height: 128,
             backgroundColor: "rgba(200,100,100, 0.2)",
             flexDirection: "row",
-            gap: 10,
+            gap: 12,
           }}
         >
           <View
-            style={{ width: 20, height: 20, backgroundColor: "indianred" }}
+            style={{ width: 20, height: 20, backgroundColor: "forestgreen" }}
           ></View>
           <View
-            style={{ width: 20, height: 20, backgroundColor: "forestgreen" }}
+            style={{ width: 20, height: 30, backgroundColor: "indianred" }}
           ></View>
           <div>
             <View
-              style={{ width: 50, height: 30, backgroundColor: "skyblue" }}
+              style={{ width: 20, height: 30, backgroundColor: "skyblue" }}
+            ></View>
+            <View
+              style={{ width: 20, height: 30, backgroundColor: "skyblue" }}
             ></View>
           </div>
         </View>

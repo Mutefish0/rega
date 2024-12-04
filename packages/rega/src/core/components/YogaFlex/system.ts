@@ -1,6 +1,6 @@
 // Yoga layout system
 import { FlexStyle, applyStyle } from "./FlexStyle";
-import Yoga, { Node, MeasureFunction, Direction } from "yoga-layout";
+import Yoga, { Node, MeasureFunction, Direction, Config } from "yoga-layout";
 import { diffStyle } from "./YogaNode";
 
 export type { MeasureFunction, FlexStyle };
@@ -38,26 +38,6 @@ function traverseFragmentTree(el: YogaFragment, cb: (el: YogaElement) => void) {
   }
 }
 
-// function appendYogaChild(parent: YogaElement, child: YogaElementNode) {
-//   if (child.type === "yoga_element") {
-//     parent.node.insertChild(child.node, parent.node.getChildCount());
-//   } else if (child.type === "yoga_fragment") {
-//     for (const c of child.children) {
-//       appendYogaChild(parent, c);
-//     }
-//   }
-// }
-
-function freeYogaSubtree(root: YogaElementNode) {
-  if (root.type === "yoga_element") {
-    root.node.freeRecursive();
-  } else if (root.type === "yoga_fragment") {
-    for (const c of root.children) {
-      freeYogaSubtree(c);
-    }
-  }
-}
-
 export class YogaSystem {
   public isDirty = false;
 
@@ -71,8 +51,8 @@ export class YogaSystem {
     this.rootElement = YogaSystem.createElement();
   }
 
-  public static createElement(): YogaElement {
-    const node = Yoga.Node.create();
+  public static createElement(config?: Config): YogaElement {
+    const node = Yoga.Node.create(config);
     return {
       type: "yoga_element",
       node,
@@ -88,23 +68,25 @@ export class YogaSystem {
   }
 
   public static appendChild(parent: YogaElement, child: YogaElement) {
-    parent.children.push(child);
     parent.node.insertChild(child.node, parent.node.getChildCount());
   }
 
   public static appendChildFragment(parent: YogaElement, child: YogaFragment) {
-    parent.children.push(child);
     traverseFragmentTree(child, (el) => {
       parent.node.insertChild(el.node, parent.node.getChildCount());
     });
   }
 
-  public static removeChild(parent: YogaElementNode, child: YogaElementNode) {
-    const index = parent.children.findIndex((el) => el === child);
-    if (index > -1) {
-      parent.children.splice(index, 1);
-      freeYogaSubtree(child);
-    }
+  public static removeChild(parent: YogaElement, child: YogaElement) {
+    parent.node.removeChild(child.node);
+    child.node.freeRecursive();
+  }
+
+  public static removeChildFragment(parent: YogaElement, child: YogaFragment) {
+    traverseFragmentTree(child, (el) => {
+      parent.node.removeChild(el.node);
+      el.node.freeRecursive();
+    });
   }
 
   public static applyStyle(el: YogaElement, style: FlexStyle) {
@@ -149,4 +131,5 @@ export interface YogaElementProps {
   style?: FlexStyle;
   onLayout?: (node: Node) => void;
   measureFunc?: MeasureFunction;
+  config?: Config;
 }

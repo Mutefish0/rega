@@ -83,7 +83,6 @@ export default function TypefaceText({ children, font, style }: TextProps) {
 
   return (
     <BaseText
-      verticalLayoutMethod="bottom"
       ha={ha}
       style={mergedStyle}
       renderItem={(code) => {

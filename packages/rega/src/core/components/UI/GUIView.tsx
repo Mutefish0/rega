@@ -1,44 +1,46 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import Yoga from "yoga-layout";
 import ThreeContext from "../../primitives/ThreeContext";
-import YogaConfigContext from "../YogaFlex/YogaConfigContext";
 import Absolute from "../../primitives/Absolute";
 import { emptyMatrix4 } from "pure3";
-import View, { ViewStyle } from "./View";
+import { ViewStyle } from "./View";
 
 interface GUIViewProps {
   children: React.ReactNode;
   style?: ViewStyle;
 }
 
+// @TODO use portal
 export default function GUIView({ children, style }: GUIViewProps) {
   const ctx = useContext(ThreeContext);
 
-  const configCtx = useMemo(() => {
+  const config = useMemo(() => {
     const config = Yoga.Config.create();
     config.setPointScaleFactor(Math.floor(ctx.pixelRatio));
-    return { config };
+    return config;
   }, [ctx.pixelRatio]);
 
   useEffect(() => {
     return () => {
-      configCtx.config.free();
+      config.free();
     };
-  }, [configCtx.config]);
+  }, [config]);
 
   return (
     <Absolute matrix={emptyMatrix4}>
-      <YogaConfigContext.Provider value={configCtx}>
-        <View
-          style={{
-            ...style,
-            width: ctx.size[0] / ctx.pixelRatio,
-            height: ctx.size[1] / ctx.pixelRatio,
-          }}
-        >
-          {children}
-        </View>
-      </YogaConfigContext.Provider>
+      <yoga
+        style={{
+          ...style,
+          width: ctx.size[0] / ctx.pixelRatio,
+          height: ctx.size[1] / ctx.pixelRatio,
+          position: "absolute",
+          left: 0,
+          top: 0,
+        }}
+        config={config}
+      >
+        {children}
+      </yoga>
     </Absolute>
   );
 }
