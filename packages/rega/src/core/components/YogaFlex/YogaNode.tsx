@@ -46,6 +46,8 @@ const DEFAULT_STYLE: FlexStyle = {
 export function diffStyle(styleOld: FlexStyle, styleNew: FlexStyle) {
   const keys = new Set([...Object.keys(styleOld), ...Object.keys(styleNew)]);
 
+  let hasDiff = false;
+
   const diff: FlexStyle = {};
 
   for (const key of keys) {
@@ -60,15 +62,17 @@ export function diffStyle(styleOld: FlexStyle, styleNew: FlexStyle) {
         if (styleOld[key] !== DEFAULT_STYLE[key]) {
           // @ts-ignore
           diff[key] = DEFAULT_STYLE[key];
+          hasDiff = true;
         }
       } else {
         // @ts-ignore
         diff[key] = styleNew[key];
+        hasDiff = true;
       }
     }
   }
 
-  return diff;
+  return hasDiff ? diff : null;
 }
 
 interface Props {

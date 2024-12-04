@@ -1,23 +1,57 @@
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority } from "react-reconciler/constants";
 
-import { YogaElement, YogaFragment, YogaSystem } from "../YogaFlex/system";
+import {
+  YogaElement,
+  YogaFragment,
+  YogaSystem,
+  YogaElementProps,
+  MeasureFunction,
+  FlexStyle,
+} from "../YogaFlex/system";
 import { RenderElement } from "../../render/system";
+
+type Props<T extends HostType> = T extends "yoga" ? YogaElementProps : {};
 
 // @ts-ignore
 const isDeno = typeof Deno !== "undefined";
 
-interface Fragment<T> {
-  children: T[];
+interface HostContainer {
+  yogaSystem: YogaSystem;
 }
 
 interface HostInstance {
+  container: HostContainer;
+  parent: HostInstance | null;
   yogaElement?: YogaElement;
   yogaFragment?: YogaFragment;
   renderElement?: RenderElement;
 }
 
 type HostType = "yoga" | "rend";
+
+interface YogaDiffPayload {
+  styleDiffs?: FlexStyle;
+  measureFunc?: MeasureFunction | "unset";
+}
+
+function instanceHasYoga(instance: HostInstance) {
+  return !!(instance.yogaElement || instance.yogaFragment);
+}
+function instanceHasRend(instance: HostInstance) {
+  return !!instance.renderElement;
+}
+
+// function findAncestor(instance: HostInstance, type: HostType) {
+//   const check = type === "yoga" ? instanceHasYoga : instanceHasRend;
+//   do {
+//     if (check(instance)) {
+//       return instance;
+//     }
+//   } while ((instance = instance.parent!));
+
+//   return null;
+// }
 
 // <rend>
 // <yoga>
@@ -27,11 +61,8 @@ type HostType = "yoga" | "rend";
 
 const reconciler = Reconciler<
   HostType,
-  {}, // props
-  {
-    // container
-    yogaSystem: YogaSystem;
-  },
+  any, // props
+  HostContainer,
   HostInstance,
   any,
   any,
@@ -49,48 +80,78 @@ const reconciler = Reconciler<
 
   clearContainer() {},
 
-  createInstance(type, props, rootContainer) {
+  createInstance<T extends HostType>(
+    type: T,
+    props: Props<T>,
+    container: HostContainer
+  ): HostInstance {
     if (type === "yoga") {
-      const el = new YogaElement(rootContainer.yogaSystem);
+      const el = YogaSystem.createElement();
+      const { onLayout, measureFunc, style } = props as Props<"yoga">;
+      if (measureFunc) {
+        YogaSystem.setMeasureFunc(el, measureFunc);
+      }
+      if (style) {
+        YogaSystem.applyStyle(el, style);
+      }
+      el.onLayout = onLayout;
       return {
+        container,
+        parent: null,
         yogaElement: el,
       };
     } else if (type === "rend") {
       // TODO
     }
-    return {};
+    return { parent: null, container };
   },
 
-  appendChild(parent, child: HostInstance) {
-    //parent.children = parent.children || [];
-    //parent.children.push(child);
-
-    debugger;
+  // updates tree: bottom-up
+  appendChild(parent, child) {
+    // const childYogaNode = child.yogaElement || child.yogaFragment;
+    // if (childYogaNode) {
+    //   let node = parent;
+    //   while (node) {
+    //     if (node.yogaElement) {
+    //       YogaSystem.appendChild(node.yogaElement, childYogaNode);
+    //       break;
+    //     } else if (node.yogaFragment) {
+    //       //
+    //     } else {
+    //       node.yogaFragment = YogaSystem.createFragment();
+    //     }
+    //     node = node.parent!;
+    //   }
+    //   parent.container.yogaSystem.markDirty();
+    // }
+    //const parentYogaNode = child.yogaElement || child.yogaFragment;
+    //const childYogaNode = parent.yogaElement || parent.yogaFragment;
+    // if (parentYogaNode && childYogaNode) {
+    //   YogaSystem.appendChild(parentYogaNode, childYogaNode);
+    // }
   },
 
-  // bottom-up
+  // building  tree: bottom-up
   appendInitialChild(parent, child: HostInstance) {
-    if (child.yogaElement) {
+    let childYogaNode = child.yogaElement || child.yogaFragment;
+    if (childYogaNode) {
       if (parent.yogaElement) {
-        parent.yogaElement.appendChild(child.yogaElement);
+        if (child.yogaElement) {
+          YogaSystem.appendChild(parent.yogaElement, child.yogaElement);
+        } else if (child.yogaFragment) {
+          YogaSystem.appendChildFragment(
+            parent.yogaElement,
+            child.yogaFragment
+          );
+        }
       } else {
-        parent.yogaFragment = parent.yogaFragment || {
-          type: "yoga_fragment" as const,
-          children: [],
-        };
-        parent.yogaFragment.children.push(child.yogaElement);
-      }
-    } else if (child.yogaFragment) {
-      if (parent.yogaElement) {
-        parent.yogaElement.appendChild(child.yogaFragment);
-      } else {
-        parent.yogaFragment = parent.yogaFragment || {
-          type: "yoga_fragment",
-          children: [],
-        };
-        parent.yogaFragment.children.push(child.yogaFragment);
+        parent.yogaFragment =
+          parent.yogaFragment || YogaSystem.createFragment();
+        parent.yogaFragment.children.push(childYogaNode);
       }
     }
+
+    child.parent = parent;
   },
 
   insertBefore(
@@ -103,17 +164,39 @@ const reconciler = Reconciler<
   },
 
   removeChild(parentInstance: HostInstance, child: HostInstance) {
-    debugger;
+    child.parent = null;
+
+    const parentYogaNode =
+      parentInstance.yogaElement || parentInstance.yogaFragment;
+    const childYogaNode = child.yogaElement || child.yogaFragment;
+
+    if (parentYogaNode && childYogaNode) {
+      YogaSystem.removeChild(parentYogaNode, childYogaNode);
+      if (
+        parentYogaNode.type === "yoga_fragment" &&
+        parentYogaNode.children.length === 0
+      ) {
+        // remove fragment
+        parentInstance.yogaFragment = undefined;
+      }
+      parentInstance.container.yogaSystem.markDirty();
+    }
   },
 
   appendChildToContainer(container, child: HostInstance) {
     if (child.yogaElement) {
-      container.yogaSystem.rootElement.appendChild(child.yogaElement);
+      YogaSystem.appendChild(
+        container.yogaSystem.rootElement,
+        child.yogaElement
+      );
+      container.yogaSystem.markDirty();
+    } else if (child.yogaFragment) {
+      YogaSystem.appendChildFragment(
+        container.yogaSystem.rootElement,
+        child.yogaFragment
+      );
+      container.yogaSystem.markDirty();
     }
-    //if (container.yogaSystem) {}
-    //if () {}
-    // container.children = container.children || [];
-    // container.children.push(child);
   },
 
   removeChildFromContainer(container: any, child: HostInstance) {},
@@ -124,25 +207,59 @@ const reconciler = Reconciler<
     container: any,
     child: HostInstance,
     beforeChild: HostInstance
-  ) {},
+  ) {
+    //
+  },
 
   createTextInstance() {
     return null;
   },
 
-  prepareUpdate(instance, type, oldProps, newProps) {
-    debugger;
+  prepareUpdate(instance, type, _oldProps, _newProps, rootContainer) {
+    if (type === "yoga") {
+      const payload = {} as YogaDiffPayload;
+      const oldProps = _oldProps as Props<"yoga">;
+      const newProps = _newProps as Props<"yoga">;
+      if (oldProps.style !== newProps.style) {
+        const styleDiffs = YogaSystem.diffStyle(
+          oldProps.style || {},
+          newProps.style || {}
+        );
+        if (styleDiffs) {
+          payload.styleDiffs = styleDiffs;
+        }
+      }
+
+      if (oldProps.measureFunc !== newProps.measureFunc) {
+        payload.measureFunc = newProps.measureFunc || "unset";
+      }
+
+      // simply assign, no need to update
+      if (oldProps.onLayout !== newProps.onLayout) {
+        instance.yogaElement!.onLayout = newProps.onLayout;
+      }
+
+      if (Object.keys(payload).length > 0) {
+        return payload;
+      }
+    }
+    return null;
   },
 
-  commitUpdate(
-    instance,
-    updatePayload,
-    type,
-    prevProps,
-    nextProps,
-    internalHandle
-  ) {
-    debugger;
+  commitUpdate(instance, _updatePayload, type) {
+    if (type === "yoga") {
+      const payload = _updatePayload as YogaDiffPayload;
+      if (payload.styleDiffs) {
+        YogaSystem.applyStyle(instance.yogaElement!, payload.styleDiffs);
+      }
+      if (payload.measureFunc) {
+        YogaSystem.setMeasureFunc(
+          instance.yogaElement!,
+          payload.measureFunc === "unset" ? undefined : payload.measureFunc
+        );
+      }
+      instance.container.yogaSystem.markDirty();
+    }
   },
 
   // deprecated

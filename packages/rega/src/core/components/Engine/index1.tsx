@@ -111,8 +111,12 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     ctx.removedCallbacks.forEach((cb) => {
       ctx.frameCallbacks.delete(cb);
     });
+
     ctx.removedCallbacks.clear();
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
+
+    container.yogaSystem.checkAndCalculateLayout();
+
     loopTimer = setTimeout(loop, 0);
   }
 

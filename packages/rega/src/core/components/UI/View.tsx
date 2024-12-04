@@ -65,15 +65,13 @@ export default function View({ children = null, style = {} }: ViewProps) {
               opacity={blockContext.opacity}
             />
           )}
-          {children ? (
-            <BlockContext.Provider value={blockContext}>
-              <yoga style={style} onLayout={onLayout}>
+          <yoga style={style} onLayout={onLayout}>
+            {children ? (
+              <BlockContext.Provider value={blockContext}>
                 {children}
-              </yoga>
-
-              {/* {children} */}
-            </BlockContext.Provider>
-          ) : null}
+              </BlockContext.Provider>
+            ) : null}
+          </yoga>
         </Relative>
       )}
     </>

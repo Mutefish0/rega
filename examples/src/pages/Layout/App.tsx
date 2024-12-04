@@ -18,21 +18,27 @@ export default function App() {
         }
       />
       <RenderGroup target="main">
-        {/* <View style={{ width: 128, height: 128 }}>
+        <View
+          style={{
+            width: 128,
+            height: 128,
+            backgroundColor: "rgba(200,100,100, 0.2)",
+            flexDirection: "row",
+            gap: 10,
+          }}
+        >
           <View
-            style={{ backgroundColor: "red", width: 20, height: 20 }}
+            style={{ width: 20, height: 20, backgroundColor: "indianred" }}
           ></View>
           <View
-            style={{ backgroundColor: "blue", width: 20, height: 20 }}
+            style={{ width: 20, height: 20, backgroundColor: "forestgreen" }}
           ></View>
+          <div>
+            <View
+              style={{ width: 50, height: 30, backgroundColor: "skyblue" }}
+            ></View>
+          </div>
         </View>
-        <View></View> */}
-        <yoga></yoga>
-        <yoga>
-          <Relative>
-            <yoga></yoga>
-          </Relative>
-        </yoga>
       </RenderGroup>
     </>
   );
