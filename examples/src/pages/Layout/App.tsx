@@ -37,9 +37,9 @@ export default function App() {
           ></View>
 
           <div>
-            <View
+            {/* <View
               style={{ width: 20, height: 30, backgroundColor: "skyblue" }}
-            ></View>
+            ></View> */}
             <View
               style={{ width: 20, height: 30, backgroundColor: "skyblue" }}
             ></View>

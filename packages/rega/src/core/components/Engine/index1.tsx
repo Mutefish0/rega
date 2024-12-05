@@ -67,7 +67,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     pixelRatio,
   });
 
-  const container = { yogaSystem: new YogaSystem() };
+  const container = { yogaRoots: [] };
 
   (window as any).con = container;
 
@@ -115,7 +115,10 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     ctx.removedCallbacks.clear();
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
 
-    container.yogaSystem.checkAndCalculateLayout();
+    // check yoga layout
+    for (const yogaRoot of container.yogaRoots) {
+      YogaSystem.validateAndCalculateLayout(yogaRoot);
+    }
 
     loopTimer = setTimeout(loop, 0);
   }

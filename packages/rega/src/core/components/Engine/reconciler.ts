@@ -1,14 +1,16 @@
+import React from "react";
 import Reconciler from "react-reconciler";
 import { DefaultEventPriority } from "react-reconciler/constants";
 
 import {
   YogaElement,
-  YogaFragment,
   YogaSystem,
   YogaElementProps,
   MeasureFunction,
   FlexStyle,
 } from "../YogaFlex/system";
+import { traverseTreeBFS, traverseTreePreDFS } from "../../tools/tree";
+
 import { RenderElement } from "../../render/system";
 
 type Props<T extends HostType> = T extends "yoga" ? YogaElementProps : {};
@@ -17,7 +19,7 @@ type Props<T extends HostType> = T extends "yoga" ? YogaElementProps : {};
 const isDeno = typeof Deno !== "undefined";
 
 interface HostContainer {
-  yogaSystem: YogaSystem;
+  yogaRoots: YogaElement[];
 }
 
 // - yogaContext  eachHostNode
@@ -27,7 +29,6 @@ interface YogaContext {
   root: YogaElement;
   ancestor: YogaElement;
   current: YogaElement | null;
-  fragment?: YogaContext[];
 }
 
 interface HostInstance {
@@ -71,38 +72,24 @@ interface YogaDiffPayload {
 // dom
 // yoga
 
-function traverseTreeDFS(
-  instance: HostInstance,
-  cb: (instance: HostInstance) => void
-) {
-  cb(instance);
-  for (const child of instance.children) {
-    traverseTreeDFS(child, cb);
-  }
-}
-
-function traverseTreeBFS(
-  instance: HostInstance,
-  cb: (instance: HostInstance) => void
-) {
-  const queue = [instance];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    cb(current);
-    queue.push(...current.children);
-  }
-}
-
-function assignYogaContextTree(instance: HostInstance) {
-  traverseTreeBFS(instance, (instance) => {
-    if (instance.parent) {
-      instance.yogaContext.ancestor =
-        instance.parent.yogaContext.current ||
-        instance.parent.yogaContext.ancestor;
-      instance.yogaContext.root = instance.parent.yogaContext.root;
-    }
-  });
-}
+// function assignYogaContextTree(instance: HostInstance) {
+//   const roots: YogaElement[] = [];
+//   traverseTreeBFS(instance, (instance) => {
+//     const parent = instance.parent;
+//     if (parent) {
+//       if (!parent.yogaContext.root && parent.yogaContext.current) {
+//         instance.yogaContext.root = parent.yogaContext.current;
+//         instance.yogaContext.ancestor = parent.yogaContext.current;
+//         roots.push(parent.yogaContext.current);
+//       } else {
+//         instance.yogaContext.root = parent.yogaContext.root;
+//         instance.yogaContext.ancestor =
+//           parent.yogaContext.current || parent.yogaContext.ancestor;
+//       }
+//     }
+//   });
+//   return roots;
+// }
 
 const renderer = Reconciler<
   HostType,
@@ -125,11 +112,7 @@ const renderer = Reconciler<
 
   clearContainer() {},
 
-  createInstance<T extends HostType>(
-    type: T,
-    props: Props<T>,
-    container: HostContainer
-  ): HostInstance {
+  createInstance(type, props, container, _hostContext): HostInstance {
     if (type === "yoga") {
       const { onLayout, measureFunc, style, config } = props as Props<"yoga">;
       const el = YogaSystem.createElement(config);
@@ -168,35 +151,7 @@ const renderer = Reconciler<
 
   // building  tree: bottom-up
   appendInitialChild(parent, child: HostInstance) {
-    // const parentYogaCtx = parent.yogaContext;
-    // const childYogaCtx = child.yogaContext;
-    // if (parentYogaCtx.current && childYogaCtx.current) {
-    //   parentYogaCtx.current.children.push(childYogaCtx.current);
-    //   childYogaCtx.ancestor = parentYogaCtx.current;
-    //   childYogaCtx.current.parent = parentYogaCtx.current;
-    // } else if (
-    //   parentYogaCtx.current &&
-    //   childYogaCtx.fragment &&
-    //   childYogaCtx.fragment.length > 0
-    // ) {
-    //   for (const childCtx of childYogaCtx.fragment) {
-    //     parentYogaCtx.current.children.push(childCtx.current!);
-    //     childCtx.current!.parent = parentYogaCtx.current;
-    //     childCtx.ancestor = parentYogaCtx.current;
-    //   }
-    //   childYogaCtx.fragment = undefined;
-    // } else if (!parentYogaCtx.current && childYogaCtx.current) {
-    //   parentYogaCtx.fragment = parentYogaCtx.fragment || [];
-    //   parentYogaCtx.fragment.push(childYogaCtx);
-    // } else if (
-    //   !parentYogaCtx.current &&
-    //   childYogaCtx.fragment &&
-    //   childYogaCtx.fragment.length > 0
-    // ) {
-    //   parentYogaCtx.fragment = parentYogaCtx.fragment || [];
-    //   parentYogaCtx.fragment.push(...childYogaCtx.fragment);
-    //   childYogaCtx.fragment = undefined;
-    // }
+    // build fiber tree
     parent.children.push(child);
     child.parent = parent;
   },
@@ -207,16 +162,77 @@ const renderer = Reconciler<
     beforeChild: HostInstance
   ) {},
 
-  removeChild(parentInstance: HostInstance, child: HostInstance) {},
+  removeChild(parentInstance: HostInstance, child: HostInstance) {
+    //
+    traverseTreePreDFS(child, (instance) => {
+      if (instance.yogaContext.current) {
+        YogaSystem.removeChild(
+          instance.yogaContext.ancestor,
+          instance.yogaContext.current
+        );
+        return true;
+      }
+    });
 
-  // assign contexts
-  appendChildToContainer(container, child: HostInstance) {
-    //child.yogaContext.root = child.yogaContext.current!;
-
-    assignYogaContextTree(child);
+    const index = parentInstance.children.indexOf(child);
+    if (index > -1) {
+      parentInstance.children.splice(index, 1);
+    }
+    child.parent = null;
   },
 
-  removeChildFromContainer(container, child) {},
+  appendChildToContainer(container, instance: HostInstance) {
+    const roots = new Set<YogaElement>();
+    // build fiber context tree + build yoga element tree
+    if (instance.yogaContext.current) {
+      instance.yogaContext.root = instance.yogaContext.current;
+      instance.yogaContext.ancestor = instance.yogaContext.current;
+      roots.add(instance.yogaContext.current);
+    }
+    for (const child of instance.children) {
+      traverseTreeBFS(child, (instance) => {
+        const parent = instance.parent!;
+        // find root
+        if (!parent.yogaContext.root && instance.yogaContext.current) {
+          instance.yogaContext.root = instance.yogaContext.current;
+          instance.yogaContext.ancestor = instance.yogaContext.current;
+          roots.add(instance.yogaContext.current);
+        } else {
+          instance.yogaContext.root = parent.yogaContext.root;
+          instance.yogaContext.ancestor =
+            parent.yogaContext.current || parent.yogaContext.ancestor;
+          if (instance.yogaContext.current) {
+            instance.yogaContext.current.parent = instance.yogaContext.ancestor;
+            instance.yogaContext.current.parent.children.push(
+              instance.yogaContext.current
+            );
+          }
+        }
+      });
+    }
+
+    // connect yoga internal tree
+    for (const root of roots) {
+      for (const child of root.children) {
+        traverseTreeBFS(child, (el) => {
+          YogaSystem.appendChild(el.parent!, el);
+        });
+      }
+      YogaSystem.markDirty(root);
+    }
+
+    container.yogaRoots.push(...Array.from(roots));
+  },
+
+  removeChildFromContainer(container, child) {
+    if (child.yogaContext.current) {
+      const index = container.yogaRoots.indexOf(child.yogaContext.current);
+      if (index !== -1) {
+        container.yogaRoots.splice(index, 1);
+      }
+      YogaSystem.removeChild(null, child.yogaContext.current);
+    }
+  },
 
   getChildHostContext: (parentHostContext, type) => {
     return parentHostContext;
@@ -236,9 +252,9 @@ const renderer = Reconciler<
     return null;
   },
 
-  prepareUpdate(instance, type, _oldProps, _newProps, rootContainer) {
+  prepareUpdate(instance, type, _oldProps, _newProps) {
     if (type === "yoga") {
-      const yogaElement = instance.yogaElementNode as YogaElement;
+      const yogaElement = instance.yogaContext.current!;
 
       const payload = {} as YogaDiffPayload;
       const oldProps = _oldProps as Props<"yoga">;
@@ -271,8 +287,7 @@ const renderer = Reconciler<
 
   commitUpdate(instance, _updatePayload, type) {
     if (type === "yoga") {
-      const yogaElement = instance.yogaElementNode as YogaElement;
-
+      const yogaElement = instance.yogaContext.current!;
       const payload = _updatePayload as YogaDiffPayload;
       if (payload.styleDiffs) {
         YogaSystem.applyStyle(yogaElement, payload.styleDiffs);
@@ -283,7 +298,7 @@ const renderer = Reconciler<
           payload.measureFunc === "unset" ? undefined : payload.measureFunc
         );
       }
-      instance.container.yogaSystem.markDirty();
+      YogaSystem.markDirty(instance.yogaContext.root);
     }
   },
 
@@ -349,7 +364,7 @@ const renderer = Reconciler<
 if (import.meta.env.DEV) {
   renderer.injectIntoDevTools({
     bundleType: 1,
-    version: "18.3.1",
+    version: React.version,
     rendererPackageName: "rega",
   });
 }
