@@ -147,6 +147,47 @@ const renderer = Reconciler<
   // updates tree: bottom-up
   appendChild(parent, child) {
     child.parent = parent;
+    parent.children.push(child);
+
+    if (parent.yogaContext.ancestor) {
+      const commonAncestor = parent.yogaContext.ancestor;
+
+      const newTopAdded = new Set<YogaElement>();
+
+      traverseTreeBFS(child, (instance) => {
+        const parent = instance.parent!;
+        if (
+          parent.ancestor === commonAncestor &&
+          instance.yogaContext.current
+        ) {
+          newTopAdded.add(instance.yogaContext.current);
+        }
+
+        // assign fiber context
+        instance.yogaContext.root = parent.yogaContext.root;
+        instance.yogaContext.ancestor =
+          parent.yogaContext.current || parent.yogaContext.ancestor;
+
+        // build yoga element tree
+        if (instance.yogaContext.current) {
+          instance.yogaContext.current.parent = instance.yogaContext.ancestor;
+          instance.yogaContext.current.parent.children.push(
+            instance.yogaContext.current
+          );
+        }
+      });
+
+      // connect yoga internal tree
+      for (const top of newTopAdded) {
+        traverseTreeBFS(top, (el) => {
+          YogaSystem.appendChild(el.parent!, el);
+        });
+      }
+
+      if (newTopAdded.size > 0) {
+        YogaSystem.markDirty(parent.yogaContext.root);
+      }
+    }
   },
 
   // building  tree: bottom-up
