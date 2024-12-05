@@ -20,11 +20,21 @@ interface HostContainer {
   yogaSystem: YogaSystem;
 }
 
+// - yogaContext  eachHostNode
+//
+
+interface YogaContext {
+  root: YogaElement;
+  ancestor: YogaElement;
+  current: YogaElement | null;
+  fragment?: YogaContext[];
+}
+
 interface HostInstance {
   container: HostContainer;
   parent: HostInstance | null;
-  yogaElementNode?: YogaElement | YogaFragment;
-  renderElement?: RenderElement;
+  children: HostInstance[];
+  yogaContext: YogaContext;
 }
 
 type HostType = "yoga" | "rend";
@@ -34,18 +44,26 @@ interface YogaDiffPayload {
   measureFunc?: MeasureFunction | "unset";
 }
 
-function findAncestorYogaElement(instance: HostInstance) {
-  let parent = instance;
-  do {
-    if (
-      parent.yogaElementNode &&
-      parent.yogaElementNode.type === "yoga_element"
-    ) {
-      return parent.yogaElementNode;
-    }
-  } while ((parent = parent.parent!));
-  return instance.container.yogaSystem.rootElement;
-}
+// function findAncestorYogaElement(instance: HostInstance) {
+//   let parent = instance;
+//   do {
+//     if (
+//       parent.yogaElementNode &&
+//       parent.yogaElementNode.type === "yoga_element"
+//     ) {
+//       return parent.yogaElementNode;
+//     }
+//   } while ((parent = parent.parent!));
+//   return instance.container.yogaSystem.rootElement;
+// }
+
+// function leftMostYogaElement(el: YogaFragment) {
+//   let leftMost = el.children[0];
+//   while (leftMost && leftMost.type === "yoga_fragment") {
+//     leftMost = leftMost.children[0];
+//   }
+//   return leftMost;
+// }
 
 // <rend>
 // <yoga>
@@ -53,7 +71,40 @@ function findAncestorYogaElement(instance: HostInstance) {
 // dom
 // yoga
 
-const reconciler = Reconciler<
+function traverseTreeDFS(
+  instance: HostInstance,
+  cb: (instance: HostInstance) => void
+) {
+  cb(instance);
+  for (const child of instance.children) {
+    traverseTreeDFS(child, cb);
+  }
+}
+
+function traverseTreeBFS(
+  instance: HostInstance,
+  cb: (instance: HostInstance) => void
+) {
+  const queue = [instance];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    cb(current);
+    queue.push(...current.children);
+  }
+}
+
+function assignYogaContextTree(instance: HostInstance) {
+  traverseTreeBFS(instance, (instance) => {
+    if (instance.parent) {
+      instance.yogaContext.ancestor =
+        instance.parent.yogaContext.current ||
+        instance.parent.yogaContext.ancestor;
+      instance.yogaContext.root = instance.parent.yogaContext.root;
+    }
+  });
+}
+
+const renderer = Reconciler<
   HostType,
   any, // props
   HostContainer,
@@ -92,76 +143,61 @@ const reconciler = Reconciler<
       return {
         container,
         parent: null,
-        yogaElementNode: el,
+        children: [],
+        yogaContext: {
+          root: null as any,
+          ancestor: null as any,
+          current: el,
+        },
       };
     } else if (type === "rend") {
       // TODO
     }
-    return { parent: null, container };
+    return {
+      parent: null,
+      children: [],
+      container,
+      yogaContext: { root: null as any, ancestor: null as any, current: null },
+    };
   },
 
   // updates tree: bottom-up
   appendChild(parent, child) {
-    if (child.yogaElementNode) {
-      let parentYogaEmement: YogaElement;
-
-      //
-      if (!parent.yogaElementNode) {
-        let connectNodeParent = parent;
-        let connectNodeChild = child;
-        while (connectNodeParent && !connectNodeParent.yogaElementNode) {
-          connectNodeParent.yogaElementNode = YogaSystem.createFragment();
-          connectNodeParent.yogaElementNode.children.push(connectNodeChild);
-          connectNodeChild = connectNodeParent;
-          connectNodeParent = connectNodeParent.parent!;
-        }
-        //   connect to root
-        if (!connectNodeParent) {
-          parent.container.yogaSystem.rootElement.children.push(
-            connectNodeChild.yogaElementNode
-          );
-          parentYogaEmement = parent.container.yogaSystem.rootElement;
-        } else {
-          parentYogaEmement = findAncestorYogaElement(connectNodeParent);
-        }
-      } else {
-        parent.yogaElementNode.children.push(child.yogaElementNode);
-        parentYogaEmement = findAncestorYogaElement(parent);
-      }
-
-      if (child.yogaElementNode.type === "yoga_element") {
-        YogaSystem.appendChild(parentYogaEmement, child.yogaElementNode);
-      } else {
-        YogaSystem.appendChildFragment(
-          parentYogaEmement,
-          child.yogaElementNode
-        );
-      }
-
-      parent.container.yogaSystem.markDirty();
-    }
-
     child.parent = parent;
   },
 
   // building  tree: bottom-up
   appendInitialChild(parent, child: HostInstance) {
-    if (child.yogaElementNode) {
-      parent.yogaElementNode =
-        parent.yogaElementNode || YogaSystem.createFragment();
-      parent.yogaElementNode.children.push(child.yogaElementNode);
-      if (parent.yogaElementNode.type === "yoga_element") {
-        if (child.yogaElementNode.type === "yoga_element") {
-          YogaSystem.appendChild(parent.yogaElementNode, child.yogaElementNode);
-        } else {
-          YogaSystem.appendChildFragment(
-            parent.yogaElementNode,
-            child.yogaElementNode
-          );
-        }
-      }
-    }
-
+    // const parentYogaCtx = parent.yogaContext;
+    // const childYogaCtx = child.yogaContext;
+    // if (parentYogaCtx.current && childYogaCtx.current) {
+    //   parentYogaCtx.current.children.push(childYogaCtx.current);
+    //   childYogaCtx.ancestor = parentYogaCtx.current;
+    //   childYogaCtx.current.parent = parentYogaCtx.current;
+    // } else if (
+    //   parentYogaCtx.current &&
+    //   childYogaCtx.fragment &&
+    //   childYogaCtx.fragment.length > 0
+    // ) {
+    //   for (const childCtx of childYogaCtx.fragment) {
+    //     parentYogaCtx.current.children.push(childCtx.current!);
+    //     childCtx.current!.parent = parentYogaCtx.current;
+    //     childCtx.ancestor = parentYogaCtx.current;
+    //   }
+    //   childYogaCtx.fragment = undefined;
+    // } else if (!parentYogaCtx.current && childYogaCtx.current) {
+    //   parentYogaCtx.fragment = parentYogaCtx.fragment || [];
+    //   parentYogaCtx.fragment.push(childYogaCtx);
+    // } else if (
+    //   !parentYogaCtx.current &&
+    //   childYogaCtx.fragment &&
+    //   childYogaCtx.fragment.length > 0
+    // ) {
+    //   parentYogaCtx.fragment = parentYogaCtx.fragment || [];
+    //   parentYogaCtx.fragment.push(...childYogaCtx.fragment);
+    //   childYogaCtx.fragment = undefined;
+    // }
+    parent.children.push(child);
     child.parent = parent;
   },
 
@@ -169,76 +205,24 @@ const reconciler = Reconciler<
     parentInstance: HostInstance,
     child: HostInstance,
     beforeChild: HostInstance
-  ) {
-    //
-    debugger;
-  },
+  ) {},
 
-  removeChild(parentInstance: HostInstance, child: HostInstance) {
-    child.parent = null;
-    if (child.yogaElementNode && parentInstance.yogaElementNode) {
-      const index = parentInstance.yogaElementNode.children.indexOf(
-        child.yogaElementNode
-      );
-      if (index !== -1) {
-        parentInstance.yogaElementNode.children.splice(index, 1);
-      }
-      const parentYogaEmement = findAncestorYogaElement(parentInstance);
-      if (child.yogaElementNode.type === "yoga_element") {
-        YogaSystem.removeChild(parentYogaEmement, child.yogaElementNode);
-      } else {
-        YogaSystem.removeChildFragment(
-          parentYogaEmement,
-          child.yogaElementNode
-        );
-      }
+  removeChild(parentInstance: HostInstance, child: HostInstance) {},
 
-      parentInstance.container.yogaSystem.markDirty();
-    }
-  },
-
+  // assign contexts
   appendChildToContainer(container, child: HostInstance) {
-    if (child.yogaElementNode) {
-      container.yogaSystem.rootElement.children.push(child.yogaElementNode);
-      if (child.yogaElementNode.type === "yoga_fragment") {
-        YogaSystem.appendChildFragment(
-          container.yogaSystem.rootElement,
-          child.yogaElementNode
-        );
-      } else {
-        YogaSystem.appendChild(
-          container.yogaSystem.rootElement,
-          child.yogaElementNode
-        );
-      }
-      container.yogaSystem.markDirty();
-    }
+    //child.yogaContext.root = child.yogaContext.current!;
+
+    assignYogaContextTree(child);
   },
 
-  removeChildFromContainer(container, child) {
-    if (child.yogaElementNode) {
-      const index = container.yogaSystem.rootElement.children.indexOf(
-        child.yogaElementNode
-      );
-      if (index !== -1) {
-        container.yogaSystem.rootElement.children.splice(index, 1);
-      }
-      if (child.yogaElementNode.type === "yoga_element") {
-        YogaSystem.removeChild(
-          container.yogaSystem.rootElement,
-          child.yogaElementNode
-        );
-      } else {
-        YogaSystem.removeChildFragment(
-          container.yogaSystem.rootElement,
-          child.yogaElementNode
-        );
-      }
-      container.yogaSystem.markDirty();
-    }
+  removeChildFromContainer(container, child) {},
+
+  getChildHostContext: (parentHostContext, type) => {
+    return parentHostContext;
   },
 
-  getChildHostContext: (parentHostContext) => parentHostContext,
+  getRootHostContext: () => {},
 
   insertInContainerBefore(
     container: any,
@@ -344,8 +328,6 @@ const reconciler = Reconciler<
 
   noTimeout: -1,
 
-  getRootHostContext: () => {},
-
   prepareForCommit: () => null,
 
   resetAfterCommit: () => {},
@@ -365,11 +347,11 @@ const reconciler = Reconciler<
 
 // @ts-ignore
 if (import.meta.env.DEV) {
-  reconciler.injectIntoDevTools({
+  renderer.injectIntoDevTools({
     bundleType: 1,
     version: "18.3.1",
     rendererPackageName: "rega",
   });
 }
 
-export default reconciler;
+export default renderer;

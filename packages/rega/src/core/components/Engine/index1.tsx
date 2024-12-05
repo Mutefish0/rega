@@ -1,6 +1,6 @@
 import { ReactElement } from "react";
 import type { ColorSpace } from "three";
-import reconciler from "./reconciler";
+import renderer from "./reconciler";
 import Physics from "../../primitives/Physics";
 import InputSystem from "../InputSystem";
 import GameStateContext from "../../primitives/GameStateContext";
@@ -71,7 +71,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
 
   (window as any).con = container;
 
-  const root = reconciler.createContainer(
+  const root = renderer.createContainer(
     container,
     1,
     null,
@@ -85,7 +85,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
   renderServer
     .init(canvas as HTMLCanvasElement, config.backgroundColor || "#000")
     .then(() => {
-      reconciler.updateContainer(
+      renderer.updateContainer(
         <ThreeContext.Provider value={ctx}>
           <GameStateContext.Provider value={gameState}>
             <InputSystem />
@@ -136,7 +136,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
 
   function destroy() {
     clearTimeout(loopTimer);
-    reconciler.updateContainer(null, root);
+    renderer.updateContainer(null, root);
     renderServer.destroy();
   }
 

@@ -28,11 +28,14 @@ export default function App() {
           }}
         >
           <View
-            style={{ width: 20, height: 20, backgroundColor: "forestgreen" }}
-          ></View>
-          <View
+            key="b"
             style={{ width: 20, height: 30, backgroundColor: "indianred" }}
           ></View>
+          <View
+            key="a"
+            style={{ width: 20, height: 20, backgroundColor: "forestgreen" }}
+          ></View>
+
           <div>
             <View
               style={{ width: 20, height: 30, backgroundColor: "skyblue" }}

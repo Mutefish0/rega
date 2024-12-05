@@ -6,9 +6,11 @@ import { diffStyle } from "./YogaNode";
 export type { MeasureFunction, FlexStyle };
 
 export interface YogaElement {
+  isDirty: boolean;
   type: "yoga_element";
   node: Node;
-  children: YogaElementNode[];
+  parent: YogaElement | null;
+  children: YogaElement[];
   onLayout?: (node: Node) => void;
 }
 
@@ -39,10 +41,8 @@ function traverseFragmentTree(el: YogaFragment, cb: (el: YogaElement) => void) {
 }
 
 export class YogaSystem {
-  public isDirty = false;
-
-  public markDirty() {
-    this.isDirty = true;
+  public static markDirty(el: YogaElement) {
+    el.isDirty = true;
   }
 
   public rootElement: YogaElement;
@@ -54,6 +54,8 @@ export class YogaSystem {
   public static createElement(config?: Config): YogaElement {
     const node = Yoga.Node.create(config);
     return {
+      isDirty: false,
+      parent: null,
       type: "yoga_element",
       node,
       children: [],
@@ -68,6 +70,16 @@ export class YogaSystem {
   }
 
   public static appendChild(parent: YogaElement, child: YogaElement) {
+    parent.node.insertChild(child.node, parent.node.getChildCount());
+  }
+
+  public static insertBeforeChild(
+    parent: YogaElement,
+    child: YogaElement,
+    beforeChild: YogaElement
+  ) {
+    parent.node.removeChild(child.node);
+    //const index = parent.children.findIndex((el) => el === beforeChild);
     parent.node.insertChild(child.node, parent.node.getChildCount());
   }
 
@@ -104,14 +116,10 @@ export class YogaSystem {
     el.node.markDirty();
   }
 
-  public checkAndCalculateLayout() {
-    if (this.isDirty) {
-      this.rootElement.node.calculateLayout(
-        undefined,
-        undefined,
-        Direction.LTR
-      );
-      traverseTree(this.rootElement, (el) => {
+  public static checkAndCalculateLayout(el: YogaElement) {
+    if (el.isDirty) {
+      el.node.calculateLayout(undefined, undefined, Direction.LTR);
+      traverseTree(el, (el) => {
         if (el.onLayout) {
           if (el.node.hasNewLayout()) {
             //
@@ -122,9 +130,31 @@ export class YogaSystem {
           }
         }
       });
-      this.isDirty = false;
+      el.isDirty = false;
     }
   }
+
+  // public checkAndCalculateLayout() {
+  //   if (this.isDirty) {
+  //     this.rootElement.node.calculateLayout(
+  //       undefined,
+  //       undefined,
+  //       Direction.LTR
+  //     );
+  //     traverseTree(this.rootElement, (el) => {
+  //       if (el.onLayout) {
+  //         if (el.node.hasNewLayout()) {
+  //           //
+  //           console.log("Has NewLayout");
+  //           el.onLayout(el.node);
+  //         } else {
+  //           console.log("No NewLayout");
+  //         }
+  //       }
+  //     });
+  //     this.isDirty = false;
+  //   }
+  // }
 }
 
 export interface YogaElementProps {
