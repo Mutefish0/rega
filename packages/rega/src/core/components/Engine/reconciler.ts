@@ -9,9 +9,11 @@ import {
   MeasureFunction,
   FlexStyle,
 } from "../YogaFlex/system";
-import { traverseTreeBFS, traverseTreePreDFS } from "../../tools/tree";
-
-import { RenderElement } from "../../render/system";
+import {
+  traverseTreeBFS,
+  Traversable,
+  traverseTreePreDFS,
+} from "../../tools/tree";
 
 type Props<T extends HostType> = T extends "yoga" ? YogaElementProps : {};
 
@@ -22,12 +24,9 @@ interface HostContainer {
   yogaRoots: YogaElement[];
 }
 
-// - yogaContext  eachHostNode
-//
-
 interface YogaContext {
-  root: YogaElement;
-  ancestor: YogaElement;
+  root: YogaElement | null;
+  ancestor: YogaElement | null;
   current: YogaElement | null;
 }
 
@@ -45,51 +44,90 @@ interface YogaDiffPayload {
   measureFunc?: MeasureFunction | "unset";
 }
 
-// function findAncestorYogaElement(instance: HostInstance) {
-//   let parent = instance;
-//   do {
-//     if (
-//       parent.yogaElementNode &&
-//       parent.yogaElementNode.type === "yoga_element"
-//     ) {
-//       return parent.yogaElementNode;
-//     }
-//   } while ((parent = parent.parent!));
-//   return instance.container.yogaSystem.rootElement;
-// }
+function insertBefore<T extends any>(
+  parent: Traversable<T>,
+  child: Traversable<T>,
+  beforeChild: Traversable<T> | number
+) {
+  const childIndex = parent.children.indexOf(child);
+  parent.children.splice(childIndex, 1);
+  const beforeIndex =
+    typeof beforeChild === "number"
+      ? beforeChild
+      : parent.children.indexOf(beforeChild);
+  parent.children.splice(beforeIndex, 0, child);
+}
 
-// function leftMostYogaElement(el: YogaFragment) {
-//   let leftMost = el.children[0];
-//   while (leftMost && leftMost.type === "yoga_fragment") {
-//     leftMost = leftMost.children[0];
-//   }
-//   return leftMost;
-// }
+function disconnect<T extends any>(
+  parent: Traversable<T>,
+  child: Traversable<T>
+) {
+  const index = parent.children.indexOf(child);
+  if (index > -1) {
+    parent.children.splice(index, 1);
+  }
+}
 
-// <rend>
-// <yoga>
+// build yoga fiber context tree
+// build yoga element tree
+function buildYogaSubtree(instance: HostInstance, rootContext?: YogaContext) {
+  const roots = new Set<YogaElement>();
+  traverseTreeBFS(instance, (instance) => {
+    const parent = instance.parent!;
+    // // assign root context
+    if ((!parent || !parent.yogaContext.root) && instance.yogaContext.current) {
+      const context = rootContext ?? {
+        root: instance.yogaContext.current,
+        ancestor: instance.yogaContext.current,
+        current: null,
+      };
+      instance.yogaContext.root = context.root;
+      instance.yogaContext.ancestor = context.current || context.ancestor;
 
-// dom
-// yoga
+      roots.add(instance.yogaContext.current);
 
-// function assignYogaContextTree(instance: HostInstance) {
-//   const roots: YogaElement[] = [];
-//   traverseTreeBFS(instance, (instance) => {
-//     const parent = instance.parent;
-//     if (parent) {
-//       if (!parent.yogaContext.root && parent.yogaContext.current) {
-//         instance.yogaContext.root = parent.yogaContext.current;
-//         instance.yogaContext.ancestor = parent.yogaContext.current;
-//         roots.push(parent.yogaContext.current);
-//       } else {
-//         instance.yogaContext.root = parent.yogaContext.root;
-//         instance.yogaContext.ancestor =
-//           parent.yogaContext.current || parent.yogaContext.ancestor;
-//       }
-//     }
-//   });
-//   return roots;
-// }
+      if (rootContext) {
+        // connect element tree
+        instance.yogaContext.current.parent = rootContext.ancestor;
+        instance.yogaContext.current.parent!.children.push(
+          instance.yogaContext.current
+        );
+      }
+    } else if (parent) {
+      // build context
+      instance.yogaContext.root = parent.yogaContext.root;
+      instance.yogaContext.ancestor =
+        parent.yogaContext.current || parent.yogaContext.ancestor;
+
+      // build element tree
+      if (instance.yogaContext.current) {
+        instance.yogaContext.current.parent = instance.yogaContext.ancestor;
+        instance.yogaContext.current.parent!.children.push(
+          instance.yogaContext.current
+        );
+      }
+    }
+  });
+  return Array.from(roots);
+}
+function connectYogaTree(root: YogaElement) {
+  traverseTreeBFS(root, (el) => {
+    if (el.parent) {
+      YogaSystem.appendChild(el.parent!, el);
+    }
+  });
+}
+
+function collectYogaSubtrees(instance: HostInstance) {
+  const roots: YogaElement[] = [];
+  traverseTreePreDFS(instance, (ins) => {
+    if (ins.yogaContext.current) {
+      roots.push(ins.yogaContext.current);
+      return true;
+    }
+  });
+  return roots;
+}
 
 const renderer = Reconciler<
   HostType,
@@ -145,52 +183,27 @@ const renderer = Reconciler<
   },
 
   // updates tree: bottom-up
-  appendChild(parent, child) {
-    child.parent = parent;
-    parent.children.push(child);
-
+  appendChild(parent: HostInstance, child: HostInstance) {
     if (parent.yogaContext.ancestor) {
-      const commonAncestor = parent.yogaContext.ancestor;
-
-      const newTopAdded = new Set<YogaElement>();
-
-      traverseTreeBFS(child, (instance) => {
-        const parent = instance.parent!;
-        if (
-          parent.ancestor === commonAncestor &&
-          instance.yogaContext.current
-        ) {
-          newTopAdded.add(instance.yogaContext.current);
-        }
-
-        // assign fiber context
-        instance.yogaContext.root = parent.yogaContext.root;
-        instance.yogaContext.ancestor =
-          parent.yogaContext.current || parent.yogaContext.ancestor;
-
-        // build yoga element tree
-        if (instance.yogaContext.current) {
-          instance.yogaContext.current.parent = instance.yogaContext.ancestor;
-          instance.yogaContext.current.parent.children.push(
-            instance.yogaContext.current
-          );
-        }
-      });
-
-      // connect yoga internal tree
-      for (const top of newTopAdded) {
-        traverseTreeBFS(top, (el) => {
-          YogaSystem.appendChild(el.parent!, el);
-        });
+      const roots = buildYogaSubtree(child, parent.yogaContext);
+      for (const root of roots) {
+        connectYogaTree(root);
       }
-
-      if (newTopAdded.size > 0) {
-        YogaSystem.markDirty(parent.yogaContext.root);
+      YogaSystem.markDirty(parent.yogaContext.root!);
+    } else {
+      const roots = buildYogaSubtree(child);
+      for (const root of roots) {
+        connectYogaTree(root);
+        YogaSystem.markDirty(root);
+        parent.container.yogaRoots.push(root);
       }
     }
+
+    child.parent = parent;
+    parent.children.push(child);
   },
 
-  // building  tree: bottom-up
+  // building fiber tree: bottom-up
   appendInitialChild(parent, child: HostInstance) {
     // build fiber tree
     parent.children.push(child);
@@ -201,68 +214,61 @@ const renderer = Reconciler<
     parentInstance: HostInstance,
     child: HostInstance,
     beforeChild: HostInstance
-  ) {},
+  ) {
+    if (
+      child.yogaContext.ancestor &&
+      beforeChild.yogaContext.ancestor &&
+      child.yogaContext.ancestor === beforeChild.yogaContext.ancestor
+    ) {
+      const yogaRoots1 = collectYogaSubtrees(child);
+      const yogaRoots2 = collectYogaSubtrees(beforeChild);
+      if (yogaRoots1.length > 0 && yogaRoots2.length > 0) {
+        for (const root of yogaRoots1) {
+          YogaSystem.removeChild(root.parent, root, true);
+          disconnect(root.parent!, root);
+        }
+        const beforeChildRoot = yogaRoots2[0];
+        let startIndex =
+          beforeChildRoot.parent!.children.indexOf(beforeChildRoot);
+        if (startIndex > -1) {
+          for (const root of yogaRoots1) {
+            YogaSystem.insertBeforeIndex(root.parent!, root, startIndex);
+            insertBefore(root.parent!, root, startIndex);
+            startIndex++;
+          }
+        } else {
+          console.error(`Yoga: insert index error!`);
+        }
+        YogaSystem.markDirty(child.yogaContext.root!);
+      }
+    }
+
+    insertBefore(parentInstance, child, beforeChild);
+  },
+
+  insertInContainerBefore(
+    container: any,
+    child: HostInstance,
+    beforeChild: HostInstance
+  ) {
+    //
+  },
 
   removeChild(parentInstance: HostInstance, child: HostInstance) {
-    //
-    traverseTreePreDFS(child, (instance) => {
-      if (instance.yogaContext.current) {
-        YogaSystem.removeChild(
-          instance.yogaContext.ancestor,
-          instance.yogaContext.current
-        );
-        return true;
-      }
-    });
-
-    const index = parentInstance.children.indexOf(child);
-    if (index > -1) {
-      parentInstance.children.splice(index, 1);
+    const roots = collectYogaSubtrees(child);
+    for (const root of roots) {
+      YogaSystem.removeChild(root.parent, root);
     }
-    child.parent = null;
+    disconnect(parentInstance, child);
   },
 
   appendChildToContainer(container, instance: HostInstance) {
-    const roots = new Set<YogaElement>();
-    // build fiber context tree + build yoga element tree
-    if (instance.yogaContext.current) {
-      instance.yogaContext.root = instance.yogaContext.current;
-      instance.yogaContext.ancestor = instance.yogaContext.current;
-      roots.add(instance.yogaContext.current);
-    }
-    for (const child of instance.children) {
-      traverseTreeBFS(child, (instance) => {
-        const parent = instance.parent!;
-        // find root
-        if (!parent.yogaContext.root && instance.yogaContext.current) {
-          instance.yogaContext.root = instance.yogaContext.current;
-          instance.yogaContext.ancestor = instance.yogaContext.current;
-          roots.add(instance.yogaContext.current);
-        } else {
-          instance.yogaContext.root = parent.yogaContext.root;
-          instance.yogaContext.ancestor =
-            parent.yogaContext.current || parent.yogaContext.ancestor;
-          if (instance.yogaContext.current) {
-            instance.yogaContext.current.parent = instance.yogaContext.ancestor;
-            instance.yogaContext.current.parent.children.push(
-              instance.yogaContext.current
-            );
-          }
-        }
-      });
-    }
-
-    // connect yoga internal tree
+    const roots = buildYogaSubtree(instance);
     for (const root of roots) {
-      for (const child of root.children) {
-        traverseTreeBFS(child, (el) => {
-          YogaSystem.appendChild(el.parent!, el);
-        });
-      }
+      connectYogaTree(root);
       YogaSystem.markDirty(root);
     }
-
-    container.yogaRoots.push(...Array.from(roots));
+    container.yogaRoots.push(...roots);
   },
 
   removeChildFromContainer(container, child) {
@@ -275,19 +281,11 @@ const renderer = Reconciler<
     }
   },
 
-  getChildHostContext: (parentHostContext, type) => {
+  getChildHostContext: (parentHostContext) => {
     return parentHostContext;
   },
 
   getRootHostContext: () => {},
-
-  insertInContainerBefore(
-    container: any,
-    child: HostInstance,
-    beforeChild: HostInstance
-  ) {
-    //
-  },
 
   createTextInstance() {
     return null;
@@ -339,7 +337,7 @@ const renderer = Reconciler<
           payload.measureFunc === "unset" ? undefined : payload.measureFunc
         );
       }
-      YogaSystem.markDirty(instance.yogaContext.root);
+      YogaSystem.markDirty(instance.yogaContext.root!);
     }
   },
 

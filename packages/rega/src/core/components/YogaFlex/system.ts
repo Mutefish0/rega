@@ -15,6 +15,10 @@ export interface YogaElement {
   onLayout?: (node: Node) => void;
 }
 
+function getID(el: YogaElement) {
+  return (el.node as any)["M"]["O"] as number;
+}
+
 export class YogaSystem {
   public static markDirty(el: YogaElement) {
     el.isDirty = true;
@@ -37,28 +41,33 @@ export class YogaSystem {
   }
 
   public static appendChild(parent: YogaElement, child: YogaElement) {
-    console.log("yoga append:", child.node["M"]["O"], parent.node["M"]["O"]);
-
+    console.debug(`Yoga Append: ${getID(child)} -> ${getID(parent)}`);
     parent.node.insertChild(child.node, parent.node.getChildCount());
   }
 
-  public static insertBeforeChild(
+  public static insertBeforeIndex(
     parent: YogaElement,
     child: YogaElement,
-    beforeChild: YogaElement
+    beforeIndex: number
   ) {
-    //parent.node.removeChild(child.node);
-    //const index = parent.children.findIndex((el) => el === beforeChild);
-    //parent.node.insertChild(child.node, parent.node.getChildCount());
+    console.debug(
+      `Yoga Insert: ${getID(child)} -> ${getID(parent)} as ${beforeIndex}`
+    );
+    parent.node.insertChild(child.node, beforeIndex);
   }
 
-  public static removeChild(parent: YogaElement | null, child: YogaElement) {
+  public static removeChild(
+    parent: YogaElement | null,
+    child: YogaElement,
+    keeplive = false
+  ) {
     if (parent) {
-      console.log("yoga remove:", child.node, parent.node);
-
+      console.debug(`Yoga Remove: ${getID(child)} -> ${getID(parent)}`);
       parent.node.removeChild(child.node);
     }
-    child.node.freeRecursive();
+    if (!keeplive) {
+      child.node.freeRecursive();
+    }
   }
 
   public static applyStyle(el: YogaElement, style: FlexStyle) {

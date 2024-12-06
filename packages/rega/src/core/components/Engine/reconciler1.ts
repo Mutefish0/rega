@@ -3,7 +3,6 @@ import { DefaultEventPriority } from "react-reconciler/constants";
 
 import {
   YogaElement,
-  YogaFragment,
   YogaSystem,
   YogaElementProps,
   MeasureFunction,
