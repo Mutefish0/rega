@@ -9,11 +9,7 @@ import {
   MeasureFunction,
   FlexStyle,
 } from "../YogaFlex/system";
-import {
-  traverseTreeBFS,
-  Traversable,
-  traverseTreePreDFS,
-} from "../../tools/tree";
+import { traverseTreeBFS, traverseTreePreDFS } from "../../tools/tree";
 
 type Props<T extends HostType> = T extends "yoga" ? YogaElementProps : {};
 
@@ -44,28 +40,30 @@ interface YogaDiffPayload {
   measureFunc?: MeasureFunction | "unset";
 }
 
-function insertBefore<T extends any>(
-  parent: Traversable<T>,
-  child: Traversable<T>,
-  beforeChild: Traversable<T> | number
+type Element<T> = {
+  parent: Element<T> | null;
+  children: Element<T>[];
+} & T;
+
+function connect<T extends any>(
+  parent: Element<T>,
+  child: Element<T>,
+  beforeIndex?: number
 ) {
-  const childIndex = parent.children.indexOf(child);
-  parent.children.splice(childIndex, 1);
-  const beforeIndex =
-    typeof beforeChild === "number"
-      ? beforeChild
-      : parent.children.indexOf(beforeChild);
-  parent.children.splice(beforeIndex, 0, child);
+  child.parent = parent;
+  if (typeof beforeIndex === "number") {
+    parent.children.splice(beforeIndex, 0, child);
+  } else {
+    parent.children.push(child);
+  }
 }
 
-function disconnect<T extends any>(
-  parent: Traversable<T>,
-  child: Traversable<T>
-) {
+function disconnect<T extends any>(parent: Element<T>, child: Element<T>) {
   const index = parent.children.indexOf(child);
   if (index > -1) {
     parent.children.splice(index, 1);
   }
+  child.parent = null;
 }
 
 // build yoga fiber context tree
@@ -76,46 +74,32 @@ function buildYogaSubtree(instance: HostInstance, rootContext?: YogaContext) {
     const parent = instance.parent!;
     // // assign root context
     if ((!parent || !parent.yogaContext.root) && instance.yogaContext.current) {
-      const context = rootContext ?? {
-        root: instance.yogaContext.current,
-        ancestor: instance.yogaContext.current,
-        current: null,
-      };
-      instance.yogaContext.root = context.root;
-      instance.yogaContext.ancestor = context.current || context.ancestor;
+      instance.yogaContext.root = rootContext
+        ? rootContext.root
+        : instance.yogaContext.current;
+      instance.yogaContext.ancestor = rootContext
+        ? rootContext.current || rootContext.ancestor
+        : instance.yogaContext.current;
 
       roots.add(instance.yogaContext.current);
-
-      if (rootContext) {
-        // connect element tree
-        instance.yogaContext.current.parent = rootContext.ancestor;
-        instance.yogaContext.current.parent!.children.push(
-          instance.yogaContext.current
-        );
-      }
     } else if (parent) {
       // build context
       instance.yogaContext.root = parent.yogaContext.root;
       instance.yogaContext.ancestor =
         parent.yogaContext.current || parent.yogaContext.ancestor;
 
-      // build element tree
       if (instance.yogaContext.current) {
-        instance.yogaContext.current.parent = instance.yogaContext.ancestor;
-        instance.yogaContext.current.parent!.children.push(
+        // build element tree
+        connect(instance.yogaContext.ancestor!, instance.yogaContext.current);
+        // build yoga internal tree
+        YogaSystem.appendChild(
+          instance.yogaContext.current.parent!,
           instance.yogaContext.current
         );
       }
     }
   });
   return Array.from(roots);
-}
-function connectYogaTree(root: YogaElement) {
-  traverseTreeBFS(root, (el) => {
-    if (el.parent) {
-      YogaSystem.appendChild(el.parent!, el);
-    }
-  });
 }
 
 function collectYogaSubtrees(instance: HostInstance) {
@@ -171,8 +155,6 @@ const renderer = Reconciler<
           current: el,
         },
       };
-    } else if (type === "rend") {
-      // TODO
     }
     return {
       parent: null,
@@ -184,66 +166,129 @@ const renderer = Reconciler<
 
   // updates tree: bottom-up
   appendChild(parent: HostInstance, child: HostInstance) {
+    // 如果 react-reconciler，
+    //    fiberA
+    //     /  \
+    //  fiberB fiberC
+    // sibling 指向：
+    // fiberB -> fiberC -> null
+    // 因此如果 替换最后两个节点的话，beforeChild会变成 null
+    // 这种情况下 react-reconciler 会把 insertBefore 操作会直接优化为 appendChild 操作
+    // https://github.com/facebook/react/blob/7283a213dbbc31029e65005276f12202558558fc/packages/react-reconciler/src/ReactFiberCommitHostEffects.js#L314
+    // 因为 DOM 的 appendChild 操作是支持 inplace 的
+    // 但是 yoga 的不支持，会导致报错，因此，这里我们需要先删除，然后再添加
+    let isReused = false;
+    let collectedYogaRoots: YogaElement[] = [];
+
+    if (child.parent === parent) {
+      isReused = true;
+      collectedYogaRoots = collectYogaSubtrees(child);
+      for (const root of collectedYogaRoots) {
+        // keepalive!
+        YogaSystem.removeChild(root.parent!, root, true);
+        disconnect(root.parent!, root);
+      }
+      disconnect(parent, child);
+    }
+
     if (parent.yogaContext.ancestor) {
-      const roots = buildYogaSubtree(child, parent.yogaContext);
+      const roots = isReused
+        ? collectedYogaRoots
+        : buildYogaSubtree(child, parent.yogaContext);
       for (const root of roots) {
-        connectYogaTree(root);
+        YogaSystem.appendChild(parent.yogaContext.ancestor, root);
+        connect(parent.yogaContext.ancestor, root);
       }
       YogaSystem.markDirty(parent.yogaContext.root!);
     } else {
-      const roots = buildYogaSubtree(child);
+      const roots = isReused ? collectedYogaRoots : buildYogaSubtree(child);
       for (const root of roots) {
-        connectYogaTree(root);
         YogaSystem.markDirty(root);
         parent.container.yogaRoots.push(root);
       }
     }
 
-    child.parent = parent;
-    parent.children.push(child);
+    connect(parent, child);
   },
 
   // building fiber tree: bottom-up
   appendInitialChild(parent, child: HostInstance) {
     // build fiber tree
-    parent.children.push(child);
-    child.parent = parent;
+    connect(parent, child);
   },
 
   insertBefore(
     parentInstance: HostInstance,
+    // 有可能是老的、也有可能是全新创建的！
     child: HostInstance,
     beforeChild: HostInstance
   ) {
-    if (
-      child.yogaContext.ancestor &&
-      beforeChild.yogaContext.ancestor &&
-      child.yogaContext.ancestor === beforeChild.yogaContext.ancestor
-    ) {
-      const yogaRoots1 = collectYogaSubtrees(child);
-      const yogaRoots2 = collectYogaSubtrees(beforeChild);
-      if (yogaRoots1.length > 0 && yogaRoots2.length > 0) {
-        for (const root of yogaRoots1) {
-          YogaSystem.removeChild(root.parent, root, true);
-          disconnect(root.parent!, root);
-        }
-        const beforeChildRoot = yogaRoots2[0];
-        let startIndex =
-          beforeChildRoot.parent!.children.indexOf(beforeChildRoot);
-        if (startIndex > -1) {
-          for (const root of yogaRoots1) {
-            YogaSystem.insertBeforeIndex(root.parent!, root, startIndex);
-            insertBefore(root.parent!, root, startIndex);
-            startIndex++;
+    // inplace insert
+    if (child.parent) {
+      const ancestor = parentInstance.yogaContext.ancestor;
+      if (ancestor) {
+        const yogaRoots1 = collectYogaSubtrees(child);
+        if (yogaRoots1.length > 0) {
+          const yogaRoots2 = collectYogaSubtrees(beforeChild);
+          if (yogaRoots2.length > 0) {
+            for (const root of yogaRoots1) {
+              // keepalive!
+              YogaSystem.removeChild(root.parent!, root, true);
+              disconnect(root.parent!, root);
+            }
+            let startIndex = ancestor.children.indexOf(yogaRoots2[0]);
+            for (const root of yogaRoots1) {
+              YogaSystem.insertBeforeIndex(ancestor, root, startIndex);
+              connect(ancestor, root, startIndex);
+              startIndex++;
+            }
+            YogaSystem.markDirty(parentInstance.yogaContext.root!);
           }
-        } else {
-          console.error(`Yoga: insert index error!`);
         }
-        YogaSystem.markDirty(child.yogaContext.root!);
+      } else {
+        // they are all container roots, so the order dose't matter
+      }
+    } else {
+      // for newly created child!
+      const yogaRoots1 = parentInstance.yogaContext.ancestor
+        ? buildYogaSubtree(child, parentInstance.yogaContext)
+        : buildYogaSubtree(child);
+
+      if (yogaRoots1.length > 0) {
+        const ancestor = parentInstance.yogaContext.ancestor;
+        if (ancestor) {
+          const yogaRoots2 = collectYogaSubtrees(beforeChild);
+          if (yogaRoots2.length > 0) {
+            let startIndex = ancestor.children.indexOf(yogaRoots2[0]);
+            for (const root of yogaRoots1) {
+              YogaSystem.insertBeforeIndex(ancestor, root, startIndex);
+              connect(ancestor, root, startIndex);
+              startIndex++;
+            }
+          } else {
+            // just append to ancestor
+            for (const root of yogaRoots1) {
+              YogaSystem.appendChild(ancestor, root);
+              connect(ancestor, root);
+            }
+          }
+          YogaSystem.markDirty(parentInstance.yogaContext.root!);
+        } else {
+          // just append to the container, the order dose't matter
+          for (const root of yogaRoots1) {
+            parentInstance.container.yogaRoots.push(root);
+            YogaSystem.markDirty(root);
+          }
+        }
       }
     }
 
-    insertBefore(parentInstance, child, beforeChild);
+    disconnect(parentInstance, child);
+    connect(
+      parentInstance,
+      child,
+      parentInstance.children.indexOf(beforeChild)
+    );
   },
 
   insertInContainerBefore(
@@ -251,13 +296,14 @@ const renderer = Reconciler<
     child: HostInstance,
     beforeChild: HostInstance
   ) {
-    //
+    // 一般情况下不会发生
   },
 
   removeChild(parentInstance: HostInstance, child: HostInstance) {
     const roots = collectYogaSubtrees(child);
     for (const root of roots) {
       YogaSystem.removeChild(root.parent, root);
+      disconnect(root.parent!, root);
     }
     disconnect(parentInstance, child);
   },
@@ -265,7 +311,6 @@ const renderer = Reconciler<
   appendChildToContainer(container, instance: HostInstance) {
     const roots = buildYogaSubtree(instance);
     for (const root of roots) {
-      connectYogaTree(root);
       YogaSystem.markDirty(root);
     }
     container.yogaRoots.push(...roots);
@@ -273,11 +318,8 @@ const renderer = Reconciler<
 
   removeChildFromContainer(container, child) {
     if (child.yogaContext.current) {
-      const index = container.yogaRoots.indexOf(child.yogaContext.current);
-      if (index !== -1) {
-        container.yogaRoots.splice(index, 1);
-      }
       YogaSystem.removeChild(null, child.yogaContext.current);
+      disconnect({ children: container.yogaRoots }, child.yogaContext.current);
     }
   },
 

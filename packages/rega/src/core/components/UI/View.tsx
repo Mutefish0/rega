@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useContext, useMemo } from "react";
 import Relative from "../../primitives/Relative";
-import { Node } from "../YogaFlex/YogaNode";
+import { Node } from "../YogaFlex/system";
 import Image from "./Image";
 import Box2D from "../Box2D";
 import BlockContext from "./BlockContext";

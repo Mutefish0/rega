@@ -1,11 +1,10 @@
 // Yoga layout system
-import { FlexStyle, applyStyle } from "./FlexStyle";
+import { FlexStyle, applyStyle, FlexStyleNames } from "./FlexStyle";
 import Yoga, { Node, MeasureFunction, Direction, Config } from "yoga-layout";
-import { diffStyle } from "./YogaNode";
 
 import { traverseTreeBFS } from "../../tools/tree";
 
-export type { MeasureFunction, FlexStyle };
+export type { MeasureFunction, FlexStyle, Node };
 
 export interface YogaElement {
   isDirty: boolean;
@@ -14,6 +13,42 @@ export interface YogaElement {
   children: YogaElement[];
   onLayout?: (node: Node) => void;
 }
+
+const DEFAULT_STYLE: FlexStyle = {
+  alignContent: "flex-start",
+  alignItems: "flex-start",
+  alignSelf: "auto",
+  direction: "inherit",
+  display: "none",
+  flexBasis: "auto",
+  flexDirection: "column",
+  flexGrow: 0,
+  flexShrink: 0,
+  flexWrap: "nowrap",
+  height: "auto",
+  justifyContent: "flex-start",
+  maxHeight: undefined,
+  maxWidth: undefined,
+  minHeight: undefined,
+  minWidth: undefined,
+  overflow: "visible",
+  width: undefined,
+  margin: 0,
+  marginLeft: 0,
+  marginRight: 0,
+  marginTop: 0,
+  marginBottom: 0,
+  padding: 0,
+  paddingLeft: 0,
+  paddingRight: 0,
+  paddingTop: 0,
+  paddingBottom: 0,
+  borderWidth: 0,
+  borderLeftWidth: 0,
+  borderRightWidth: 0,
+  borderTopWidth: 0,
+  borderBottomWidth: 0,
+};
 
 function getID(el: YogaElement) {
   return (el.node as any)["M"]["O"] as number;
@@ -74,7 +109,37 @@ export class YogaSystem {
     applyStyle(el.node, style);
   }
 
-  public static diffStyle = diffStyle;
+  public static diffStyle(styleOld: FlexStyle, styleNew: FlexStyle) {
+    const keys = new Set([...Object.keys(styleOld), ...Object.keys(styleNew)]);
+
+    let hasDiff = false;
+
+    const diff: FlexStyle = {};
+
+    for (const key of keys) {
+      if (!FlexStyleNames.includes(key)) {
+        continue;
+      }
+      // @ts-ignore
+      if (styleOld[key] !== styleNew[key]) {
+        // @ts-ignore
+        if (typeof styleNew[key] === "undefined") {
+          // @ts-ignore
+          if (styleOld[key] !== DEFAULT_STYLE[key]) {
+            // @ts-ignore
+            diff[key] = DEFAULT_STYLE[key];
+            hasDiff = true;
+          }
+        } else {
+          // @ts-ignore
+          diff[key] = styleNew[key];
+          hasDiff = true;
+        }
+      }
+    }
+
+    return hasDiff ? diff : null;
+  }
 
   public static setMeasureFunc(el: YogaElement, func?: MeasureFunction) {
     if (func) {
@@ -91,10 +156,7 @@ export class YogaSystem {
       traverseTreeBFS(el, (el) => {
         if (el.onLayout) {
           if (el.node.hasNewLayout()) {
-            console.log("Has NewLayout");
             el.onLayout(el.node);
-          } else {
-            console.log("No NewLayout");
           }
         }
       });

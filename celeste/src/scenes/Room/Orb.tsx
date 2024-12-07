@@ -90,14 +90,17 @@ export default function Orb({ onGetOrb, shake, freeze, setMusic }: Props) {
                   ActiveCollisionTypes.KINEMATIC_FIXED
                 }
                 onCollisionChange={(cols) => {
-                  if (cols.find((col) => col?.userData?.type === "player")) {
+                  const colPlayer = cols.find(
+                    (col) => col?.userData?.type === "player"
+                  );
+                  if (colPlayer.type === "enter") {
                     sfx.play(() => setMusic("/sounds/area3.mp3"));
                     setState("shaking");
                     shake(400);
                     freeze(400);
                     setTimeout(() => {
-                      onGetOrb();
                       setState("destroyed");
+                      onGetOrb();
                     }, 300);
                   }
                 }}

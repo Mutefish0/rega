@@ -28,10 +28,6 @@ export default function App() {
           }}
         >
           <View
-            key="b"
-            style={{ width: 10, height: 30, backgroundColor: "indianred" }}
-          ></View>
-          <View
             key="a"
             style={{ width: 10, height: 20, backgroundColor: "forestgreen" }}
           ></View>
@@ -43,12 +39,17 @@ export default function App() {
 
           <div>
             <View
-              style={{ width: 10, height: 10, backgroundColor: "skyblue" }}
-            ></View>
-            <View
               style={{ width: 10, height: 30, backgroundColor: "silver" }}
             ></View>
+            <View
+              style={{ width: 10, height: 10, backgroundColor: "skyblue" }}
+            ></View>
           </div>
+
+          <View
+            key="b"
+            style={{ width: 10, height: 30, backgroundColor: "indianred" }}
+          ></View>
         </View>
       </RenderGroup>
     </>
