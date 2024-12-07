@@ -99,6 +99,8 @@ export default function useAnimation<T>({
     onAnimationFrame,
     onAnimationEnd,
     onDeactive,
+
+    done: false,
   });
 
   const _genFunc = useMemo(() => {
@@ -137,6 +139,10 @@ export default function useAnimation<T>({
   }, [onDeactive]);
 
   useFrame((_, time) => {
+    if (state.done) {
+      return;
+    }
+
     const isActive = state.onCheckActive();
     const isPaused = state.onCheckPaused && state.onCheckPaused();
 
@@ -161,6 +167,7 @@ export default function useAnimation<T>({
       const { done, value } = state.gen.next();
       if (done) {
         state.onAnimationEnd?.();
+        state.done = true;
       } else {
         // @ts-ignore
         const [val, dt] = value;

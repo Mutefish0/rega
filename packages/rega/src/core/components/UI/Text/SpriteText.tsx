@@ -33,7 +33,6 @@ export default function SpriteText({ font, children, style }: SpriteTextProps) {
 
   return (
     <BaseText
-      verticalLayoutMethod="top"
       ha={ha}
       style={style}
       renderItem={(code) => {

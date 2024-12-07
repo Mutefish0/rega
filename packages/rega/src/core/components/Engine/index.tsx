@@ -1,6 +1,6 @@
 import { ReactElement } from "react";
 import type { ColorSpace } from "three";
-import reconciler from "./reconciler";
+import renderer from "./reconciler";
 import Physics from "../../primitives/Physics";
 import InputSystem from "../InputSystem";
 import GameStateContext from "../../primitives/GameStateContext";
@@ -10,6 +10,8 @@ import ThreeContext, {
 import RenderContext, {
   createRenderContext,
 } from "../../primitives/RenderContext";
+
+import { YogaSystem } from "../YogaFlex/system";
 import RenderServer from "../../render/server";
 
 // @ts-ignore
@@ -30,6 +32,7 @@ export interface EngineConfig {
   fixedTimestep?: number;
   canvas?: CanvasLike;
   backgroundColor?: string;
+  performanceMode?: "high" | "normal";
 }
 
 export default function CoreEngine(app: ReactElement, config: EngineConfig) {
@@ -65,8 +68,10 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     pixelRatio,
   });
 
-  const root = reconciler.createContainer(
-    {},
+  const container = { yogaRoots: [] };
+
+  const root = renderer.createContainer(
+    container,
     1,
     null,
     false,
@@ -79,7 +84,7 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
   renderServer
     .init(canvas as HTMLCanvasElement, config.backgroundColor || "#000")
     .then(() => {
-      reconciler.updateContainer(
+      renderer.updateContainer(
         <ThreeContext.Provider value={ctx}>
           <GameStateContext.Provider value={gameState}>
             <InputSystem />
@@ -95,9 +100,8 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     });
 
   let lastTime = performance.now();
-  let loopTimer: any = null;
 
-  function loop() {
+  function render() {
     const now = performance.now();
     const deltaTime = now - lastTime;
     lastTime = now;
@@ -107,10 +111,40 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     });
     ctx.removedCallbacks.clear();
     ctx.frameCallbacks.forEach((cb) => cb(deltaTime, now));
-    loopTimer = setTimeout(loop, 0);
+
+    // check yoga layout
+    for (const yogaRoot of container.yogaRoots) {
+      YogaSystem.validateAndCalculateLayout(yogaRoot);
+    }
   }
 
-  loop();
+  function startHighPerformanceLoop() {
+    let destroyed = false;
+    const listener = (e: MessageEvent) => {
+      if (e.data === "render") {
+        render();
+        if (!destroyed) {
+          window.postMessage("render", "*");
+        }
+      }
+    };
+    window.addEventListener("message", listener);
+    window.postMessage("render", "*");
+    return () => {
+      destroyed = true;
+      window.removeEventListener("message", listener);
+    };
+  }
+
+  function startLoop() {
+    let timer: any = null;
+    function loop() {
+      render();
+      timer = setTimeout(loop, 0);
+    }
+    loop();
+    return () => clearTimeout(timer);
+  }
 
   function pause() {
     gameState.paused = true;
@@ -120,13 +154,14 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
     gameState.paused = false;
   }
 
-  function stop() {
-    gameState.paused = true;
-  }
+  const stop =
+    config.performanceMode === "high"
+      ? startHighPerformanceLoop()
+      : startLoop();
 
   function destroy() {
-    clearTimeout(loopTimer);
-    reconciler.updateContainer(null, root);
+    stop();
+    renderer.updateContainer(null, root);
     renderServer.destroy();
   }
 

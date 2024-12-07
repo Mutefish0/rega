@@ -37,7 +37,7 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <div>loading...</div>;
+    return null;
   }
 
   return (

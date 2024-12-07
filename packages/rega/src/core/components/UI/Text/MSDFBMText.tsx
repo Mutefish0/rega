@@ -43,7 +43,6 @@ export default function MSDFBMText({ font, children, style }: SpriteTextProps) {
   // ha, style.lineHeight,
   return (
     <BaseText
-      verticalLayoutMethod="top"
       ha={ha}
       style={mergedStyle}
       renderItem={(code) => {

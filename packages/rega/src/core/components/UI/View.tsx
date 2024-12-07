@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useContext, useMemo } from "react";
 import Relative from "../../primitives/Relative";
-import YogaNode, { Node } from "../YogaFlex/YogaNode";
+import { Node } from "../YogaFlex/system";
 import Image from "./Image";
 import Box2D from "../Box2D";
 import BlockContext from "./BlockContext";
@@ -42,7 +42,7 @@ export default function View({ children = null, style = {} }: ViewProps) {
   }, []);
 
   return (
-    <YogaNode style={style} onLayout={onLayout}>
+    <>
       {layout && (
         <Relative
           translation={{
@@ -65,13 +65,15 @@ export default function View({ children = null, style = {} }: ViewProps) {
               opacity={blockContext.opacity}
             />
           )}
-          {children ? (
-            <BlockContext.Provider value={blockContext}>
-              {children}
-            </BlockContext.Provider>
-          ) : null}
+          <yoga style={style} onLayout={onLayout}>
+            {children ? (
+              <BlockContext.Provider value={blockContext}>
+                {children}
+              </BlockContext.Provider>
+            ) : null}
+          </yoga>
         </Relative>
       )}
-    </YogaNode>
+    </>
   );
 }

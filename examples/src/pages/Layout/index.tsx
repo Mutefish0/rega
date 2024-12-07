@@ -19,7 +19,7 @@ export default function () {
 
   return (
     <div>
-      <h1>font rendering</h1>
+      <h1>layout</h1>
       <canvas ref={canvasRef} />
     </div>
   );

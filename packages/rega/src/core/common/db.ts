@@ -11,17 +11,10 @@ let _dbPromise: Promise<IDBDatabase> = new Promise((resolve, reject) => {
     const db = event.target.result as IDBDatabase;
     console.log("uodate event", event);
 
-    debugger;
-
     // 创建对象存储
     if (!db.objectStoreNames.contains("textures")) {
       db.createObjectStore("textures", { keyPath: "id" });
     }
-
-    // const db = event.target.result as IDBDatabase;
-    // resolve(db);
-
-    // console.log("Database upgrade needed: ", event);
   };
   request.onsuccess = (event: any) => {
     const db = event.target.result as IDBDatabase;

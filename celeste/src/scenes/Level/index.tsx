@@ -206,6 +206,9 @@ export default function Level({ initialLevel = 0, onShake, showToast }: Props) {
   }
 
   function goNextLevel() {
+    if (level >= 30) {
+      return;
+    }
     setPlayerPosition(undefined);
     setTotalFruitsGot(totalFruitsGot + currentFruitsGot.length);
     setCurrentFruitsGot([]);
