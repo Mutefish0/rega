@@ -70,8 +70,6 @@ export default function CoreEngine(app: ReactElement, config: EngineConfig) {
 
   const container = { yogaRoots: [] };
 
-  (window as any).con = container;
-
   const root = renderer.createContainer(
     container,
     1,
