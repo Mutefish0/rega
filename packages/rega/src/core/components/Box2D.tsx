@@ -1,16 +1,8 @@
 import React, { useEffect, useMemo } from "react";
-import {
-  positionGeometry,
-  vec4,
-  uniform,
-  modelWorldMatrix,
-  Matrix4,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
-} from "pure3";
+import { vec4, uniform, Matrix4 } from "pure3";
 
 import quad from "../render/geometry/quad";
-
+import { basicVertexNode } from "../render/shaders/index";
 import useBindings from "../hooks/useBingdings";
 
 import RenderObject from "../primitives/RenderObject";
@@ -28,11 +20,6 @@ interface Props {
 
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
-
-const vertexNode = cameraProjectionMatrix
-  .mul(cameraViewMatrix)
-  .mul(modelWorldMatrix)
-  .mul(vec4(positionGeometry, 1));
 
 const fragmentNode = vec4(color, opacity);
 
@@ -65,7 +52,7 @@ export default React.memo(function Box2D({
   return (
     <Relative matrix={matrix}>
       <RenderObject
-        vertexNode={vertexNode}
+        vertexNode={basicVertexNode}
         fragmentNode={fragmentNode}
         vertexCount={quad.vertexCount}
         vertex={quad.vertex}

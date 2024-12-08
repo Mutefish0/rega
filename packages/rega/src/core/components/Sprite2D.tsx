@@ -4,12 +4,8 @@ import {
   luminance,
   vec4,
   texture,
-  positionGeometry,
   uniform,
-  modelWorldMatrix,
   Matrix4,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
   Fn,
   Discard,
   If,
@@ -23,6 +19,7 @@ import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
 
+import { basicVertexNode } from "../render/shaders/index";
 import quad from "../render/geometry/quad";
 import useBindings from "../hooks/useBingdings";
 import useVertexBinding from "../hooks/useVertexBinding";
@@ -45,11 +42,6 @@ const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 const tex = texture("tex");
 const texAlpha = texture("texAlpha");
-
-const vertexNode = cameraProjectionMatrix
-  .mul(cameraViewMatrix)
-  .mul(modelWorldMatrix)
-  .mul(vec4(positionGeometry, 1));
 
 const transparentDiscard = Fn(({ color }: any) => {
   const result = color.toVar();
@@ -171,7 +163,7 @@ export default React.memo(function Sprite2D({
   return (
     <Relative matrix={matrix}>
       <RenderObject
-        vertexNode={vertexNode}
+        vertexNode={basicVertexNode}
         fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
         bindings={bindings.resources}
         vertexCount={quad.vertexCount}

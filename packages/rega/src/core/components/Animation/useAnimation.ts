@@ -116,6 +116,7 @@ export default function useAnimation<T>({
   useEffect(() => {
     state.genFunc = _genFunc;
     state.gen = _genFunc();
+    state.done = false;
   }, [_genFunc]);
 
   useEffect(() => {

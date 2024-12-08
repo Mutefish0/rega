@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactNode } from "react";
 import type { ColorSpace } from "three";
 import renderer from "./reconciler";
 import Physics from "../../primitives/Physics";
@@ -35,7 +35,7 @@ export interface EngineConfig {
   performanceMode?: "high" | "normal";
 }
 
-export default function CoreEngine(app: ReactElement, config: EngineConfig) {
+export default function CoreEngine(app: ReactNode, config: EngineConfig) {
   const { width, height } = config;
 
   const gameState = { paused: false };

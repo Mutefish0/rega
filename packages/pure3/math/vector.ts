@@ -4,9 +4,20 @@ import {
   add as _add,
   sub as _sub,
   mul as _mul,
+  normalize as _normalize,
+  dot as _dot,
 } from "three/src/nodes/TSL.js";
 
 import { WGSLValueType, Node } from "../core/types";
+
+export const dot = _dot as <T extends "vec2" | "vec3" | "vec4">(
+  a: Node<T> | number,
+  b: Node<T> | number
+) => Node<"float">;
+
+export const normalize = _normalize as <T extends "vec2" | "vec3" | "vec4">(
+  a: Node<T> | number
+) => Node<T>;
 
 export const max = _max as <T extends WGSLValueType>(
   a: Node<T> | number,

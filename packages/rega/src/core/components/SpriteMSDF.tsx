@@ -4,13 +4,10 @@ import TextureManager from "../common/texture_manager";
 import useVertexBinding from "../hooks/useVertexBinding";
 import Relative from "../primitives/Relative";
 import quad from "../render/geometry/quad";
+import { basicVertexNode } from "../render/shaders/index";
 import {
   uniform,
   texture,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
-  modelWorldMatrix,
-  positionGeometry,
   vec4,
   Matrix4,
   Fn,
@@ -56,11 +53,6 @@ const opacity = uniform("float", "opacity");
 const texUv = attribute("vec2", "texUv");
 
 tex.uvNode = texUv;
-
-const vertexNode = cameraProjectionMatrix
-  .mul(cameraViewMatrix)
-  .mul(modelWorldMatrix)
-  .mul(vec4(positionGeometry, 1));
 
 const fragmentNode = (function () {
   const dx = texSize.x.mul(
@@ -198,7 +190,7 @@ export default function SpriteMSDF({
   return (
     <Relative matrix={matrix}>
       <RenderObject
-        vertexNode={vertexNode}
+        vertexNode={basicVertexNode}
         fragmentNode={fragmentNode}
         bindings={bindings.resources}
         vertexCount={quad.vertexCount}

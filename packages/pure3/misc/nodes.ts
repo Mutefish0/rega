@@ -2,6 +2,7 @@ import { Node, WGSLValueType } from "../core/types";
 
 import {
   uv as _uv,
+  normalGeometry as _normalGeometry,
   positionGeometry as _positionGeometry,
   cameraProjectionMatrix as _cameraProjectionMatrix,
   cameraViewMatrix as _cameraViewMatrix,
@@ -10,6 +11,7 @@ import {
 
 import uniform from "../core/uniform";
 
+export const normalGeometry = _normalGeometry as Node<"vec3">;
 export const positionGeometry = _positionGeometry as Node<"vec3">;
 export const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
 export const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;

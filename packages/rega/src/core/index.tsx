@@ -15,10 +15,13 @@ import AnimationPipe from "./components/Animation/AnimationPipe";
 import SpriteMSDF from "./components/SpriteMSDF";
 import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
+import Box3D from "./components/Box3D";
 import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
 import ZIndex from "./primitives/ZIndex";
 import useTransform from "./hooks/useTransform";
+
+import useDirectionalLight from "./components/Light/useDirectionalLight";
 
 import Camera from "./primitives/Camera";
 
@@ -158,6 +161,7 @@ export {
   Box2D,
   Sprite2D,
   SpriteMSDF,
+  Box3D,
 
   // ui
   FontManager,
@@ -167,6 +171,9 @@ export {
   GUIView,
   GUICamera,
   localStorage,
+
+  // lights
+  useDirectionalLight,
 };
 
 export { useTextureBinding };

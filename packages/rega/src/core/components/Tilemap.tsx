@@ -13,13 +13,9 @@ import {
   texture,
   uniform,
   float,
-  positionGeometry,
   uvec2,
   vec2,
   vec4,
-  modelWorldMatrix,
-  cameraProjectionMatrix,
-  cameraViewMatrix,
   dataTexture,
   Matrix4,
 } from "pure3";
@@ -27,6 +23,7 @@ import {
 import Relative from "../primitives/Relative";
 import TextureManager from "../common/texture_manager";
 import quad from "../render/geometry/quad";
+import { basicVertexNode } from "../render/shaders/index";
 import useBindings from "../hooks/useBingdings";
 import useTextureBinding from "../hooks/useTextureBinding";
 
@@ -53,11 +50,6 @@ const dataTex = dataTexture("rgba8uint", "dataTex");
 // const dataTexSize = uniform("vec2", "dataTexSize");
 const pixelPerTile = uniform("float", "pixelPerTile");
 const color = uniform("vec4", "color");
-
-const vertexNode = cameraProjectionMatrix
-  .mul(cameraViewMatrix)
-  .mul(modelWorldMatrix)
-  .mul(vec4(positionGeometry, 1));
 
 const transparentDiscard = Fn(({ color }: any) => {
   const result = color.toVar();
@@ -190,7 +182,7 @@ export default React.memo(function Tilemap({
     <Relative matrix={matrix}>
       <RenderObject
         bindings={bindings.resources}
-        vertexNode={vertexNode}
+        vertexNode={basicVertexNode}
         fragmentNode={fragmentNode}
         vertex={{
           position: quad.vertex.position,

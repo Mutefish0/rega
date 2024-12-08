@@ -1,7 +1,7 @@
-import { ReactElement } from "react";
+import { ReactNode } from "react";
 import CoreEngine, { EngineConfig } from "../core/components/Engine";
 
-function Engine(app: ReactElement, config: EngineConfig) {
+function Engine(app: ReactNode, config: EngineConfig) {
   return CoreEngine(app, config);
 }
 

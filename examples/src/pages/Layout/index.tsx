@@ -1,26 +1,58 @@
 import React, { useEffect, useRef } from "react";
-import Engine from "rega/web";
-import App from "./App";
+import { Canvas } from "rega/web";
+import { RenderTarget, RenderGroup, View, Camera, Relative } from "rega";
 
-export default function () {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const instance = Engine(<App />, {
-      width: 512,
-      height: 512,
-      outputColorSpace: "srgb-linear",
-      canvas: canvasRef.current!,
-    });
-    return () => {
-      instance.destroy();
-    };
-  }, []);
-
+export default function App() {
   return (
-    <div>
-      <h1>layout</h1>
-      <canvas ref={canvasRef} />
-    </div>
+    <Canvas width={512} height={512}>
+      <RenderTarget
+        id="main"
+        camera={
+          <Relative translation={{ z: 1000 }}>
+            <Camera
+              type="orthographic"
+              width={128}
+              height={128}
+              anchor="top-left"
+            />
+          </Relative>
+        }
+      />
+      <RenderGroup target="main">
+        <View
+          style={{
+            width: 128,
+            height: 128,
+            backgroundColor: "rgba(200,100,100, 0.2)",
+            flexDirection: "row",
+            gap: 12,
+          }}
+        >
+          <View
+            key="a"
+            style={{ width: 10, height: 20, backgroundColor: "forestgreen" }}
+          ></View>
+
+          <View
+            key="c"
+            style={{ width: 10, height: 20, backgroundColor: "springgreen" }}
+          ></View>
+
+          <div>
+            <View
+              style={{ width: 10, height: 30, backgroundColor: "silver" }}
+            ></View>
+            <View
+              style={{ width: 10, height: 10, backgroundColor: "skyblue" }}
+            ></View>
+          </div>
+
+          <View
+            key="b"
+            style={{ width: 10, height: 30, backgroundColor: "indianred" }}
+          ></View>
+        </View>
+      </RenderGroup>
+    </Canvas>
   );
 }
