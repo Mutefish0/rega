@@ -3,13 +3,13 @@ import { EngineConfig } from "../core/components/Engine";
 import Engine from "rega/web";
 
 interface Props extends Omit<EngineConfig, "canvas"> {
-  children: React.ReactNode;
+  App: React.ComponentType;
 }
 
-export default function Canvas({ children, ...rest }: Props) {
+export default function Canvas({ App, ...rest }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const instance = Engine(children, {
+    const instance = Engine(<App />, {
       canvas: canvasRef.current!,
       ...rest,
     });

@@ -61,6 +61,8 @@ interface SmaplerOptions {
   maxAnisotropy?: number;
 }
 
+export type BindingsLayout = Record<string, UniformType>;
+
 export type BindingUpdater<
   T extends UniformType,
   A = T extends WGSLValueType
@@ -111,6 +113,8 @@ function createUniformValueBindingView<T extends WGSLValueType>(
   }
 
   function update(values: number[]) {
+    console.log("update-values", values, versionView.getUint32(0));
+
     dataView.set(values);
     updateVersion(versionView);
   }

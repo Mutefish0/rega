@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+import { TransferResource, UniformType } from "../render";
 import {
-  TransferResource,
-  UniformType,
-} from "../render";
-import { createUniformBinding, BindingUpdater } from "../render/binding";
+  createUniformBinding,
+  BindingUpdater,
+  BindingsLayout,
+} from "../render/binding";
 
-export default function useBindings<T extends Record<string, UniformType>>(
+export default function useBindings<T extends BindingsLayout>(
   obj: T,
   initilizer?: (updates: {
     [K in keyof T]: BindingUpdater<T[K] extends UniformType ? T[K] : never>;

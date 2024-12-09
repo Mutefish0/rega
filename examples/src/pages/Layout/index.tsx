@@ -1,10 +1,14 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Canvas } from "rega/web";
 import { RenderTarget, RenderGroup, View, Camera, Relative } from "rega";
 
-export default function App() {
+export default function Page() {
+  return <Canvas width={512} height={512} App={App} />;
+}
+
+function App() {
   return (
-    <Canvas width={512} height={512}>
+    <>
       <RenderTarget
         id="main"
         camera={
@@ -49,10 +53,10 @@ export default function App() {
 
           <View
             key="b"
-            style={{ width: 10, height: 30, backgroundColor: "indianred" }}
+            style={{ width: 10, height: 40, backgroundColor: "indianred" }}
           ></View>
         </View>
       </RenderGroup>
-    </Canvas>
+    </>
   );
 }

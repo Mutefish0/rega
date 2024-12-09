@@ -5,6 +5,8 @@ import { FlexStyle } from "../components/YogaFlex/FlexStyle";
 import { TransferResource, TransferBinding } from "../render";
 import TextureManager, { Texture } from "../common/texture_manager";
 import { createUniformBinding } from "../../core/render/binding";
+import useBindings from "../hooks/useBingdings";
+import { UniformType } from "../render";
 
 import { getOrcreateSlot } from "../render/slot";
 import { Matrix4 } from "pure3";
@@ -19,16 +21,18 @@ interface Props {
   camera?: React.ReactNode;
   children?: React.ReactNode;
   style?: FlexStyle;
-  bindings?: Record<string, TransferResource>;
+  bindingsLayout?: Record<string, UniformType>;
 }
 
 const emptyMatrix = new Matrix4();
 
 export default function RenderTarget(props: Props) {
-  const { id, camera, children, style, bindings = {} } = props;
+  const { id, camera, children, style, bindingsLayout = {} } = props;
 
   const ctx = useContext(ThreeContext);
   const renderCtx = useContext(RenderContext);
+
+  const bindings = useBindings(bindingsLayout);
 
   const parentRenderTargetCtx = useContext(RenderTargetContext);
 
@@ -66,7 +70,7 @@ export default function RenderTarget(props: Props) {
     const allBindings = {
       cameraProjectionMatrix: bCameraProjectionMatrix.resource,
       cameraViewMatrix: bCameraViewMatrix.resource,
-      ...bindings,
+      ...bindings.resources,
     } as Record<string, TransferResource>;
 
     renderCtx.renderTargets.set(id, {

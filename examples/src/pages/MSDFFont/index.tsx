@@ -10,7 +10,7 @@ import {
 } from "rega";
 import { Canvas } from "rega/web";
 
-export default function App() {
+export default function Page() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,8 +41,12 @@ export default function App() {
     return <h1>loading...</h1>;
   }
 
+  return <Canvas width={512} height={512} App={App} />;
+}
+
+function App() {
   return (
-    <Canvas width={512} height={512}>
+    <>
       <RenderTarget camera={<GUICamera />} id="GUI" />
       <RenderGroup target="GUI">
         <GUIView
@@ -111,6 +115,6 @@ export default function App() {
           </Text>
         </GUIView>
       </RenderGroup>
-    </Canvas>
+    </>
   );
 }

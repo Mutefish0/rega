@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Canvas } from "rega/web";
 import {
   RenderTarget,
@@ -9,11 +9,14 @@ import {
   useDirectionalLight,
 } from "rega";
 
-export default function App() {
-  const light = useDirectionalLight({ direction: [0, 0, 1], intensity: 0.7 });
+export default function Page() {
+  return <Canvas width={512} height={512} App={App} />;
+}
 
+function App() {
+  const light = useDirectionalLight({ direction: [1, 0, 0], intensity: 0.8 });
   return (
-    <Canvas width={512} height={512}>
+    <>
       <RenderTarget
         id="main"
         bindings={light}
@@ -24,11 +27,10 @@ export default function App() {
         }
       />
       <RenderGroup target="main">
-        <Relative rotation={{ x: 0, y: Math.PI / 8, z: 0 }}>
-          <Box3D size={[2, 2, 2]} color="blue" />
+        <Relative rotation={{ x: Math.PI / 3, y: Math.PI / 3, z: 0 }}>
+          <Box3D size={[2, 2, 2]} color="green" />
         </Relative>
-        {/* <Box2D size={[5, 5]} color="green" /> */}
       </RenderGroup>
-    </Canvas>
+    </>
   );
 }

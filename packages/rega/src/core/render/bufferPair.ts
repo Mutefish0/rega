@@ -356,10 +356,10 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
   if (record.version < version) {
     record.version = version;
     device.queue.writeBuffer(record.gpuBuffer, 0, record.dataView, 0);
-    // console.debug(
-    //   `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
-    //   `v${version}`
-    // );
+    console.debug(
+      `[buffer ${uuid}] write <${record.gpuBuffer.label}>`,
+      `v${version}`
+    );
   }
 
   return record.gpuBuffer;
