@@ -1,9 +1,10 @@
 import {
-  positionGeometry,
+  normalGeometry,
   vec4,
   modelWorldMatrix,
   cameraProjectionMatrix,
   cameraViewMatrix,
+  positionGeometry,
 } from "pure3";
 
 const basicVertexNode = cameraProjectionMatrix
@@ -11,4 +12,6 @@ const basicVertexNode = cameraProjectionMatrix
   .mul(modelWorldMatrix)
   .mul(vec4(positionGeometry, 1));
 
-export { basicVertexNode };
+const worldNormalNode = modelWorldMatrix.mul(vec4(normalGeometry, 1)).xyz;
+
+export { basicVertexNode, worldNormalNode };

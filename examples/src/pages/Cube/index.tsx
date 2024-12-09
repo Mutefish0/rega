@@ -5,13 +5,12 @@ import {
   RenderGroup,
   Camera,
   Relative,
-  Box2D,
   Box3D,
   useDirectionalLight,
 } from "rega";
 
 export default function App() {
-  const light = useDirectionalLight({ direction: [0, 0, 1], intensity: 1 });
+  const light = useDirectionalLight({ direction: [0, 0, 1], intensity: 0.7 });
 
   return (
     <Canvas width={512} height={512}>
@@ -26,7 +25,7 @@ export default function App() {
       />
       <RenderGroup target="main">
         <Relative rotation={{ x: 0, y: Math.PI / 8, z: 0 }}>
-          <Box3D size={[2, 2, 2]} color="green" />
+          <Box3D size={[2, 2, 2]} color="blue" />
         </Relative>
         {/* <Box2D size={[5, 5]} color="green" /> */}
       </RenderGroup>

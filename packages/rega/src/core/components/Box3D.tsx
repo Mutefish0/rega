@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { uniform, vec4, Matrix4 } from "pure3";
+
 import RenderObject from "../primitives/RenderObject";
 import { basicVertexNode } from "../render/shaders/index";
 import cube from "../render/geometry/cube";
@@ -39,7 +40,7 @@ export default function Box3D({
 
   const matrix = useMemo(() => {
     const mat = new Matrix4();
-    mat.makeScale(size[0], size[1], 1);
+    mat.makeScale(size[0], size[1], size[2] ?? 1);
     //mat.premultiply(anchorMatrix);
     return mat;
   }, [size.join(",")]);
@@ -60,6 +61,7 @@ export default function Box3D({
         vertex={cube.vertex}
         index={cube.index}
         depthWriteEnabled
+        cullMode="back"
       />
     </Relative>
   );

@@ -1,13 +1,6 @@
-import {
-  normalGeometry,
-  Fn,
-  Node,
-  normalize,
-  max,
-  dot,
-  varying,
-  float,
-} from "pure3";
+import { Fn, Node, normalize, max, dot, varying } from "pure3";
+
+import { worldNormalNode } from "./index";
 
 export const lambertDiffuse = Fn(
   ({
@@ -18,9 +11,8 @@ export const lambertDiffuse = Fn(
     lightIntensity: Node<"float">;
   }) => {
     lightDir = normalize(lightDir);
-
-    return max(dot(varying(normalGeometry), lightDir), 0.0).mul(lightIntensity);
-
-    //return float(1);
+    return max(dot(varying(worldNormalNode), lightDir), 0.0).mul(
+      lightIntensity
+    );
   }
 );
