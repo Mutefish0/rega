@@ -21,7 +21,7 @@ import Relative from "./primitives/Relative";
 import ZIndex from "./primitives/ZIndex";
 import useTransform from "./hooks/useTransform";
 
-import useDirectionalLight from "./components/Light/useDirectionalLight";
+import DirectionalLight from "./components/Light/DirectionalLight";
 
 import Camera from "./primitives/Camera";
 
@@ -173,7 +173,7 @@ export {
   localStorage,
 
   // lights
-  useDirectionalLight,
+  DirectionalLight,
 };
 
 export { useTextureBinding };

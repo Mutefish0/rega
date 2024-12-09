@@ -4,8 +4,7 @@ import { RenderTargetContext } from "./RenderTarget";
 import { WebGPUCoordinateSystem } from "three/src/constants.js";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
 import { AnchorType } from "../hooks/useAnchor";
-import useBindingView from "../hooks/useBindingView";
-
+import useBindingViews from "../hooks/useBindingViews";
 import { Matrix4 } from "pure3";
 
 interface CommonProps {}
@@ -35,6 +34,11 @@ interface OrthographicProps {
 }
 
 type Props = (PerspectiveProps | OrthographicProps) & CommonProps;
+
+const bindingsLayout = {
+  cameraProjectionMatrix: "mat4",
+  cameraViewMatrix: "mat4",
+} as const;
 
 export default function Camera({
   type,
@@ -117,23 +121,19 @@ export default function Camera({
     }
   }, [type, fov, aspect, near, far, width, height, anchor]);
 
-  const bCameraProjectionMatrix = useBindingView(
-    "mat4",
-    renderTarget.bindings["cameraProjectionMatrix"]
-  );
-
-  const bCameraViewMatrix = useBindingView(
-    "mat4",
-    renderTarget.bindings["cameraViewMatrix"]
-  );
+  const bindingViews = useBindingViews(bindingsLayout, renderTarget.bindings);
 
   useEffect(() => {
-    bCameraProjectionMatrix.update(projectionMatrix.elements);
+    bindingViews.cameraProjectionMatrix(projectionMatrix.elements);
   }, [projectionMatrix]);
 
   useEffect(() => {
-    bCameraViewMatrix.update(transform.leafMatrix.clone().invert().elements);
+    bindingViews.cameraViewMatrix(
+      transform.leafMatrix.clone().invert().elements
+    );
   }, [transform.leafMatrix]);
 
   return null;
 }
+
+Camera.bindingsLayout = bindingsLayout;

@@ -19,6 +19,7 @@ export const RenderTargetContext = createContext({
 interface Props {
   id: string;
   camera?: React.ReactNode;
+  light?: React.ReactNode;
   children?: React.ReactNode;
   style?: FlexStyle;
   bindingsLayout?: Record<string, UniformType>;
@@ -27,7 +28,7 @@ interface Props {
 const emptyMatrix = new Matrix4();
 
 export default function RenderTarget(props: Props) {
-  const { id, camera, children, style, bindingsLayout = {} } = props;
+  const { id, camera, light, children, style, bindingsLayout = {} } = props;
 
   const ctx = useContext(ThreeContext);
   const renderCtx = useContext(RenderContext);
@@ -149,6 +150,7 @@ export default function RenderTarget(props: Props) {
   return (
     <RenderTargetContext.Provider value={renderTargetCtx}>
       {camera}
+      {light}
       <yoga
         style={_style}
         onLayout={(node) => {

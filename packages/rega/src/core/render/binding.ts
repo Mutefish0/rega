@@ -49,7 +49,7 @@ export interface BindingHandle<T extends UniformType> {
   update: BindingUpdater<T>;
 }
 
-interface BindingView<T extends UniformType> {
+export interface BindingView<T extends UniformType> {
   update: BindingUpdater<T>;
   get: Viewer<T>;
 }
@@ -113,8 +113,6 @@ function createUniformValueBindingView<T extends WGSLValueType>(
   }
 
   function update(values: number[]) {
-    console.log("update-values", values, versionView.getUint32(0));
-
     dataView.set(values);
     updateVersion(versionView);
   }

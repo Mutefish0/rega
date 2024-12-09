@@ -6,7 +6,7 @@ import {
   Camera,
   Relative,
   Box3D,
-  useDirectionalLight,
+  DirectionalLight,
 } from "rega";
 
 export default function Page() {
@@ -14,17 +14,19 @@ export default function Page() {
 }
 
 function App() {
-  const light = useDirectionalLight({ direction: [1, 0, 0], intensity: 0.8 });
   return (
     <>
       <RenderTarget
         id="main"
-        bindings={light}
+        bindingsLayout={{
+          ...DirectionalLight.bindingsLayout,
+        }}
         camera={
           <Relative translation={{ z: 10 }}>
             <Camera type="perspective" />
           </Relative>
         }
+        light={<DirectionalLight intensity={0.8} direction={[1, -1, 1]} />}
       />
       <RenderGroup target="main">
         <Relative rotation={{ x: Math.PI / 3, y: Math.PI / 3, z: 0 }}>
