@@ -20,8 +20,17 @@ export interface BindingLayout {
 
 export interface TransferObject {
   id: string;
-  material: MaterialJSON;
-  bindings: TransferBinding[];
+
+  groupId: string;
+
+  passes: Record<
+    string,
+    {
+      material: MaterialJSON;
+      bindings: TransferBinding[];
+    }
+  >;
+
   input: TransferInput;
   textures: Record<
     string,
@@ -52,7 +61,11 @@ export interface TransferRenderTarget {
 }
 
 export interface TransferInput {
-  vertexBuffers: SharedArrayBuffer[];
+  vertexBuffers: Array<{
+    name: string;
+    buffer: SharedArrayBuffer;
+    binding: number;
+  }>;
   vertexCtrlBuffer: SharedArrayBuffer;
 
   index?: {
@@ -148,6 +161,7 @@ export interface MaterialJSON {
 
   attributes: Array<{
     name: string;
+    binding: number;
     type: "vec3" | "vec2" | "float";
   }>;
 

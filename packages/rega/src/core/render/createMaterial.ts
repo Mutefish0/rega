@@ -79,6 +79,7 @@ export default function createMaterial(
   vertexNode: Node<"vec4">,
   fragmentNode: Node<"vec4">,
   getBindingLayout: (name: string) => { group: number; binding: number },
+  getAttributeLayout: (name: string) => number,
   options: Options = {
     frontFace: "ccw",
     cullMode: "none",
@@ -112,6 +113,7 @@ export default function createMaterial(
     { geometry, material },
     {
       getBindingLayout,
+      getAttributeLayout,
       getRenderTarget: () => null,
       nodes: {
         library: {

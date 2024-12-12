@@ -1,38 +1,17 @@
 const MAX_SLOTS_PER_GROUP = 900;
 
-const slotMap = {
-  target: {
-    map: {} as Record<string, number>,
-    maxSlot: 0,
-  },
+export interface SlotGroup {
+  map: Record<string, number>;
+  maxSlot: 0;
+}
 
-  object: {
-    map: {} as Record<string, number>,
-    maxSlot: 0,
-  },
-
-  frame: {
-    map: {} as Record<string, number>,
-    maxSlot: 0,
-  },
-
-  global: {
-    map: {} as Record<string, number>,
-    maxSlot: 0,
-  },
-};
-
-export function getOrcreateSlot(
-  group: "object" | "target" | "frame" | "global",
-  name: string
-) {
-  const g = slotMap[group];
-  if (g.map[name] === undefined) {
-    if (g.maxSlot > MAX_SLOTS_PER_GROUP) {
+export function getOrcreateSlot(group: SlotGroup, name: string) {
+  if (group.map[name] === undefined) {
+    if (group.maxSlot > MAX_SLOTS_PER_GROUP) {
       throw new Error("Too many slots");
     }
-    g.map[name] = g.maxSlot;
-    g.maxSlot++;
+    group.map[name] = group.maxSlot;
+    group.maxSlot++;
   }
-  return g.map[name];
+  return group.map[name];
 }

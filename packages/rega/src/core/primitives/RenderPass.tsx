@@ -97,3 +97,23 @@ export default function RenderPass({
     </RenderPassContext.Provider>
   );
 }
+
+interface Denpendency {
+  pass: PassNode;
+  type: "depth" | "output";
+}
+interface PassNode {
+  dependencies: Denpendency[];
+  pipeline: Pipeline;
+  renderGroups: string[];
+}
+
+// export default function App() {
+//
+//   return (
+//     <RenderPipeline>
+//       <RenderGroup id="GUI"></RenderGroup>
+//       <RenderGroup id="GAME"></RenderGroup>
+//     </RenderPipeline>
+//   );
+// }
