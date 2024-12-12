@@ -44,20 +44,39 @@ export interface TransferObject {
   >;
 }
 
-export interface TransferRenderTarget {
-  id: string;
-  viewport: SharedArrayBuffer;
-  bindings: TransferBinding[];
-  textures: Record<
-    string,
-    {
-      width: number;
-      height: number;
-      buffer: SharedArrayBuffer;
-      format: GPUTextureFormat;
-      immutable: boolean;
-    }
-  >;
+// export interface TransferRenderTarget {
+//   id: string;
+//   viewport: SharedArrayBuffer;
+//   bindings: TransferBinding[];
+//   textures: Record<
+//     string,
+//     {
+//       width: number;
+//       height: number;
+//       buffer: SharedArrayBuffer;
+//       format: GPUTextureFormat;
+//       immutable: boolean;
+//     }
+//   >;
+// }
+
+interface TransferRenderPass {
+  id: string; // -.-
+  loadOp: GPULoadOp;
+  storeOp: GPUStoreOp;
+  depthStoreOp: GPUStoreOp;
+  depthLoadOp: GPULoadOp;
+  dependencies: RenderPassDenpendency[];
+}
+interface RenderPassDenpendency {
+  pass: string;
+  type: "depth" | "output";
+}
+
+export interface TransferPipeline {
+  rootPasses: string[];
+  sortedPasses: string[];
+  passes: Record<string, TransferRenderPass>;
 }
 
 export interface TransferInput {

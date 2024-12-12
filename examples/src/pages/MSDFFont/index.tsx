@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  RenderTarget,
-  RenderGroup,
-  GUICamera,
-  GUIView,
-  Text,
-  Br,
-  FontManager,
-} from "rega";
+import { RenderGroup, GUICamera, GUIView, Text, Br, FontManager } from "rega";
 import { Canvas } from "rega/web";
 
 export default function Page() {
@@ -47,7 +39,7 @@ export default function Page() {
 function App() {
   return (
     <>
-      <RenderTarget camera={<GUICamera />} id="GUI" />
+      {/* <RenderTarget camera={<GUICamera />} id="GUI" />
       <RenderGroup target="GUI">
         <GUIView
           style={{
@@ -114,7 +106,7 @@ function App() {
             GPU（グラフィックスプロセッサ）を活用して、高性能な計算を実行し、ブラウザでレンダリング可能な複雑なグラフィックスを描画できるようにします。
           </Text>
         </GUIView>
-      </RenderGroup>
+      </RenderGroup> */}
     </>
   );
 }

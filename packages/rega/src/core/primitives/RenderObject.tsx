@@ -18,19 +18,20 @@ import createMaterial from "../render/createMaterial";
 import TextureManager, { Texture } from "../common/texture_manager";
 import { Node, vec4, zIndexBias } from "pure3";
 import { RenderPipelineContext } from "./RenderPipeline";
-import { vec2, vec3, float } from "pure3";
+import { vec2, vec3, float, positionGeometry, normalGeometry } from "pure3";
 import { TransferObject } from "../render";
 
 interface Props {
   bindings?: Record<string, TransferResource>;
 
-  positionNode: Node<"vec4">;
+  positionNode?: Node<"vec4">;
   colorNode: Node<"vec3">;
-  normalNode: Node<"vec3">;
-  material: {
-    opacity: Node<"float">;
-    roughness: Node<"float">;
-    metallic: Node<"float">;
+  normalNode?: Node<"vec3">;
+
+  material?: {
+    opacity?: Node<"float">;
+    roughness?: Node<"float">;
+    metallic?: Node<"float">;
   };
 
   vertexCount: number;
@@ -49,8 +50,8 @@ interface Props {
 }
 
 export default function RenderObject({
-  positionNode,
-  normalNode,
+  positionNode = vec4(positionGeometry, 1),
+  normalNode = normalGeometry,
   colorNode,
 
   material,
@@ -116,8 +117,9 @@ export default function RenderObject({
         position: positionNode,
         normal: normalNode,
         color: colorNode,
-        metallic: material.metallic,
-        roughness: material.roughness,
+
+        metallic: material?.metallic ?? float(0),
+        roughness: material?.roughness ?? float(0),
 
         lightDir: vec3(0, 0, 1),
         lightColor: vec3(1, 1, 1),
@@ -132,7 +134,7 @@ export default function RenderObject({
 
       materials[pass.id] = createMaterial(
         vertex,
-        vec4(color!, material.opacity),
+        vec4(color!, material?.opacity ?? float(1)),
         getBindingLayout,
         getAttributeLayout,
         {
@@ -149,8 +151,8 @@ export default function RenderObject({
     normalNode,
     colorNode,
     zIndexEnabled,
-    material.metallic,
-    material.roughness,
+    material?.metallic,
+    material?.roughness,
   ]);
 
   useEffect(() => {
@@ -332,20 +334,6 @@ export default function RenderObject({
       renderCtx.server.removeObject(id);
     };
   }, []);
-
-  useEffect(() => {
-    // const prevIds = refTargets.current.targetIds;
-    // const currentIds = rgCtx.targetIds;
-    // const addedIds = differenceBy(currentIds, prevIds);
-    // const removedIds = differenceBy(prevIds, currentIds);
-    // removedIds.forEach((targetId) => {
-    //   renderCtx.server.removeObjectFromTarget(targetId, id);
-    // });
-    // addedIds.forEach((targetId) => {
-    //   renderCtx.server.addObjectToTarget(targetId, id);
-    // });
-    // refTargets.current.targetIds = rgCtx.targetIds;
-  }, [rgCtx]);
 
   return null;
 }

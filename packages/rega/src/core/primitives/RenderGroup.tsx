@@ -1,4 +1,5 @@
-import React, { createContext, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
+import RenderContext from "./RenderContext";
 
 interface Props {
   id: string;
@@ -11,6 +12,18 @@ export const RenderGroupContext = createContext({
 
 export default function RenderGroup({ id, children }: Props) {
   const ctx = useMemo(() => ({ id }), []);
+  const renderCtx = useContext(RenderContext);
+
+  useMemo(() => {
+    renderCtx.server.createRenderGroup(id);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      renderCtx.server.removeRenderGroup(id);
+    };
+  }, []);
+
   return (
     <RenderGroupContext.Provider value={ctx}>
       {children}

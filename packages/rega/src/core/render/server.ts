@@ -1,4 +1,5 @@
-import { TransferObject, TransferRenderTarget } from "./types";
+import { pipe } from "rxjs";
+import { TransferObject, TransferPipeline } from "./types";
 // @ts-ignore
 import RenderWorker from "./worker?worker";
 
@@ -43,33 +44,24 @@ class RenderServer {
     });
   }
 
-  createRenderTarget(target: TransferRenderTarget) {
+  createRenderGroup(id: string) {
     this.worker.postMessage({
-      type: "createRenderTarget",
-      target,
-    });
-  }
-
-  removeRenderTarget(id: string) {
-    this.worker.postMessage({
-      type: "removeRenderTarget",
+      type: "createRenderGroup",
       id,
     });
   }
 
-  addObjectToTarget(targetId: string, objectId: string) {
+  removeRenderGroup(id: string) {
     this.worker.postMessage({
-      type: "addObjectToTarget",
-      targetId,
-      objectId,
+      type: "removeRenderGroup",
+      id,
     });
   }
 
-  removeObjectFromTarget(targetId: string, objectId: string) {
+  initPipeline(pipeline: TransferPipeline) {
     this.worker.postMessage({
-      type: "removeObjectFromTarget",
-      targetId,
-      objectId,
+      type: "initPipeline",
+      pipeline,
     });
   }
 

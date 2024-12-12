@@ -1,6 +1,6 @@
 import React from "react";
 import { Canvas } from "rega/web";
-import { RenderTarget, RenderGroup, View, Camera, Relative } from "rega";
+import { RenderGroup, View, Camera, Relative } from "rega";
 
 export default function Page() {
   return <Canvas width={512} height={512} App={App} />;
@@ -9,7 +9,7 @@ export default function Page() {
 function App() {
   return (
     <>
-      <RenderTarget
+      {/* <RenderTarget
         id="main"
         camera={
           <Relative translation={{ z: 1000 }}>
@@ -56,7 +56,7 @@ function App() {
             style={{ width: 10, height: 40, backgroundColor: "indianred" }}
           ></View>
         </View>
-      </RenderGroup>
+      </RenderGroup> */}
     </>
   );
 }

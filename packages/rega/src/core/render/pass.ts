@@ -20,8 +20,32 @@ interface Denpendency {
   type: "depth" | "output";
 }
 
+// texture: GPUTexture;
+// textureView: GPUTextureView;
+// depthTexture: GPUTexture;
+// depthTextureView: GPUTextureView;
+// viewportView: Float32Array;
+// groups: Set<string>;
+// loadOp: GPULoadOp;
+// storeOp: GPUStoreOp;
+// depthStoreOp: GPUStoreOp;
+// depthLoadOp: GPULoadOp;
+
 export interface RenderPass {
   id: string;
   dependencies: Denpendency[];
-  pipeline: Pipeline;
+  pipelines: Pipeline[];
+
+  loadOp: GPULoadOp;
+  storeOp: GPUStoreOp;
+  depthStoreOp: GPUStoreOp;
+  depthLoadOp: GPULoadOp;
+}
+
+export function mergePipelines(pipelines: Pipeline[]): Pipeline {
+  return function (pipelineIn: PipelineIn) {
+    return pipelines.reduce((acc, pipeline) => {
+      return { ...acc, ...pipeline(acc) };
+    }, pipelineIn);
+  };
 }

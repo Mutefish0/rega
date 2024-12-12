@@ -1,9 +1,9 @@
 import {
   MaterialJSON,
   TransferObject,
-  TransferRenderTarget,
   TransferInput,
   TransferResource,
+  TransferPipeline,
 } from "./types";
 
 import {
@@ -67,10 +67,10 @@ const renderPasses = new Map<
   string,
   {
     texture: GPUTexture;
-    textureView: GPUTextureView;
+    //textureView: GPUTextureView;
     depthTexture: GPUTexture;
-    depthTextureView: GPUTextureView;
-    viewportView: Float32Array;
+    //depthTextureView: GPUTextureView;
+    // viewportView: Float32Array;
     groups: Set<string>;
     loadOp: GPULoadOp;
     storeOp: GPUStoreOp;
@@ -79,7 +79,8 @@ const renderPasses = new Map<
   }
 >();
 
-const sortedPasses: string[] = [];
+let sortedPasses: string[] = [];
+let rootPasses = new Set<string>();
 
 // index 2
 // check-every-frame
@@ -158,6 +159,37 @@ self.addEventListener("message", async (event) => {
 
     self.postMessage({ type: "ready" });
     start();
+  } else if (event.data.type === "initPipeline") {
+    const pipeline = event.data.pipeline as TransferPipeline;
+    sortedPasses = pipeline.sortedPasses;
+    rootPasses = new Set(pipeline.rootPasses);
+    for (const passId in pipeline.passes) {
+      const pass = pipeline.passes[passId];
+      const { loadOp, storeOp, depthLoadOp, depthStoreOp } = pass;
+      const texture = device.createTexture({
+        size: [canvasSize.width, canvasSize.height, 1],
+        format: "bgra8unorm",
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      });
+      const textureView = texture.createView();
+      const depthTexture = device.createTexture({
+        size: [canvasSize.width, canvasSize.height, 1],
+        format: "depth24plus",
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      });
+      const depthTextureView = depthTexture.createView();
+      renderPasses.set(passId, {
+        texture,
+        textureView,
+        depthTexture,
+        depthTextureView,
+        groups: new Set(),
+        loadOp,
+        storeOp,
+        depthStoreOp,
+        depthLoadOp,
+      });
+    }
   } else if (event.data.type === "createRenderTarget") {
     // const { id, viewport, bindings, textures } = event.data
     //   .target as TransferRenderTarget;
@@ -413,6 +445,12 @@ self.addEventListener("message", async (event) => {
       renderObjectMap.delete(id);
       renderGroups.get(groupId)!.objects.delete(id);
     }
+  } else if (event.data.type === "createRenderGroup") {
+    const { id } = event.data;
+    renderGroups.set(id, { objects: new Set() });
+  } else if (event.data.type === "removeRenderGroup") {
+    const { id } = event.data;
+    renderGroups.delete(id);
   }
 });
 
@@ -428,15 +466,18 @@ async function start() {
 
     sortedPasses.forEach((passId) => {
       const {
+        texture,
+        depthTexture,
         groups,
-        textureView,
-        depthTextureView,
         loadOp,
         storeOp,
         depthStoreOp,
         depthLoadOp,
         viewportView,
       } = renderPasses.get(passId)!;
+
+      const textureView = texture.createView();
+      const depthTextureView = depthTexture.createView();
 
       const renderPassDescriptor: GPURenderPassDescriptor = {
         colorAttachments: [
@@ -460,14 +501,14 @@ async function start() {
       passEncoder.setBindGroup(3, globalBindGroup.bindGroup);
       passEncoder.setBindGroup(2, frameBindGroup.bindGroup);
 
-      passEncoder.setViewport(
-        viewportView[0],
-        viewportView[1],
-        viewportView[2],
-        viewportView[3],
-        0,
-        1
-      );
+      // passEncoder.setViewport(
+      //   viewportView[0],
+      //   viewportView[1],
+      //   viewportView[2],
+      //   viewportView[3],
+      //   0,
+      //   1
+      // );
 
       // check target bindings
       sharedBindGroup.bindings.forEach(({ resource }) => {
