@@ -3,6 +3,7 @@ import { WGSLValueType } from "pure3";
 export interface TransferBinding {
   name: string;
   binding: number;
+  visibility: number;
   resource: TransferResource;
 }
 
@@ -60,23 +61,33 @@ export interface TransferObject {
 //   >;
 // }
 
-interface TransferRenderPass {
-  id: string; // -.-
+export interface TransferRenderPass {
+  id: string;
   loadOp: GPULoadOp;
   storeOp: GPUStoreOp;
   depthStoreOp: GPUStoreOp;
   depthLoadOp: GPULoadOp;
-  dependencies: RenderPassDenpendency[];
-}
-interface RenderPassDenpendency {
-  pass: string;
-  type: "depth" | "output";
+
+  depthTexture: string | undefined;
+  outputTxture: string | undefined;
+
+  renderGroups: string[];
 }
 
 export interface TransferPipeline {
-  rootPasses: string[];
   sortedPasses: string[];
   passes: Record<string, TransferRenderPass>;
+  bindings: TransferBinding[];
+  textures: Record<
+    string,
+    {
+      width: number;
+      height: number;
+      buffer: SharedArrayBuffer;
+      format: GPUTextureFormat;
+      immutable: boolean;
+    }
+  >;
 }
 
 export interface TransferInput {
@@ -194,4 +205,22 @@ export interface MaterialJSON {
 
   topology: GPUPrimitiveTopology;
   depthWriteEnabled: boolean;
+}
+
+export function resourceToResourceType(
+  resource: TransferResource
+): ResourceType {
+  let type;
+  if (resource.type === "texture") {
+    if (resource.sampleType === "sint") {
+      type = "sintTexture" as const;
+    } else if (resource.sampleType === "uint") {
+      type = "uintTexture" as const;
+    } else {
+      type = "sampledTexture" as const;
+    }
+  } else {
+    type = resource.type;
+  }
+  return type;
 }

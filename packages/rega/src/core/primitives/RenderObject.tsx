@@ -1,11 +1,10 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import TransformContext from "./TransformContext";
 import RenderContext from "./RenderContext";
 import { ZIndexContext } from "./ZIndex";
 import { RenderGroupContext } from "./RenderGroup";
 import {
   MaterialJSON,
-  NamedBindingLayout,
   TransferBinding,
   TransferResource,
   TransferTextureResource,
@@ -13,12 +12,17 @@ import {
 import { createVertexControll } from "../render/vertex";
 import useBindings from "../hooks/useBingdings";
 import { SlotGroup, getOrcreateSlot } from "../render/slot";
-import { differenceBy } from "lodash";
 import createMaterial from "../render/createMaterial";
 import TextureManager, { Texture } from "../common/texture_manager";
 import { Node, vec4, zIndexBias } from "pure3";
 import { RenderPipelineContext } from "./RenderPipeline";
-import { vec2, vec3, float, positionGeometry, normalGeometry } from "pure3";
+import {
+  vec3,
+  float,
+  positionGeometry,
+  normalGeometry,
+  modelWorldMatrix,
+} from "pure3";
 import { TransferObject } from "../render";
 
 interface Props {
@@ -114,7 +118,7 @@ export default function RenderObject({
 
     for (const pass of passes) {
       const { position, color } = pass.pipeline({
-        position: positionNode,
+        position: modelWorldMatrix.mul(positionNode),
         normal: normalNode,
         color: colorNode,
 
@@ -163,84 +167,6 @@ export default function RenderObject({
   useEffect(() => binds.updates.zIndex([zIndexCtx.node.zValue]), [zIndexCtx]);
 
   useEffect(() => {
-    // const allBindings = {
-    //   ...bindings,
-    //   ...binds.resources,
-    // } as Record<string, TransferResource>;
-    // const objectBindings: TransferBinding[] = [];
-    // for (const layout of material.bindGroups[0]) {
-    //   const name = layout.name;
-    //   const resource = allBindings[name];
-    //   if (resource) {
-    //     objectBindings.push({
-    //       name,
-    //       binding: layout.binding,
-    //       resource,
-    //     });
-    //   } else {
-    //     if (layout.type === "sampler") {
-    //       objectBindings.push({
-    //         name,
-    //         binding: layout.binding,
-    //         resource: {
-    //           type: "sampler",
-    //           magFilter: "nearest",
-    //           minFilter: "nearest",
-    //         },
-    //       });
-    //     } else {
-    //       throw new Error(`Missing binding ${name}`);
-    //     }
-    //   }
-    // }
-    // const targetBindingLayouts: NamedBindingLayout[] = [];
-    // for (const name in renderCtx.renderTargetBindGroupLayout) {
-    //   targetBindingLayouts.push({
-    //     name,
-    //     type: renderCtx.renderTargetBindGroupLayout[name],
-    //     binding: getOrcreateSlot("target", name),
-    //     visibility: 3,
-    //   });
-    // }
-    // const textures: Record<string, Texture> = {};
-    // for (const b of material.bindGroups[0]) {
-    //   if (
-    //     b.type === "sampledTexture" ||
-    //     b.type === "sintTexture" ||
-    //     b.type === "uintTexture"
-    //   ) {
-    //     const res = allBindings[b.name] as TransferTextureResource;
-    //     const texture = TextureManager.get(res.textureId);
-    //     if (!texture) {
-    //       throw new Error(`Missing texture ${res.textureId}`);
-    //     }
-    //     textures[b.name] = texture;
-    //   }
-    // }
-    // const vertexBuffers: SharedArrayBuffer[] = [];
-    // for (const attr of material.attributes) {
-    //   const attributeName = attr.name;
-    //   const buffer = vertex[attributeName];
-    //   if (!buffer) {
-    //     throw new Error(`Missing attribute ${attributeName}`);
-    //   }
-    //   vertexBuffers.push(buffer);
-    // }
-    // renderCtx.server.createObject({
-    //   id,
-    //   material: {
-    //     ...material,
-    //     bindGroups: [material.bindGroups[0], targetBindingLayouts, [], []],
-    //   },
-    //   bindings: objectBindings,
-    //   input: {
-    //     vertexBuffers,
-    //     vertexCtrlBuffer: vc.buffer,
-    //     index,
-    //   },
-    //   textures,
-    // });
-
     const textures: Record<string, Texture> = {};
 
     const vertexBuffers: Array<{
@@ -274,6 +200,7 @@ export default function RenderObject({
             name,
             binding: layout.binding,
             resource,
+            visibility: layout.visibility,
           });
         } else {
           if (layout.type === "sampler") {
@@ -285,6 +212,7 @@ export default function RenderObject({
                 magFilter: "nearest",
                 minFilter: "nearest",
               },
+              visibility: layout.visibility,
             });
           } else {
             throw new Error(`Missing binding ${name}`);
@@ -314,6 +242,11 @@ export default function RenderObject({
           buffer,
         });
       }
+
+      passes[passId] = {
+        material,
+        bindings: objectBindings,
+      };
     }
 
     const object: TransferObject = {

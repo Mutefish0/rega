@@ -201,7 +201,10 @@ export default function createMaterial(
   const mat: MaterialJSON = {
     vertexShader: builder.vertexShader,
     fragmentShader: builder.fragmentShader,
-    attributes: builder.attributes,
+    attributes: builder.attributes.map((attr) => ({
+      ...attr,
+      binding: getAttributeLayout(attr.name),
+    })),
     bindGroups,
     blend,
     format: "bgra8unorm",

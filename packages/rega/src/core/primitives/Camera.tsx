@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import TransformContext from "./TransformContext";
-import { RenderTargetContext } from "./RenderTarget";
+import { BindingContext } from "./BindingLayer";
 import { WebGPUCoordinateSystem } from "three/src/constants.js";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
 import { AnchorType } from "../hooks/useAnchor";
 import useBindingViews from "../hooks/useBindingViews";
-import { Matrix4 } from "pure3";
+import { Matrix4, cameraProjectionMatrix, cameraViewMatrix } from "pure3";
+import { PipelineIn, PipelineOut } from "../render/pass";
 
 interface CommonProps {}
 
@@ -53,7 +54,7 @@ export default function Camera({
   anchor = "center",
 }: Props) {
   const transform = useContext(TransformContext);
-  const renderTarget = useContext(RenderTargetContext);
+  const bCtx = useContext(BindingContext);
 
   const projectionMatrix = useMemo(() => {
     if (type === "perspective") {
@@ -121,7 +122,7 @@ export default function Camera({
     }
   }, [type, fov, aspect, near, far, width, height, anchor]);
 
-  const bindingViews = useBindingViews(bindingsLayout, renderTarget.bindings);
+  const bindingViews = useBindingViews(bindingsLayout, bCtx);
 
   useEffect(() => {
     bindingViews.cameraProjectionMatrix(projectionMatrix.elements);
@@ -137,3 +138,8 @@ export default function Camera({
 }
 
 Camera.bindingsLayout = bindingsLayout;
+Camera.pipeline = ({ position }: PipelineIn) => {
+  return {
+    position: cameraProjectionMatrix.mul(cameraViewMatrix).mul(position),
+  } as PipelineOut;
+};

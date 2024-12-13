@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo } from "react";
-import { vec4, uniform, Matrix4, positionGeometry } from "pure3";
-
+import { vec4, uniform, Matrix4 } from "pure3";
 import quad from "../render/geometry/quad";
-import { basicVertexNode } from "../render/shaders/index";
 import useBindings from "../hooks/useBingdings";
 
 import RenderObject from "../primitives/RenderObject";
@@ -21,8 +19,6 @@ interface Props {
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 
-const fragmentNode = vec4(color, opacity);
-
 export default React.memo(function Box2D({
   size,
   anchor = "center",
@@ -38,7 +34,7 @@ export default React.memo(function Box2D({
     const { opacity, array } = parseColor(colorValue || "#fff");
     bindings.updates.opacity([opacityValue * opacity]);
     bindings.updates.color(array);
-  }, [color, opacityValue]);
+  }, [colorValue, opacityValue]);
 
   const anchorMatrix = useAnchor(anchor, size);
 

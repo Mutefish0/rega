@@ -4,6 +4,8 @@ import {
   TransferInput,
   TransferResource,
   TransferPipeline,
+  TransferBinding,
+  resourceToResourceType,
 } from "./types";
 
 import {
@@ -20,6 +22,76 @@ import createRenderPipeline from "./createRenderPipeline";
 import createBindGroupLayout from "./createBindGroupLayout";
 
 import { parseColor } from "../tools/color";
+
+function createBindGroupByBindings(
+  device: GPUDevice,
+  bindings: TransferBinding[],
+  textures: Record<string, any>
+) {
+  const gpuResources = bindings.map(({ resource, binding, name }) => {
+    if (resource.type === "uniformBuffer") {
+      const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+      const gpuBuffer = addObjectGPUBuffer(
+        device,
+        name,
+        resource.buffer,
+        usage
+      );
+      return {
+        binding,
+        resource: { buffer: gpuBuffer } as GPUBufferBinding,
+      };
+    } else if (resource.type === "texture") {
+      const usage = GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+      const t = textures[name];
+      const texture = addObjectGPUTexture(
+        device,
+        t.immutable,
+        name,
+        resource.textureId,
+        t.buffer,
+        {
+          width: t.width,
+          height: t.height,
+          usage,
+          format: t.format,
+        }
+      );
+      return {
+        binding,
+        resource: texture.createView(),
+      };
+    } else if (resource.type === "sampler") {
+      return {
+        binding,
+        resource: addObjectGPUSampler(device, {
+          magFilter: resource.magFilter,
+          minFilter: resource.minFilter,
+          maxAnisotropy: resource.maxAnisotropy,
+          compare: resource.compare,
+        }),
+      };
+    } else {
+      throw new Error("not supported uniform type");
+    }
+  });
+  const namedBindingLayout = bindings.map(
+    ({ binding, resource, name, visibility }) => ({
+      type: resourceToResourceType(resource),
+      name,
+      binding,
+      visibility,
+    })
+  );
+
+  const bindGroupLayout = createBindGroupLayout(device, namedBindingLayout);
+  const bindGroup = createGPUBindGroup(device, bindGroupLayout, gpuResources);
+
+  return {
+    bindGroupLayout,
+    bindGroup,
+  };
+}
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
@@ -66,7 +138,7 @@ const renderObjectMap = new Map<
 const renderPasses = new Map<
   string,
   {
-    texture: GPUTexture;
+    outputTexture: GPUTexture | null;
     //textureView: GPUTextureView;
     depthTexture: GPUTexture;
     //depthTextureView: GPUTextureView;
@@ -80,7 +152,6 @@ const renderPasses = new Map<
 >();
 
 let sortedPasses: string[] = [];
-let rootPasses = new Set<string>();
 
 // index 2
 // check-every-frame
@@ -97,6 +168,7 @@ const sharedBindGroup = {
     binding: number;
     resource: TransferResource;
   }>,
+  bindGroupLayout: null as any as GPUBindGroupLayout,
   bindGroup: null as any as GPUBindGroup,
 };
 
@@ -108,6 +180,7 @@ const frameBindGroup = {
     resource: TransferResource;
   }>,
   bindGroup: null as any as GPUBindGroup,
+  bindGroupLayout: null as any as GPUBindGroupLayout,
 };
 
 // index 0
@@ -118,9 +191,11 @@ const globalBindGroup = {
     resource: TransferResource;
   }>,
   bindGroup: null as any as GPUBindGroup,
+  bindGroupLayout: null as any as GPUBindGroupLayout,
 };
 
 let _initialized = false;
+let _pipelineInitialized = false;
 
 self.addEventListener("message", async (event) => {
   if (event.data.type === "initCanvas" && !_initialized) {
@@ -145,154 +220,85 @@ self.addEventListener("message", async (event) => {
       format: "bgra8unorm",
     });
 
+    globalBindGroup.bindGroupLayout = device.createBindGroupLayout({
+      entries: [],
+    });
     globalBindGroup.bindGroup = createGPUBindGroup(
       device,
-      device.createBindGroupLayout({ entries: [] }),
+      globalBindGroup.bindGroupLayout,
       []
     );
 
+    frameBindGroup.bindGroupLayout = device.createBindGroupLayout({
+      entries: [],
+    });
     frameBindGroup.bindGroup = createGPUBindGroup(
       device,
-      device.createBindGroupLayout({ entries: [] }),
+      frameBindGroup.bindGroupLayout,
       []
     );
 
     self.postMessage({ type: "ready" });
-    start();
-  } else if (event.data.type === "initPipeline") {
+  } else if (event.data.type === "initPipeline" && !_pipelineInitialized) {
+    _pipelineInitialized = true;
     const pipeline = event.data.pipeline as TransferPipeline;
     sortedPasses = pipeline.sortedPasses;
-    rootPasses = new Set(pipeline.rootPasses);
     for (const passId in pipeline.passes) {
       const pass = pipeline.passes[passId];
-      const { loadOp, storeOp, depthLoadOp, depthStoreOp } = pass;
-      const texture = device.createTexture({
-        size: [canvasSize.width, canvasSize.height, 1],
-        format: "bgra8unorm",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      });
-      const textureView = texture.createView();
-      const depthTexture = device.createTexture({
-        size: [canvasSize.width, canvasSize.height, 1],
-        format: "depth24plus",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      });
-      const depthTextureView = depthTexture.createView();
+      const {
+        loadOp,
+        storeOp,
+        depthLoadOp,
+        depthStoreOp,
+        depthTexture: _depthTexture,
+        outputTxture: _outputTxture,
+      } = pass;
+
+      let depthTexture: GPUTexture;
+      if (_depthTexture) {
+        depthTexture = renderPasses.get(_depthTexture)!.depthTexture;
+      } else {
+        depthTexture = device.createTexture({
+          size: [canvasSize.width, canvasSize.height, 1],
+          format: "depth24plus",
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+      }
+      let outputTexture: GPUTexture | null;
+      if (_outputTxture) {
+        if (_outputTxture === "swapchain") {
+          outputTexture = null;
+        } else {
+          outputTexture = renderPasses.get(_outputTxture)!.outputTexture;
+        }
+      } else {
+        outputTexture = device.createTexture({
+          size: [canvasSize.width, canvasSize.height, 1],
+          format: "bgra8unorm",
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+      }
+
       renderPasses.set(passId, {
-        texture,
-        textureView,
         depthTexture,
-        depthTextureView,
-        groups: new Set(),
+        outputTexture,
+        groups: new Set(pass.renderGroups),
         loadOp,
         storeOp,
         depthStoreOp,
         depthLoadOp,
       });
     }
-  } else if (event.data.type === "createRenderTarget") {
-    // const { id, viewport, bindings, textures } = event.data
-    //   .target as TransferRenderTarget;
-    // const viewportView = new Float32Array(viewport);
-    // const bindGroupLayout = createBindGroupLayout(
-    //   device,
-    //   bindings.map(({ binding, resource, name }) => {
-    //     let type;
-    //     if (resource.type === "texture") {
-    //       if (resource.sampleType === "sint") {
-    //         type = "sintTexture" as const;
-    //       } else if (resource.sampleType === "uint") {
-    //         type = "uintTexture" as const;
-    //       } else {
-    //         type = "sampledTexture" as const;
-    //       }
-    //     } else {
-    //       type = resource.type;
-    //     }
-    //     return {
-    //       binding,
-    //       type,
-    //       name,
-    //       visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-    //     };
-    //   })
-    // );
-    // const gpuResources = bindings.map(({ resource, binding, name }) => {
-    //   if (resource.type === "uniformBuffer") {
-    //     const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-    //     const gpuBuffer = addObjectGPUBuffer(
-    //       device,
-    //       name,
-    //       resource.buffer,
-    //       usage
-    //     );
-    //     return {
-    //       binding,
-    //       resource: { buffer: gpuBuffer } as GPUBufferBinding,
-    //     };
-    //   } else if (resource.type === "texture") {
-    //     const usage =
-    //       GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-    //     const t = textures[name];
-    //     const texture = addObjectGPUTexture(
-    //       device,
-    //       t.immutable,
-    //       name,
-    //       resource.textureId,
-    //       t.buffer,
-    //       {
-    //         width: t.width,
-    //         height: t.height,
-    //         usage,
-    //         format: t.format,
-    //       }
-    //     );
-    //     return {
-    //       binding,
-    //       resource: texture.createView(),
-    //     };
-    //   } else if (resource.type === "sampler") {
-    //     return {
-    //       binding,
-    //       resource: addObjectGPUSampler(device, {
-    //         magFilter: resource.magFilter,
-    //         minFilter: resource.minFilter,
-    //         maxAnisotropy: resource.maxAnisotropy,
-    //         compare: resource.compare,
-    //       }),
-    //     };
-    //   } else {
-    //     throw new Error("not supported uniform type");
-    //   }
-    // });
-    // const gpuBindGroup = createGPUBindGroup(
-    //   device,
-    //   bindGroupLayout,
-    //   gpuResources
-    // );
-    // const depthTexture = device.createTexture({
-    //   size: [canvasSize.width, canvasSize.height, 1],
-    //   format: "depth24plus",
-    //   usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    // });
-    // const depthTextureView = depthTexture.createView();
-    // renderTargets.set(id, {
-    //   objects: new Set(),
-    //   viewportView,
-    //   bindGroup: gpuBindGroup,
-    //   bindings,
-    //   depthTexture,
-    //   depthTextureView,
-    // });
-    // renderTargetIds.push(id);
-  } else if (event.data.type === "removeRenderTarget") {
-    // const { id } = event.data;
-    // const target = renderTargets.get(id);
-    // if (target) {
-    //   renderTargetIds = renderTargetIds.filter((targetId) => targetId !== id);
-    //   target.depthTexture.destroy();
-    //   renderTargets.delete(id);
-    // }
+
+    const { bindGroup, bindGroupLayout } = createBindGroupByBindings(
+      device,
+      pipeline.bindings,
+      pipeline.textures
+    );
+    sharedBindGroup.bindings = pipeline.bindings;
+    sharedBindGroup.bindGroup = bindGroup;
+    sharedBindGroup.bindGroupLayout = bindGroupLayout;
+    start();
   } else if (event.data.type === "addObjectToTarget") {
     // const { targetId, objectId } = event.data;
     // const target = renderTargets.get(targetId);
@@ -324,71 +330,28 @@ self.addEventListener("message", async (event) => {
 
     for (const passId in passes) {
       const { material, bindings } = passes[passId];
+
       const pipelineKey = JSON.stringify(material);
+      const objectBindGroup = createBindGroupByBindings(
+        device,
+        bindings,
+        textures
+      );
       if (!pipelineMap.has(pipelineKey)) {
-        const pipeline = createRenderPipeline(device, material);
+        const pipeline = createRenderPipeline(device, material, [
+          objectBindGroup.bindGroupLayout,
+          sharedBindGroup.bindGroupLayout,
+          frameBindGroup.bindGroupLayout,
+          globalBindGroup.bindGroupLayout,
+        ]);
         pipelineMap.set(pipelineKey, pipeline);
       }
-      const pl = pipelineMap.get(pipelineKey)!;
 
-      const gpuResources = bindings.map(({ resource, binding, name }) => {
-        if (resource.type === "uniformBuffer") {
-          const usage = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-          const gpuBuffer = addObjectGPUBuffer(
-            device,
-            name,
-            resource.buffer,
-            usage
-          );
-          return {
-            binding,
-            resource: { buffer: gpuBuffer } as GPUBufferBinding,
-          };
-        } else if (resource.type === "texture") {
-          const usage =
-            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-          const t = textures[name];
-          const texture = addObjectGPUTexture(
-            device,
-            t.immutable,
-            name,
-            resource.textureId,
-            t.buffer,
-            {
-              width: t.width,
-              height: t.height,
-              usage,
-              format: t.format,
-            }
-          );
-          return {
-            binding,
-            resource: texture.createView(),
-          };
-        } else if (resource.type === "sampler") {
-          return {
-            binding,
-            resource: addObjectGPUSampler(device, {
-              magFilter: resource.magFilter,
-              minFilter: resource.minFilter,
-              maxAnisotropy: resource.maxAnisotropy,
-              compare: resource.compare,
-            }),
-          };
-        } else {
-          throw new Error("not supported uniform type");
-        }
-      });
-      const gpuBindGroup = createGPUBindGroup(
-        device,
-        pl.bindGroupLayouts[0],
-        gpuResources
-      );
       passRet[passId] = {
         material,
         pipelineKey,
         bindings,
-        bindGroup: gpuBindGroup,
+        bindGroup: objectBindGroup.bindGroup,
       };
     }
 
@@ -410,6 +373,7 @@ self.addEventListener("message", async (event) => {
         GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
       );
     }
+
     renderObjectMap.set(id, {
       groupId,
       passes: passRet,
@@ -460,13 +424,13 @@ async function start() {
   function render() {
     frame++;
 
-    // const textureView = context.getCurrentTexture().createView();
+    const textureView = context.getCurrentTexture().createView();
 
     const commandEncoder = device.createCommandEncoder();
 
     sortedPasses.forEach((passId) => {
       const {
-        texture,
+        outputTexture,
         depthTexture,
         groups,
         loadOp,
@@ -476,20 +440,17 @@ async function start() {
         viewportView,
       } = renderPasses.get(passId)!;
 
-      const textureView = texture.createView();
-      const depthTextureView = depthTexture.createView();
-
       const renderPassDescriptor: GPURenderPassDescriptor = {
         colorAttachments: [
           {
-            view: textureView,
+            view: outputTexture?.createView() ?? textureView,
             loadOp,
             storeOp,
             clearValue: backgroundColor,
           },
         ],
         depthStencilAttachment: {
-          view: depthTextureView,
+          view: depthTexture.createView(),
           depthClearValue: 1.0, // 深度清除值
           depthStoreOp,
           depthLoadOp,
@@ -525,11 +486,12 @@ async function start() {
       passEncoder.setBindGroup(1, sharedBindGroup.bindGroup);
 
       groups.forEach((groupId) => {
-        const objects = renderGroups.get(groupId)!.objects;
+        const objects = renderGroups.get(groupId)?.objects || [];
         objects.forEach((objectId) => {
           const object = renderObjectMap.get(objectId);
           if (object) {
             const passObject = object.passes[passId];
+
             const pipeline = pipelineMap.get(passObject.pipelineKey)!.pipeline;
             passEncoder.setPipeline(pipeline);
             // check object bindings

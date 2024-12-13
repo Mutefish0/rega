@@ -1,14 +1,14 @@
 import React, { ReactNode, useContext, createContext, useMemo } from "react";
-import { TransferResource } from "../render";
+import { TransferBinding, TransferRenderPass } from "../render";
 import { BindingsLayout } from "../render/binding";
 import { RenderPass, Pipeline, mergePipelines } from "../render/pass";
 import { SlotGroup, getOrcreateSlot } from "../render/slot";
 import RenderContext from "./RenderContext";
 import useBindings from "../hooks/useBingdings";
+import { BindingContext } from "./BindingLayer";
 
 export const RenderPipelineContext = createContext({
   bindingPoints: {} as Record<string, number>,
-  bindings: {} as Record<string, TransferResource>,
   groupToPass: {} as Record<string, Array<{ id: string; pipeline: Pipeline }>>,
 });
 
@@ -59,13 +59,52 @@ export default function RenderPipeline({
     return {
       groupToPass,
       bindingPoints,
-      bindings: bindings.resources,
     };
   }, [bindings]);
 
+  useMemo(() => {
+    const sharedBindings: TransferBinding[] = [];
+    for (const name in bindings.resources) {
+      sharedBindings.push({
+        name,
+        binding: ctx.bindingPoints[name],
+        visibility: 3,
+        resource: bindings.resources[name],
+      });
+    }
+
+    const transferRenderPasses: Record<string, TransferRenderPass> = {};
+    const sortedPasses: string[] = [];
+
+    for (const pass of renderPass) {
+      transferRenderPasses[pass.id] = {
+        id: pass.id,
+        depthLoadOp: pass.depthLoadOp,
+        depthStoreOp: pass.depthStoreOp,
+        loadOp: pass.loadOp,
+        storeOp: pass.storeOp,
+
+        depthTexture: "",
+        outputTxture: "swapchain",
+
+        renderGroups: renderGroups.get(pass) || [],
+      };
+      sortedPasses.push(pass.id);
+    }
+
+    renderCtx.server.initPipeline({
+      sortedPasses,
+      passes: transferRenderPasses,
+      textures: {},
+      bindings: sharedBindings,
+    });
+  }, []);
+
   return (
     <RenderPipelineContext.Provider value={ctx}>
-      {children}
+      <BindingContext.Provider value={bindings.resources}>
+        {children}
+      </BindingContext.Provider>
     </RenderPipelineContext.Provider>
   );
 }

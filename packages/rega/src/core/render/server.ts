@@ -1,4 +1,3 @@
-import { pipe } from "rxjs";
 import { TransferObject, TransferPipeline } from "./types";
 // @ts-ignore
 import RenderWorker from "./worker?worker";

@@ -20,17 +20,6 @@ interface Denpendency {
   type: "depth" | "output";
 }
 
-// texture: GPUTexture;
-// textureView: GPUTextureView;
-// depthTexture: GPUTexture;
-// depthTextureView: GPUTextureView;
-// viewportView: Float32Array;
-// groups: Set<string>;
-// loadOp: GPULoadOp;
-// storeOp: GPUStoreOp;
-// depthStoreOp: GPUStoreOp;
-// depthLoadOp: GPULoadOp;
-
 export interface RenderPass {
   id: string;
   dependencies: Denpendency[];

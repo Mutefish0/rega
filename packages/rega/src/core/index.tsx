@@ -23,6 +23,7 @@ import ZIndex from "./primitives/ZIndex";
 import useTransform from "./hooks/useTransform";
 
 import DirectionalLight from "./components/Light/DirectionalLight";
+import { BasicLightModel } from "./render/pipeline";
 
 import Camera from "./primitives/Camera";
 
@@ -176,6 +177,9 @@ export {
 
   // lights
   DirectionalLight,
+  BasicLightModel,
+
+  // pipeline
 };
 
 export { useTextureBinding };
