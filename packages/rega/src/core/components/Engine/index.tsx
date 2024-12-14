@@ -82,7 +82,11 @@ export default function CoreEngine(app: ReactNode, config: EngineConfig) {
   );
 
   renderServer
-    .init(canvas as HTMLCanvasElement, config.backgroundColor || "#000")
+    .init(
+      canvas as HTMLCanvasElement,
+      config.backgroundColor || "#000",
+      ctx.swapchainFormat
+    )
     .then(() => {
       renderer.updateContainer(
         <ThreeContext.Provider value={ctx}>

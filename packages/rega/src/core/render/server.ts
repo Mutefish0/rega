@@ -10,7 +10,11 @@ class RenderServer {
     this.worker = worker;
   }
 
-  async init(canvas: HTMLCanvasElement, backgroundColor: string) {
+  async init(
+    canvas: HTMLCanvasElement,
+    backgroundColor: string,
+    swapchainFormat: GPUTextureFormat
+  ) {
     const offscreenCanvas = canvas.transferControlToOffscreen();
     return new Promise<void>((resolve) => {
       this.worker.addEventListener("message", (event) => {
@@ -23,6 +27,7 @@ class RenderServer {
           type: "initCanvas",
           canvas: offscreenCanvas,
           backgroundColor,
+          swapchainFormat,
         },
         [offscreenCanvas]
       );

@@ -6,6 +6,8 @@ import {
   TransferPipeline,
   TransferBinding,
   resourceToResourceType,
+  TransferRenderPassRef,
+  TransferRenderPassTexture,
 } from "./types";
 
 import {
@@ -17,6 +19,7 @@ import {
   addObjectGPUSampler,
   updateGPUBuffer,
 } from "./bufferPair";
+
 import createGPUBindGroup from "./createGPUBindGroup";
 import createRenderPipeline from "./createRenderPipeline";
 import createBindGroupLayout from "./createBindGroupLayout";
@@ -95,7 +98,6 @@ function createBindGroupByBindings(
 
 let context!: GPUCanvasContext;
 let device!: GPUDevice;
-let canvasSize = { width: 0, height: 0 };
 let backgroundColor = { r: 0, g: 0, b: 0, a: 1 };
 
 const pipelineMap = new Map<
@@ -138,16 +140,19 @@ const renderObjectMap = new Map<
 const renderPasses = new Map<
   string,
   {
-    outputTexture: GPUTexture | null;
-    //textureView: GPUTextureView;
-    depthTexture: GPUTexture;
-    //depthTextureView: GPUTextureView;
+    output: Array<{
+      texture: GPUTexture | null;
+      storeOp: GPUStoreOp;
+      loadOp: GPULoadOp;
+    }>;
+
+    depth: {
+      texture: GPUTexture;
+      storeOp: GPUStoreOp;
+      loadOp: GPULoadOp;
+    };
     // viewportView: Float32Array;
     groups: Set<string>;
-    loadOp: GPULoadOp;
-    storeOp: GPUStoreOp;
-    depthStoreOp: GPUStoreOp;
-    depthLoadOp: GPULoadOp;
   }
 >();
 
@@ -201,8 +206,9 @@ self.addEventListener("message", async (event) => {
   if (event.data.type === "initCanvas" && !_initialized) {
     _initialized = true;
     const canvas = event.data.canvas as OffscreenCanvas;
+    const swapchainFormat = event.data.swapchainFormat;
     const adapter = await navigator.gpu.requestAdapter();
-    canvasSize = { width: canvas.width, height: canvas.height };
+
     device = await adapter!.requestDevice();
     context = canvas.getContext("webgpu")!;
 
@@ -217,7 +223,7 @@ self.addEventListener("message", async (event) => {
     // 配置画布格式
     context.configure({
       device: device,
-      format: "bgra8unorm",
+      format: swapchainFormat,
     });
 
     globalBindGroup.bindGroupLayout = device.createBindGroupLayout({
@@ -245,48 +251,108 @@ self.addEventListener("message", async (event) => {
     sortedPasses = pipeline.sortedPasses;
     for (const passId in pipeline.passes) {
       const pass = pipeline.passes[passId];
-      const {
-        loadOp,
-        storeOp,
-        depthLoadOp,
-        depthStoreOp,
-        depthTexture: _depthTexture,
-        outputTxture: _outputTxture,
-      } = pass;
+      const { depth: _depth, output: _output } = pass;
 
-      let depthTexture: GPUTexture;
-      if (_depthTexture) {
-        depthTexture = renderPasses.get(_depthTexture)!.depthTexture;
-      } else {
-        depthTexture = device.createTexture({
-          size: [canvasSize.width, canvasSize.height, 1],
-          format: "depth24plus",
-          usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-      }
-      let outputTexture: GPUTexture | null;
-      if (_outputTxture) {
-        if (_outputTxture === "swapchain") {
-          outputTexture = null;
-        } else {
-          outputTexture = renderPasses.get(_outputTxture)!.outputTexture;
+      let depth!: {
+        texture: GPUTexture;
+        storeOp: GPUStoreOp;
+        loadOp: GPULoadOp;
+      };
+      if ((_depth as TransferRenderPassRef).ref) {
+        const { ref, src, loadOp, storeOp } = _depth as TransferRenderPassRef;
+        const pass = renderPasses.get(ref);
+        if (src === "depth") {
+          depth = {
+            texture: pass!.depth.texture,
+            storeOp,
+            loadOp,
+          };
+        } else if (src === "output_0") {
+          depth = {
+            texture: pass!.output[0]!.texture!,
+            storeOp,
+            loadOp,
+          };
+        } else if (src === "output_1") {
+          depth = {
+            texture: pass!.output[1]!.texture!,
+            storeOp,
+            loadOp,
+          };
+        } else if (src === "output_2") {
+          depth = {
+            texture: pass!.output[2]!.texture!,
+            storeOp,
+            loadOp,
+          };
         }
       } else {
-        outputTexture = device.createTexture({
-          size: [canvasSize.width, canvasSize.height, 1],
-          format: "bgra8unorm",
-          usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        });
+        const { width, height, format, loadOp, storeOp } =
+          _depth as TransferRenderPassTexture;
+        depth = {
+          texture: device.createTexture({
+            size: [width, height, 1],
+            format,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+          }),
+          storeOp,
+          loadOp,
+        };
+      }
+
+      let output: Array<{
+        texture: GPUTexture | null;
+        storeOp: GPUStoreOp;
+        loadOp: GPULoadOp;
+      }> = [];
+
+      for (const item of _output) {
+        if ((item as TransferRenderPassRef).ref) {
+          const { ref, src, loadOp, storeOp } = item as TransferRenderPassRef;
+          const pass = renderPasses.get(ref);
+          if (ref === "swapchain") {
+            output.push({ texture: null, loadOp, storeOp });
+          } else if (src === "depth") {
+            output.push({ texture: pass!.depth.texture, loadOp, storeOp });
+          } else if (src === "output_0") {
+            output.push({
+              texture: pass!.output[0]!.texture!,
+              loadOp,
+              storeOp,
+            });
+          } else if (src === "output_1") {
+            output.push({
+              texture: pass!.output[1]!.texture!,
+              loadOp,
+              storeOp,
+            });
+          } else if (src === "output_2") {
+            output.push({
+              texture: pass!.output[2]!.texture!,
+              loadOp,
+              storeOp,
+            });
+          }
+        } else {
+          const { width, height, format, loadOp, storeOp } =
+            item as TransferRenderPassTexture;
+          output.push({
+            texture: device.createTexture({
+              size: [width, height, 1],
+              format,
+              usage:
+                GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            }),
+            storeOp,
+            loadOp,
+          });
+        }
       }
 
       renderPasses.set(passId, {
-        depthTexture,
-        outputTexture,
-        groups: new Set(pass.renderGroups),
-        loadOp,
-        storeOp,
-        depthStoreOp,
-        depthLoadOp,
+        depth,
+        output,
+        groups: new Set(pass.groups),
       });
     }
 
@@ -299,18 +365,6 @@ self.addEventListener("message", async (event) => {
     sharedBindGroup.bindGroup = bindGroup;
     sharedBindGroup.bindGroupLayout = bindGroupLayout;
     start();
-  } else if (event.data.type === "addObjectToTarget") {
-    // const { targetId, objectId } = event.data;
-    // const target = renderTargets.get(targetId);
-    // if (target) {
-    //   target.objects.add(objectId);
-    // }
-  } else if (event.data.type === "removeObjectFromTarget") {
-    // const { targetId, objectId } = event.data;
-    // const target = renderTargets.get(targetId);
-    // if (target) {
-    //   target.objects.delete(objectId);
-    // }
   } else if (event.data.type === "createObject") {
     const { id, groupId, passes, input, textures } = event.data
       .object as TransferObject;
@@ -424,36 +478,30 @@ async function start() {
   function render() {
     frame++;
 
-    const textureView = context.getCurrentTexture().createView();
+    const swapchainTextureView = context.getCurrentTexture().createView();
 
     const commandEncoder = device.createCommandEncoder();
 
     sortedPasses.forEach((passId) => {
       const {
-        outputTexture,
-        depthTexture,
+        depth,
+        output,
         groups,
-        loadOp,
-        storeOp,
-        depthStoreOp,
-        depthLoadOp,
-        viewportView,
+        // viewportView,
       } = renderPasses.get(passId)!;
 
       const renderPassDescriptor: GPURenderPassDescriptor = {
-        colorAttachments: [
-          {
-            view: outputTexture?.createView() ?? textureView,
-            loadOp,
-            storeOp,
-            clearValue: backgroundColor,
-          },
-        ],
+        colorAttachments: output.map(({ texture, loadOp, storeOp }) => ({
+          view: texture?.createView() ?? swapchainTextureView,
+          loadOp,
+          storeOp,
+          clearValue: backgroundColor,
+        })),
         depthStencilAttachment: {
-          view: depthTexture.createView(),
+          view: depth.texture.createView(),
           depthClearValue: 1.0, // 深度清除值
-          depthStoreOp,
-          depthLoadOp,
+          depthStoreOp: depth.storeOp,
+          depthLoadOp: depth.loadOp,
         },
       };
 

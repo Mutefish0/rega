@@ -2,9 +2,12 @@
 
 import texture, { dataTexture } from "./accessors/texture/index";
 
+import type { NodeTexture } from "./accessors/texture/index";
+
 import uniform from "./core/uniform";
 
 export { texture, dataTexture, uniform };
+export type { NodeTexture };
 
 import type { Node, WGSLValueType } from "./core/types";
 export type { Node, WGSLValueType } from "./core/types";

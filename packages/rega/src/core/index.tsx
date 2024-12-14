@@ -22,6 +22,7 @@ import Relative from "./primitives/Relative";
 import ZIndex from "./primitives/ZIndex";
 import useTransform from "./hooks/useTransform";
 
+import AmbientLight from "./components/Light/AmbientLight";
 import DirectionalLight from "./components/Light/DirectionalLight";
 import { BasicLightModel } from "./render/pipeline";
 
@@ -177,6 +178,7 @@ export {
 
   // lights
   DirectionalLight,
+  AmbientLight,
   BasicLightModel,
 
   // pipeline

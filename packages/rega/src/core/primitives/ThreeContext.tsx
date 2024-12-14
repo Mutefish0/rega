@@ -17,11 +17,13 @@ export function createContextValues({
   assetsPixelToWorldRatio,
   fixedTimestep = 20,
   pixelRatio = 1,
+  swapchainFormat = "bgra8unorm",
 }: {
   size?: [number, number];
   assetsPixelToWorldRatio: number;
   fixedTimestep?: number;
   pixelRatio?: number;
+  swapchainFormat?: GPUTextureFormat;
 }) {
   return {
     id: Math.random().toString(36).slice(2),
@@ -34,6 +36,7 @@ export function createContextValues({
     dev: !!(import.meta as any).env.DEV,
     now: performance.now(),
     pixelRatio,
+    swapchainFormat,
   };
 }
 

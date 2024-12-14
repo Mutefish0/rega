@@ -5,8 +5,8 @@ import { WebGPUCoordinateSystem } from "three/src/constants.js";
 import { DEG2RAD } from "three/src/math/MathUtils.js";
 import { AnchorType } from "../hooks/useAnchor";
 import useBindingViews from "../hooks/useBindingViews";
-import { Matrix4, cameraProjectionMatrix, cameraViewMatrix } from "pure3";
-import { PipelineIn, PipelineOut } from "../render/pass";
+import { Matrix4 } from "pure3";
+import { createPipelineLayer } from "../render/pass";
 
 interface CommonProps {}
 
@@ -137,9 +137,10 @@ export default function Camera({
   return null;
 }
 
-Camera.bindingsLayout = bindingsLayout;
-Camera.pipeline = ({ position }: PipelineIn) => {
-  return {
-    position: cameraProjectionMatrix.mul(cameraViewMatrix).mul(position),
-  } as PipelineOut;
-};
+Camera.layer = createPipelineLayer(
+  bindingsLayout,
+  ({ cameraProjectionMatrix, cameraViewMatrix }) =>
+    ({ position }) => ({
+      position: cameraProjectionMatrix.mul(cameraViewMatrix).mul(position),
+    })
+);

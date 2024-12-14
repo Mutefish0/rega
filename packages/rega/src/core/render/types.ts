@@ -63,15 +63,27 @@ export interface TransferObject {
 
 export interface TransferRenderPass {
   id: string;
+  depth: TransferRenderPassTexture | TransferRenderPassRef;
+  output: Array<
+    | TransferRenderPassTexture
+    | TransferRenderPassRef
+    | { ref: "swapchain"; loadOp: GPULoadOp; storeOp: GPUStoreOp }
+  >;
+  groups: string[];
+}
+
+export interface TransferRenderPassRef {
+  ref: string;
+  src: "depth" | "output_0" | "output_1" | "output_2";
   loadOp: GPULoadOp;
   storeOp: GPUStoreOp;
-  depthStoreOp: GPUStoreOp;
-  depthLoadOp: GPULoadOp;
-
-  depthTexture: string | undefined;
-  outputTxture: string | undefined;
-
-  renderGroups: string[];
+}
+export interface TransferRenderPassTexture {
+  loadOp: GPULoadOp;
+  storeOp: GPUStoreOp;
+  width: number;
+  height: number;
+  format: GPUTextureFormat;
 }
 
 export interface TransferPipeline {

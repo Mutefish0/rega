@@ -127,7 +127,7 @@ export default function RenderObject({
 
         lightDir: vec3(0, 0, 1),
         lightColor: vec3(1, 1, 1),
-        ambientColor: vec3(0.1, 0.1, 0.1),
+        ambientColor: vec3(0, 0, 0),
       });
 
       let vertex = position!;

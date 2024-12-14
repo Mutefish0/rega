@@ -1,7 +1,7 @@
 import { useEffect, useContext } from "react";
 import useBindingViews from "../../hooks/useBindingViews";
-import { PipelineOut } from "../../render/pass";
-import { uniform, Vector3 } from "pure3";
+import { PipelineOut, createPipelineLayer } from "../../render/pass";
+import { Vector3 } from "pure3";
 import { parseColor } from "../../tools/color";
 import { BindingContext } from "../../primitives/BindingLayer";
 import TransformContext from "../../primitives/TransformContext";
@@ -17,11 +17,6 @@ const bindingsLayout = {
   directionalLight_direction: "vec3",
   directionalLight_intensity: "float",
 } as const;
-const uniforms = {
-  directionalLight_color: uniform("vec3", "directionalLight_color"),
-  directionalLight_direction: uniform("vec3", "directionalLight_direction"),
-  directionalLight_intensity: uniform("float", "directionalLight_intensity"),
-};
 
 export default function DirectionalLight({
   intensity,
@@ -37,17 +32,9 @@ export default function DirectionalLight({
   }, [intensity]);
 
   useEffect(() => {
-    console.log("=== direction", direction);
-
     const v = new Vector3(direction[0], direction[1], direction[2]);
-
     v.applyMatrix4(transform.leafMatrix);
-
-    const arr = [v.x, v.y, v.z];
-
-    console.log("=== arr", arr);
-
-    bindingViews.directionalLight_direction(arr);
+    bindingViews.directionalLight_direction([v.x, v.y, v.z]);
   }, [direction.join(","), transform.leafMatrix]);
 
   useEffect(() => {
@@ -58,12 +45,17 @@ export default function DirectionalLight({
   return null;
 }
 
-DirectionalLight.bindingsLayout = bindingsLayout;
-DirectionalLight.pipeline = () => {
-  return {
-    lightColor: uniforms.directionalLight_color.mul(
-      uniforms.directionalLight_intensity
-    ),
-    lightDir: uniforms.directionalLight_direction,
-  } as PipelineOut;
-};
+DirectionalLight.layer = createPipelineLayer(
+  bindingsLayout,
+  ({
+      directionalLight_color,
+      directionalLight_intensity,
+      directionalLight_direction,
+    }) =>
+    () => {
+      return {
+        lightColor: directionalLight_color.mul(directionalLight_intensity),
+        lightDir: directionalLight_direction,
+      };
+    }
+);

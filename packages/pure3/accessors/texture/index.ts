@@ -5,6 +5,8 @@ import type { Node } from "../../core/types.ts";
 
 const _texture = nodeProxy(TextureNode);
 
+export type NodeTexture = Node<"vec4"> & { uvNode: Node<"vec2"> };
+
 function texture(
   label: string,
   opts?: {
@@ -19,8 +21,14 @@ function texture(
   if (label) {
     t.label(label);
   }
-  return t as Node<"vec4"> & { uvNode: Node<"vec2"> };
+  return t as NodeTexture;
 }
+
+// export type NodeDataTexture<T extends GPUTextureFormat> = Node<
+//   T extends "rgba8uint" ? "uvec4" : "vec4"
+// > & {
+//   uvNode: Node<T extends "rgba8uint" ? "uvec2" : "vec2">;
+// };
 
 function dataTexture<T extends GPUTextureFormat>(format: T, label: string) {
   const t = _texture({
