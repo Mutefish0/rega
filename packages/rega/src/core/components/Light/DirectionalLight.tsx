@@ -1,6 +1,6 @@
 import { useEffect, useContext } from "react";
 import useBindingViews from "../../hooks/useBindingViews";
-import { PipelineOut, createPipelineLayer } from "../../render/pass";
+import { createPipelineLayer } from "../../render/pass";
 import { Vector3 } from "pure3";
 import { parseColor } from "../../tools/color";
 import { BindingContext } from "../../primitives/BindingLayer";
@@ -24,7 +24,7 @@ export default function DirectionalLight({
   color: colorValue = "#fff",
 }: Props) {
   const bCtx = useContext(BindingContext);
-  const bindingViews = useBindingViews(bindingsLayout, bCtx);
+  const bindingViews = useBindingViews(bindingsLayout, bCtx.resources);
   const transform = useContext(TransformContext);
 
   useEffect(() => {

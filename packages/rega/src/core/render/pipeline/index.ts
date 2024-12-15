@@ -1,4 +1,4 @@
-import { vec4, normalize, max, dot, modelWorldMatrix, add } from "pure3";
+import { normalize, max, dot, add } from "pure3";
 import { PipelineIn, Pipeline } from "../pass";
 
 export const BasicLightModel: Pipeline = ({
@@ -9,9 +9,8 @@ export const BasicLightModel: Pipeline = ({
   ambientColor,
 }: PipelineIn) => {
   lightDir = normalize(lightDir);
-  const normalWorld = modelWorldMatrix.mul(vec4(normal, 1)).xyz;
   const lambertDiffuse = lightColor.mul(
-    max(dot(normalWorld, lightDir.negate()), 0.0)
+    max(dot(normal, lightDir.negate()), 0.0)
   );
   return {
     color: add(color.mul(lambertDiffuse), color.mul(ambientColor)),

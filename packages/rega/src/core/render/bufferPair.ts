@@ -364,3 +364,11 @@ export function updateGPUBuffer(device: GPUDevice, sab: SharedArrayBuffer) {
 
   return record.gpuBuffer;
 }
+
+export function getGPUBuffer(sab: SharedArrayBuffer) {
+  const uuid = getUUID(sab);
+  const record = buffersMap.get(uuid);
+  if (record) {
+    return record.gpuBuffer;
+  }
+}

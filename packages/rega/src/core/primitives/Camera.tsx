@@ -122,7 +122,7 @@ export default function Camera({
     }
   }, [type, fov, aspect, near, far, width, height, anchor]);
 
-  const bindingViews = useBindingViews(bindingsLayout, bCtx);
+  const bindingViews = useBindingViews(bindingsLayout, bCtx.resources);
 
   useEffect(() => {
     bindingViews.cameraProjectionMatrix(projectionMatrix.elements);

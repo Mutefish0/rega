@@ -1,4 +1,5 @@
 import { WGSLValueType } from "pure3";
+import { parseUUID } from "./sharedBufferLayout";
 
 export interface TransferBinding {
   name: string;
@@ -28,7 +29,7 @@ export interface TransferObject {
     string,
     {
       material: MaterialJSON;
-      bindings: TransferBinding[];
+      bindingGroups: Array<TransferBinding[]>;
     }
   >;
 
@@ -44,22 +45,6 @@ export interface TransferObject {
     }
   >;
 }
-
-// export interface TransferRenderTarget {
-//   id: string;
-//   viewport: SharedArrayBuffer;
-//   bindings: TransferBinding[];
-//   textures: Record<
-//     string,
-//     {
-//       width: number;
-//       height: number;
-//       buffer: SharedArrayBuffer;
-//       format: GPUTextureFormat;
-//       immutable: boolean;
-//     }
-//   >;
-// }
 
 export interface TransferRenderPass {
   id: string;
@@ -89,25 +74,17 @@ export interface TransferRenderPassTexture {
 export interface TransferPipeline {
   sortedPasses: string[];
   passes: Record<string, TransferRenderPass>;
-  bindings: TransferBinding[];
-  textures: Record<
-    string,
-    {
-      width: number;
-      height: number;
-      buffer: SharedArrayBuffer;
-      format: GPUTextureFormat;
-      immutable: boolean;
-    }
-  >;
 }
 
 export interface TransferInput {
-  vertexBuffers: Array<{
-    name: string;
-    buffer: SharedArrayBuffer;
-    binding: number;
-  }>;
+  vertexBuffers: Record<
+    string,
+    {
+      buffer: SharedArrayBuffer;
+      binding: number;
+    }
+  >;
+
   vertexCtrlBuffer: SharedArrayBuffer;
 
   index?: {
@@ -235,4 +212,19 @@ export function resourceToResourceType(
     type = resource.type;
   }
   return type;
+}
+
+export function resourceToKey(resource: TransferResource): string {
+  if (resource.type === "texture") {
+    return resource.textureId;
+  } else if (resource.type === "sampler") {
+    return [
+      resource.minFilter,
+      resource.magFilter,
+      resource.compare,
+      resource.maxAnisotropy,
+    ].join(",");
+  } else {
+    return parseUUID(resource.buffer);
+  }
 }

@@ -2,7 +2,8 @@ import { Vector } from "@dimforge/rapier2d";
 
 import RenderGroup from "./primitives/RenderGroup";
 import RenderPipeline from "./primitives/RenderPipeline";
-import { RenderPass, Pipeline } from "./render/pass";
+import EffectScope from "./primitives/EffectScope";
+import { Pipeline } from "./render/pass";
 
 import AnimationTree from "./components/Animation/AnimationTree";
 import Transition from "./components/Animation/Transition";
@@ -93,8 +94,8 @@ export type {
   TextStyle,
 };
 
-export { RenderGroup, RenderPipeline };
-export type { RenderPass, Pipeline };
+export { RenderGroup, RenderPipeline, EffectScope };
+export type { Pipeline };
 
 export {
   // animations

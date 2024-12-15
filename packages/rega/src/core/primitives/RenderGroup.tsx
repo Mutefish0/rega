@@ -1,23 +1,16 @@
 import React, { createContext, useContext, useEffect, useMemo } from "react";
-import { BindingsLayout } from "../render/binding";
 import RenderContext from "./RenderContext";
-import BindingLayer from "./BindingLayer";
 
 interface Props {
   id: string;
   children: React.ReactNode;
-  bindingsLayout?: BindingsLayout;
 }
 
 export const RenderGroupContext = createContext({
   id: "" as string,
 });
 
-export default function RenderGroup({
-  id,
-  children,
-  bindingsLayout = {},
-}: Props) {
+export default function RenderGroup({ id, children }: Props) {
   const ctx = useMemo(() => ({ id }), []);
   const renderCtx = useContext(RenderContext);
 
@@ -33,7 +26,7 @@ export default function RenderGroup({
 
   return (
     <RenderGroupContext.Provider value={ctx}>
-      <BindingLayer bindingsLayout={bindingsLayout}>{children}</BindingLayer>
+      {children}
     </RenderGroupContext.Provider>
   );
 }

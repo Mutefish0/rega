@@ -18,7 +18,7 @@ export default function AmbientLight({
   color: colorValue = "#fff",
 }: Props) {
   const bCtx = useContext(BindingContext);
-  const bindingViews = useBindingViews(bindingsLayout, bCtx);
+  const bindingViews = useBindingViews(bindingsLayout, bCtx.resources);
 
   useEffect(() => {
     const { opacity, array } = parseColor(colorValue || "#fff");
