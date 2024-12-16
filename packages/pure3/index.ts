@@ -54,6 +54,7 @@ export {
   cameraProjectionMatrix,
   cameraViewMatrix,
   modelWorldMatrix,
+  modelWorldMatrixInverse,
   modelViewMatrix,
   uv,
   attribute,

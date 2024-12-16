@@ -21,11 +21,11 @@ import {
   vec3,
   float,
   vec4,
-  sub,
   positionGeometry,
   normalGeometry,
   zIndexBias,
   modelWorldMatrix,
+  modelWorldMatrixInverse,
   normalize,
 } from "pure3";
 import { TransferObject } from "../render";
@@ -86,6 +86,7 @@ export default function RenderObject({
 
   const binds = useBindings({
     modelWorldMatrix: "mat4",
+    modelWorldMatrixInverse: "mat4",
     zIndex: "float",
   });
 
@@ -133,10 +134,7 @@ export default function RenderObject({
 
     const p = modelWorldMatrix.mul(positionNode);
     const n = normalize(
-      sub(
-        modelWorldMatrix.mul(vec4(normalNode, 1)).xyz,
-        modelWorldMatrix.mul(vec4(0, 0, 0, 1)).xyz
-      )
+      modelWorldMatrixInverse.transpose().mul(vec4(normalNode, 0)).xyz
     );
 
     for (const pass of passes) {
@@ -185,6 +183,7 @@ export default function RenderObject({
   useEffect(() => {
     const mat = transform.leafMatrix;
     binds.updates.modelWorldMatrix(mat.elements);
+    binds.updates.modelWorldMatrixInverse(mat.invert().elements);
   }, [transform]);
 
   useEffect(() => binds.updates.zIndex([zIndexCtx.node.zValue]), [zIndexCtx]);

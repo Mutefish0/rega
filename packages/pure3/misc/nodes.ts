@@ -16,6 +16,10 @@ export const positionGeometry = _positionGeometry as Node<"vec3">;
 export const cameraProjectionMatrix = _cameraProjectionMatrix as Node<"mat4">;
 export const cameraViewMatrix = _cameraViewMatrix as Node<"mat4">;
 export const modelWorldMatrix = uniform("mat4", "modelWorldMatrix");
+export const modelWorldMatrixInverse = uniform(
+  "mat4",
+  "modelWorldMatrixInverse"
+);
 export const modelViewMatrix = cameraViewMatrix.mul(modelWorldMatrix);
 
 export const uv = _uv as () => Node<"vec2">;

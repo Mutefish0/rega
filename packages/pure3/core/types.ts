@@ -18,7 +18,7 @@ export type WGSLValueType =
 
 export type NodeValueType = "literal" | WGSLValueType;
 
-import { Mul, Add, Div, LessThan, OneMinus } from "./ops";
+import { Mul, Add, Div, LessThan, OneMinus, Transpose } from "./ops";
 import { Props } from "./props";
 
 type RemoveVoid<T> = {
@@ -57,6 +57,8 @@ export type Node<A extends WGSLValueType> = RemoveVoid<{
   lessThanEqual(node: number): Node<LessThan<A, "literal">>;
 
   negate(): Node<A>;
+
+  transpose(): Transpose<A> extends WGSLValueType ? Node<Transpose<A>> : void;
 
   oneMinus(): OneMinus<A> extends WGSLValueType ? Node<OneMinus<A>> : void;
 

@@ -120,6 +120,13 @@ export type Div<
   R extends [WGSLValueType, NodeValueType, WGSLValueType] = RuleDiv
 > = R extends [A, B, infer C] ? C : never;
 
+type RuleTranspose = ["mat2", "mat2"] | ["mat3", "mat3"] | ["mat4", "mat4"];
+
+export type Transpose<
+  A extends NodeValueType,
+  R extends ["mat2" | "mat3" | "mat4", "mat2" | "mat3" | "mat4"] = RuleTranspose
+> = R extends [A, infer C] ? C : never;
+
 type RuleLessThan =
   | ["int", "int", "bool"]
   | ["int", "literal", "bool"]

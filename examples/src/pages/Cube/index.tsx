@@ -10,7 +10,21 @@ import {
   AmbientLight,
   DirectionalLight,
   BasicLightModel,
+  Animation,
 } from "rega";
+
+function* anim() {
+  // 33 fps
+  const dt = 16;
+  let time = 0;
+  const w = (2 * Math.PI) / 3000;
+  while (true) {
+    const offsetY = Math.sin(w * time);
+    const rotateY = w * time;
+    yield [{ offsetY, rotateY }, dt] as const;
+    time += dt;
+  }
+}
 
 export default function Page() {
   return <Canvas width={512} height={512} App={App} />;
@@ -44,19 +58,17 @@ function App() {
       </Relative>
 
       <RenderGroup id="main">
-        <Relative
-          translation={{ y: -1 }}
-          rotation={{ x: Math.PI / 3, y: Math.PI / 3, z: 0 }}
-        >
-          <Box3D size={[2, 2, 2]} color="skyblue" />
-        </Relative>
-
-        <Relative
-          translation={{ y: 1 }}
-          rotation={{ x: Math.PI / 3, y: Math.PI / 3, z: 0 }}
-        >
-          <Box3D size={[2, 2, 2]} color="skyblue" />
-        </Relative>
+        <Animation
+          genFunc={anim}
+          renderItem={({ offsetY, rotateY }) => (
+            <Relative
+              translation={{ y: offsetY * 3 }}
+              rotation={{ x: 0, y: rotateY, z: 0 }}
+            >
+              <Box3D size={[2, 2, 2]} color="skyblue" />
+            </Relative>
+          )}
+        />
       </RenderGroup>
     </RenderPipeline>
   );
