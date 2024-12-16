@@ -4,6 +4,7 @@ import "./index.css";
 import MSDFFont from "./pages/MSDFFont";
 import LayoutExample from "./pages/Layout";
 import Cube from "./pages/Cube";
+import GLTF from "./pages/GLTF";
 
 function App() {
   return (
@@ -19,6 +20,9 @@ function App() {
           <Link className="nav-link" to="/cube">
             Cube example
           </Link>
+          <Link className="nav-link" to="/gltf">
+            GLTF example
+          </Link>
         </div>
         <Outlet />
       </div>
@@ -33,6 +37,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="msdf-font" element={<MSDFFont />} />
         <Route path="layout" element={<LayoutExample />} />
         <Route path="cube" element={<Cube />} />
+        <Route path="gltf" element={<GLTF />} />
       </Route>
     </Routes>
   </BrowserRouter>

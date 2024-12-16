@@ -83,6 +83,8 @@ import useParticles, { Particle } from "./hooks/useParticles";
 
 import { parseGodotTileData } from "./tools/godot";
 
+import { GLTFLoader } from "./tools/gltf";
+
 const localStorage = globalThis.localStorage;
 
 export type {
@@ -159,6 +161,7 @@ export {
   useConst,
   useBeforePhysicsFrame,
   useAfterPhysicsFrame,
+  GLTFLoader,
   usePhysicsInfo,
 
   // components
