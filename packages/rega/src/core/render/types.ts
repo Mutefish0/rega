@@ -141,38 +141,6 @@ export interface VertexHandle {
   update: (name: string, value: number[]) => void;
 }
 
-interface UniformBindInfo {
-  type: "uniformBuffer";
-  byteLength: number;
-  visibility: number;
-  uniforms: Array<{
-    offset: number;
-    name: string;
-  }>;
-}
-
-interface SamplerBindInfo {
-  type: "sampler";
-  visibility: number;
-}
-
-interface SampledTextureBindInfo {
-  type: "sampledTexture";
-  visibility: number;
-  name: string;
-}
-
-export type BindInfo =
-  | UniformBindInfo
-  | SamplerBindInfo
-  | SampledTextureBindInfo;
-
-export interface BindGroupInfo {
-  index: number;
-  name: string;
-  bindings: Array<BindInfo>;
-}
-
 export interface MaterialJSON {
   vertexShader: string;
 

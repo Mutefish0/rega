@@ -37,7 +37,7 @@ function App() {
     loader.load("DamagedHelmet.gltf", function (gltf) {
       console.log(gltf);
 
-      debugger;
+      //debugger;
 
       //scene.add(gltf.scene);
       //render();

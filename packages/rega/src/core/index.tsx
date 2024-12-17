@@ -42,7 +42,6 @@ import ConvexCollider2D from "./components/ConvexCollider2D";
 import TilemapCollider2D from "./components/TilemapCollider2D";
 import useCharacterController from "./primitives/useCharacterController";
 
-import useWindowInfo from "./hooks/useWindowInfo";
 import useConst from "./hooks/useConst";
 import usePhysicsInfo from "./hooks/usePhysicsInfo";
 import {
@@ -83,7 +82,9 @@ import useParticles, { Particle } from "./hooks/useParticles";
 
 import { parseGodotTileData } from "./tools/godot";
 
-import { GLTFLoader } from "./tools/gltf";
+import { GLTFLoader as _GLTFLoader } from "./tools/gltf";
+import type { IGLTFLoader } from "./tools/gltf.d.ts";
+const GLTFLoader = _GLTFLoader as any as IGLTFLoader;
 
 const localStorage = globalThis.localStorage;
 
@@ -152,9 +153,6 @@ export {
 
   // particles
   useParticles,
-
-  //
-  useWindowInfo,
 
   // tools
   parseGodotTileData,

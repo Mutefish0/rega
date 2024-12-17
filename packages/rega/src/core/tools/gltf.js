@@ -2,7 +2,7 @@ import {
   AnimationClip,
   Bone,
   Box3,
-  BufferAttribute,
+  //BufferAttribute,
   BufferGeometry,
   ClampToEdgeWrapping,
   Color,
@@ -57,15 +57,18 @@ import {
   SpotLight,
   Texture,
   TextureLoader,
-  TriangleFanDrawMode,
-  TriangleStripDrawMode,
+  //TriangleFanDrawMode,
+  //TriangleStripDrawMode,
   Vector2,
   Vector3,
   VectorKeyframeTrack,
   SRGBColorSpace,
   InstancedBufferAttribute,
 } from "three";
-import { toTrianglesDrawMode } from "three/addons/utils/BufferGeometryUtils.js";
+//import { toTrianglesDrawMode } from "three/addons/utils/BufferGeometryUtils.js";
+
+import { createVertexBinding, createIndexBinding } from "../render/vertex";
+import { traverseTreePreDFS } from "./tree";
 
 class GLTFLoader extends Loader {
   constructor(manager) {
@@ -2358,10 +2361,6 @@ class GLTFParser {
             return ext.afterRoot && ext.afterRoot(result);
           })
         ).then(function () {
-          for (const scene of result.scenes) {
-            scene.updateMatrixWorld();
-          }
-
           onLoad(result);
         });
       })
@@ -2671,12 +2670,13 @@ class GLTFParser {
       accessorDef.bufferView === undefined &&
       accessorDef.sparse === undefined
     ) {
-      const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
-      const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
-      const normalized = accessorDef.normalized === true;
-
-      const array = new TypedArray(accessorDef.count * itemSize);
-      return Promise.resolve(new BufferAttribute(array, itemSize, normalized));
+      // @TODO
+      throw new Error(`GLTFLoader: Missing bufferView or sparse property.`);
+      // const itemSize = WEBGL_TYPE_SIZES[accessorDef.type];
+      // const TypedArray = WEBGL_COMPONENT_TYPES[accessorDef.componentType];
+      // const normalized = accessorDef.normalized === true;
+      // const array = new TypedArray(accessorDef.count * itemSize);
+      // return Promise.resolve(new BufferAttribute(array, itemSize, normalized));
     }
 
     const pendingBufferViews = [];
@@ -2717,51 +2717,55 @@ class GLTFParser {
 
       // The buffer is not interleaved if the stride is the item size in bytes.
       if (byteStride && byteStride !== itemBytes) {
-        // Each "slice" of the buffer, as defined by 'count' elements of 'byteStride' bytes, gets its own InterleavedBuffer
-        // This makes sure that IBA.count reflects accessor.count properly
-        const ibSlice = Math.floor(byteOffset / byteStride);
-        const ibCacheKey =
-          "InterleavedBuffer:" +
-          accessorDef.bufferView +
-          ":" +
-          accessorDef.componentType +
-          ":" +
-          ibSlice +
-          ":" +
-          accessorDef.count;
-        let ib = parser.cache.get(ibCacheKey);
-
-        if (!ib) {
-          array = new TypedArray(
-            bufferView,
-            ibSlice * byteStride,
-            (accessorDef.count * byteStride) / elementBytes
-          );
-
-          // Integer parameters to IB/IBA are in array elements, not bytes.
-          ib = new InterleavedBuffer(array, byteStride / elementBytes);
-
-          parser.cache.add(ibCacheKey, ib);
-        }
-
-        bufferAttribute = new InterleavedBufferAttribute(
-          ib,
-          itemSize,
-          (byteOffset % byteStride) / elementBytes,
-          normalized
+        // @TODO
+        console.warn(
+          "THREE.GLTFLoader: Variable interleaved buffer not supported."
         );
+        bufferAttribute = null;
+
+        // // Each "slice" of the buffer, as defined by 'count' elements of 'byteStride' bytes, gets its own InterleavedBuffer
+        // // This makes sure that IBA.count reflects accessor.count properly
+        // const ibSlice = Math.floor(byteOffset / byteStride);
+        // const ibCacheKey =
+        //   "InterleavedBuffer:" +
+        //   accessorDef.bufferView +
+        //   ":" +
+        //   accessorDef.componentType +
+        //   ":" +
+        //   ibSlice +
+        //   ":" +
+        //   accessorDef.count;
+        // let ib = parser.cache.get(ibCacheKey);
+        // if (!ib) {
+        //   array = new TypedArray(
+        //     bufferView,
+        //     ibSlice * byteStride,
+        //     (accessorDef.count * byteStride) / elementBytes
+        //   );
+        //   // Integer parameters to IB/IBA are in array elements, not bytes.
+        //   ib = new InterleavedBuffer(array, byteStride / elementBytes);
+        //   parser.cache.add(ibCacheKey, ib);
+        // }
+        // bufferAttribute = new InterleavedBufferAttribute(
+        //   ib,
+        //   itemSize,
+        //   (byteOffset % byteStride) / elementBytes,
+        //   normalized
+        // );
       } else {
-        if (bufferView === null) {
-          array = new TypedArray(accessorDef.count * itemSize);
+        if (accessorDef.type === "SCALAR" && TypedArray === Uint16Array) {
+          bufferAttribute = createIndexBinding(accessorDef.count);
         } else {
-          array = new TypedArray(
-            bufferView,
-            byteOffset,
-            accessorDef.count * itemSize
+          bufferAttribute = createVertexBinding(
+            accessorDef.type.toLowerCase(),
+            accessorDef.count
           );
         }
-
-        bufferAttribute = new BufferAttribute(array, itemSize, normalized);
+        if (bufferView) {
+          bufferAttribute.update(
+            new TypedArray(bufferView, byteOffset, accessorDef.count * itemSize)
+          );
+        }
       }
 
       // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#sparse-accessors
@@ -2784,38 +2788,31 @@ class GLTFParser {
           accessorDef.sparse.count * itemSize
         );
 
-        if (bufferView !== null) {
-          // Avoid modifying the original ArrayBuffer, if the bufferView wasn't initialized with zeroes.
-          bufferAttribute = new BufferAttribute(
-            bufferAttribute.array.slice(),
-            bufferAttribute.itemSize,
-            bufferAttribute.normalized
-          );
-        }
+        // if (bufferView !== null) {
+        //   // Avoid modifying the original ArrayBuffer, if the bufferView wasn't initialized with zeroes.
+        //   bufferAttribute = new BufferAttribute(
+        //     bufferAttribute.array.slice(),
+        //     bufferAttribute.itemSize,
+        //     bufferAttribute.normalized
+        //   );
+        // }
 
         // Ignore normalized since we copy from sparse
         bufferAttribute.normalized = false;
 
         for (let i = 0, il = sparseIndices.length; i < il; i++) {
           const index = sparseIndices[i];
-
-          bufferAttribute.setX(index, sparseValues[i * itemSize]);
-          if (itemSize >= 2)
-            bufferAttribute.setY(index, sparseValues[i * itemSize + 1]);
-          if (itemSize >= 3)
-            bufferAttribute.setZ(index, sparseValues[i * itemSize + 2]);
-          if (itemSize >= 4)
-            bufferAttribute.setW(index, sparseValues[i * itemSize + 3]);
-          if (itemSize >= 5)
-            throw new Error(
-              "THREE.GLTFLoader: Unsupported itemSize in sparse BufferAttribute."
-            );
+          const values = [];
+          for (let j = 0; j < itemSize; j++) {
+            values.push(sparseValues[i * itemSize + j]);
+          }
+          bufferAttribute.update(values, index);
         }
 
         bufferAttribute.normalized = normalized;
       }
 
-      return bufferAttribute;
+      return bufferAttribute.buffer;
     });
   }
 
@@ -3356,10 +3353,15 @@ class GLTFParser {
           // Use DRACO geometry if available
           geometryPromise = createDracoPrimitive(primitive);
         } else {
-          debugger;
           // Otherwise create a new geometry
           geometryPromise = addPrimitiveAttributes(
-            new BufferGeometry(),
+            {
+              attributes: {},
+              morphAttributes: {},
+              vertexCount: 0,
+              indexCount: 0,
+              index: null,
+            },
             primitive,
             parser
           );
@@ -3424,35 +3426,57 @@ class GLTFParser {
           primitive.mode === undefined
         ) {
           // .isSkinnedMesh isn't in glTF spec. See ._markDefs()
-          mesh =
-            meshDef.isSkinnedMesh === true
-              ? new SkinnedMesh(geometry, material)
-              : new Mesh(geometry, material);
+          mesh = {
+            type: "mesh",
+            geometry,
+            material,
+            topology: "triangle-list",
+            userData: {},
+          };
 
           if (mesh.isSkinnedMesh === true) {
+            // @TODO
             // normalize skin weights to fix malformed assets (see #15319)
-            mesh.normalizeSkinWeights();
+            //mesh.normalizeSkinWeights();
           }
 
           if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP) {
-            mesh.geometry = toTrianglesDrawMode(
-              mesh.geometry,
-              TriangleStripDrawMode
-            );
+            mesh = { geometry, material, topology: "triangle-strip" };
           } else if (primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN) {
-            mesh.geometry = toTrianglesDrawMode(
-              mesh.geometry,
-              TriangleFanDrawMode
+            throw new Error(
+              "GLTFLoader: Triangle Fan primitives are unsupported."
             );
+            //// mesh.geometry = toTrianglesDrawMode(
+            //   mesh.geometry,
+            //   TriangleFanDrawMode
+            // );
           }
         } else if (primitive.mode === WEBGL_CONSTANTS.LINES) {
-          mesh = new LineSegments(geometry, material);
+          mesh = {
+            type: "mesh",
+            geometry,
+            material,
+            topology: "line-list",
+            userData: {},
+          };
         } else if (primitive.mode === WEBGL_CONSTANTS.LINE_STRIP) {
-          mesh = new Line(geometry, material);
+          mesh = {
+            type: "mesh",
+            geometry,
+            material,
+            topology: "line-strip",
+            userData: {},
+          };
         } else if (primitive.mode === WEBGL_CONSTANTS.LINE_LOOP) {
-          mesh = new LineLoop(geometry, material);
+          throw new Error("GLTFLoader: Unsupported mode LINE_LOOP.");
         } else if (primitive.mode === WEBGL_CONSTANTS.POINTS) {
-          mesh = new Points(geometry, material);
+          mesh = {
+            type: "mesh",
+            geometry,
+            material,
+            topology: "point-list",
+            userData: {},
+          };
         } else {
           throw new Error(
             "THREE.GLTFLoader: Primitive mode unsupported: " + primitive.mode
@@ -3761,7 +3785,7 @@ class GLTFParser {
       }
 
       for (let i = 0, il = children.length; i < il; i++) {
-        node.add(children[i]);
+        node.children.push(children[i]);
       }
 
       return node;
@@ -3819,45 +3843,37 @@ class GLTFParser {
       // .isBone isn't in glTF spec. See ._markDefs
       if (nodeDef.isBone === true) {
         node = new Bone();
-      } else if (objects.length > 1) {
-        node = new Group();
-      } else if (objects.length === 1) {
-        node = objects[0];
-      } else {
-        node = new Object3D();
+      } else if (objects.length > 0) {
+        node = { type: "node", name: nodeDef.name, children: [] };
       }
 
-      if (node !== objects[0]) {
-        for (let i = 0, il = objects.length; i < il; i++) {
-          node.add(objects[i]);
+      for (let i = 0, il = objects.length; i < il; i++) {
+        const obj = objects[i];
+        if (obj.type === "mesh") {
+          node.mesh = obj;
+        } else if (obj.type === "camera") {
+          node.camera = obj;
+        } else {
+          throw new Error("GLTFLoader: unkonw node object type: " + obj);
         }
       }
 
-      if (nodeDef.name) {
-        node.userData.name = nodeDef.name;
-        node.name = nodeName;
-      }
-
-      assignExtrasToUserData(node, nodeDef);
+      // assignExtrasToUserData(node, nodeDef);
 
       if (nodeDef.extensions)
         addUnknownExtensionsToUserData(extensions, node, nodeDef);
 
       if (nodeDef.matrix !== undefined) {
-        const matrix = new Matrix4();
-        matrix.fromArray(nodeDef.matrix);
-        node.applyMatrix4(matrix);
+        node.matrix = nodeDef.matrix;
       } else {
         if (nodeDef.translation !== undefined) {
-          node.position.fromArray(nodeDef.translation);
+          node.translation = nodeDef.translation;
         }
-
         if (nodeDef.rotation !== undefined) {
-          node.quaternion.fromArray(nodeDef.rotation);
+          node.rotation = nodeDef.rotation;
         }
-
         if (nodeDef.scale !== undefined) {
-          node.scale.fromArray(nodeDef.scale);
+          node.scale = nodeDef.scale;
         }
       }
 
@@ -3885,7 +3901,7 @@ class GLTFParser {
 
     // Loader returns Group, not Scene.
     // See: https://github.com/mrdoob/three.js/issues/18342#issuecomment-578981172
-    const scene = new Group();
+    const scene = { type: "scene", nodes: [] };
     if (sceneDef.name) scene.name = parser.createUniqueName(sceneDef.name);
 
     assignExtrasToUserData(scene, sceneDef);
@@ -3903,7 +3919,7 @@ class GLTFParser {
 
     return Promise.all(pending).then(function (nodes) {
       for (let i = 0, il = nodes.length; i < il; i++) {
-        scene.add(nodes[i]);
+        scene.nodes.push(nodes[i]);
       }
 
       // Removes dangling associations, associations that reference a node that
@@ -3917,9 +3933,8 @@ class GLTFParser {
           }
         }
 
-        node.traverse((node) => {
+        traverseTreePreDFS(node, (node) => {
           const mappings = parser.associations.get(node);
-
           if (mappings != null) {
             reducedAssociations.set(node, mappings);
           }
@@ -4163,7 +4178,7 @@ function addPrimitiveAttributes(geometry, primitiveDef, parser) {
     return parser
       .getDependency("accessor", accessorIndex)
       .then(function (accessor) {
-        geometry.setAttribute(attributeName, accessor);
+        geometry.attributes[attributeName] = accessor;
       });
   }
 
@@ -4179,11 +4194,17 @@ function addPrimitiveAttributes(geometry, primitiveDef, parser) {
     );
   }
 
+  // set vertex count
+  const accessorDef = parser.json.accessors[primitiveDef.attributes.POSITION];
+  geometry.vertexCount = accessorDef.count;
+
   if (primitiveDef.indices !== undefined && !geometry.index) {
     const accessor = parser
       .getDependency("accessor", primitiveDef.indices)
       .then(function (accessor) {
-        geometry.setIndex(accessor);
+        const accessorDef = parser.json.accessors[primitiveDef.indices];
+        geometry.index = accessor;
+        geometry.indexCount = accessorDef.count;
       });
 
     pending.push(accessor);
@@ -4198,9 +4219,9 @@ function addPrimitiveAttributes(geometry, primitiveDef, parser) {
     );
   }
 
-  assignExtrasToUserData(geometry, primitiveDef);
-
-  computeBounds(geometry, primitiveDef, parser);
+  // @TODO
+  // assignExtrasToUserData(geometry, primitiveDef);
+  //computeBounds(geometry, primitiveDef, parser);
 
   return Promise.all(pending).then(function () {
     return primitiveDef.targets !== undefined

@@ -2,12 +2,7 @@ import WGSLNodeBuilder from "three/src/renderers/webgpu/nodes/WGSLNodeBuilder.js
 import NodeMaterial from "three/src/materials/nodes/NodeMaterial.js";
 import WebGPUPipelineUtils from "three/src/renderers/webgpu/utils/WebGPUPipelineUtils.js";
 import { BufferGeometry } from "three/src/core/BufferGeometry.js";
-import {
-  BindGroupInfo,
-  BindInfo,
-  MaterialJSON,
-  NamedBindingLayout,
-} from "./types";
+import { MaterialJSON, NamedBindingLayout } from "./types";
 import { Node } from "pure3";
 
 import { hasFeature } from "./features";

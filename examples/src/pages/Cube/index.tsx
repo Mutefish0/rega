@@ -49,9 +49,7 @@ function App() {
     >
       <AmbientLight intensity={0.2} />
 
-      <Relative>
-        <DirectionalLight direction={[0, 0, -1]} intensity={1} />
-      </Relative>
+      <DirectionalLight direction={[0, 0, -1]} intensity={1} />
 
       <Relative translation={{ z: 10 }}>
         <Camera type="perspective" />

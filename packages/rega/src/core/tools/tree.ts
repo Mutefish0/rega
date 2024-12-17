@@ -32,8 +32,10 @@ export function traverseTreePreDFS<T extends any>(
   cb: (instance: T) => boolean | void
 ) {
   if (!cb(instance)) {
-    for (const child of instance.children) {
-      traverseTreePostDFS(child, cb);
+    if (instance.children) {
+      for (const child of instance.children) {
+        traverseTreePostDFS(child, cb);
+      }
     }
   }
 }
