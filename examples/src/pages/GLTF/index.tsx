@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Canvas } from "rega/web";
 import {
   RenderPipeline,
@@ -7,11 +7,12 @@ import {
   Camera,
   Relative,
   Box3D,
+  GLTF,
   AmbientLight,
   DirectionalLight,
   BasicLightModel,
   Animation,
-  GLTFLoader,
+  ModelManager,
 } from "rega";
 
 function* anim() {
@@ -28,22 +29,22 @@ function* anim() {
 }
 
 export default function Page() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    ModelManager.loadModel("/models/helmet/DamagedHelmet.gltf").then(() =>
+      setIsLoading(false)
+    );
+  }, []);
+
+  if (isLoading) {
+    return <h1>loading...</h1>;
+  }
+
   return <Canvas width={512} height={512} App={App} />;
 }
 
 function App() {
-  useEffect(() => {
-    const loader = new GLTFLoader().setPath("/models/helmet/");
-    loader.load("DamagedHelmet.gltf", function (gltf) {
-      console.log(gltf);
-
-      //debugger;
-
-      //scene.add(gltf.scene);
-      //render();
-    });
-  }, []);
-
   return (
     <RenderPipeline
       config={{
@@ -75,10 +76,12 @@ function App() {
           genFunc={anim}
           renderItem={({ offsetY, rotateY }) => (
             <Relative
-              translation={{ y: offsetY * 3 }}
+              //translation={{ y: offsetY * 3 }}
               rotation={{ x: 0, y: rotateY, z: 0 }}
             >
-              <Box3D size={[2, 2, 2]} color="skyblue" />
+              <RenderGroup id="main">
+                <GLTF modelId="/models/helmet/DamagedHelmet.gltf" />
+              </RenderGroup>
             </Relative>
           )}
         />

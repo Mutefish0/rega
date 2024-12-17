@@ -2,23 +2,14 @@ import React, { useEffect, useMemo } from "react";
 import { uniform, vec4, Matrix4 } from "pure3";
 
 import RenderObject from "../primitives/RenderObject";
-import { basicVertexNode } from "../render/shaders/index";
 import cube from "../render/geometry/cube";
 
 import useBindings from "../hooks/useBingdings";
 import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
 
-import { lambertDiffuse } from "../render/shaders/lambert";
-
 const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
-
-// const lightDir = uniform("vec3", "directionalLight_direction");
-// const lightIntensity = uniform("float", "directionalLight_intensity");
-
-// const diffuse = lambertDiffuse({ lightDir, lightIntensity });
-// const fragmentNode = vec4(albedo.mul(diffuse), opacity);
 
 interface Props {
   size: [number, number, number];

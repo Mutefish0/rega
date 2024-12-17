@@ -18,6 +18,7 @@ import SpriteMSDF from "./components/SpriteMSDF";
 import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
 import Box3D from "./components/Box3D";
+import GLTF from "./components/GLTF";
 import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
 import ZIndex from "./primitives/ZIndex";
@@ -43,7 +44,7 @@ import TilemapCollider2D from "./components/TilemapCollider2D";
 import useCharacterController from "./primitives/useCharacterController";
 
 import useConst from "./hooks/useConst";
-import usePhysicsInfo from "./hooks/usePhysicsInfo";
+
 import {
   useBeforePhysicsFrame,
   useAfterPhysicsFrame,
@@ -53,6 +54,7 @@ import SoundManager from "./common/sound_manager";
 import SoundPlayer from "./components/SoundPlayer";
 import useSoundPlayer from "./hooks/useSoundPlayer";
 
+import * as ModelManager from "./common/model_manager";
 import FontManager from "./common/font_manager";
 import GUIView from "./components/UI/GUIView";
 import GUICamera from "./components/UI/GUICamera";
@@ -81,10 +83,6 @@ import { mergeInputValues } from "./components/InputSystem/utils";
 import useParticles, { Particle } from "./hooks/useParticles";
 
 import { parseGodotTileData } from "./tools/godot";
-
-import { GLTFLoader as _GLTFLoader } from "./tools/gltf";
-import type { IGLTFLoader } from "./tools/gltf.d.ts";
-const GLTFLoader = _GLTFLoader as any as IGLTFLoader;
 
 const localStorage = globalThis.localStorage;
 
@@ -159,8 +157,6 @@ export {
   useConst,
   useBeforePhysicsFrame,
   useAfterPhysicsFrame,
-  GLTFLoader,
-  usePhysicsInfo,
 
   // components
   Tilemap,
@@ -168,6 +164,10 @@ export {
   Sprite2D,
   SpriteMSDF,
   Box3D,
+  GLTF,
+
+  //
+  ModelManager,
 
   // ui
   FontManager,
