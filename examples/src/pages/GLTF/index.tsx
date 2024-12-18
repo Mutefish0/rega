@@ -6,8 +6,7 @@ import {
   EffectScope,
   Camera,
   Relative,
-  Box3D,
-  GLTF,
+  GLTFObject,
   AmbientLight,
   DirectionalLight,
   BasicLightModel,
@@ -74,13 +73,10 @@ function App() {
       <RenderGroup id="main">
         <Animation
           genFunc={anim}
-          renderItem={({ offsetY, rotateY }) => (
-            <Relative
-              //translation={{ y: offsetY * 3 }}
-              rotation={{ x: 0, y: rotateY, z: 0 }}
-            >
+          renderItem={({ rotateY }) => (
+            <Relative rotation={{ x: 0, y: rotateY, z: 0 }}>
               <RenderGroup id="main">
-                <GLTF modelId="/models/helmet/DamagedHelmet.gltf" />
+                <GLTFObject modelId="/models/helmet/DamagedHelmet.gltf" />
               </RenderGroup>
             </Relative>
           )}

@@ -18,7 +18,7 @@ import SpriteMSDF from "./components/SpriteMSDF";
 import Sprite2D from "./components/Sprite2D";
 import Box2D from "./components/Box2D";
 import Box3D from "./components/Box3D";
-import GLTF from "./components/GLTF";
+import GLTFObject from "./components/GLTFObject";
 import Absolute from "./primitives/Absolute";
 import Relative from "./primitives/Relative";
 import ZIndex from "./primitives/ZIndex";
@@ -164,7 +164,7 @@ export {
   Sprite2D,
   SpriteMSDF,
   Box3D,
-  GLTF,
+  GLTFObject,
 
   //
   ModelManager,

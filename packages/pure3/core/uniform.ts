@@ -38,7 +38,10 @@ function uniform<T extends WGSLValueType>(type: T, label?: string) {
     node.label(label);
   }
 
-  const id = ((Date.now() + Math.random() * 1000) % 100000000).toString(36);
+  const id = (
+    ( Date.now() % 10000000 ) +
+    Math.ceil( Math.random() * 100000 )
+    ).toString( 36 );
 
   node.uuid = `${type}(uniform_${label || ''}_${id})`;
 

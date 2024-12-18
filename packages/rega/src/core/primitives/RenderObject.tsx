@@ -27,18 +27,32 @@ import {
   modelWorldMatrix,
   modelWorldMatrixInverse,
   normalize,
+  Fn,
+  If,
+  Discard,
 } from "pure3";
 import { TransferObject } from "../render";
+
+const alphaDiscard = Fn(
+  ({ color, test }: { color: Node<"vec4">; test: Node<"float"> }) => {
+    const result = color.toVar();
+    If(color.a.lessThanEqual(test), () => {
+      Discard();
+    });
+    return result;
+  }
+);
 
 interface Props {
   bindings?: Record<string, TransferResource>;
 
   positionNode?: Node<"vec4">;
-  colorNode: Node<"vec3">;
   normalNode?: Node<"vec3">;
 
+  opacityNode?: Node<"float">;
+  colorNode: Node<"vec3">;
+
   material?: {
-    opacity?: Node<"float">;
     roughness?: Node<"float">;
     metallic?: Node<"float">;
   };
@@ -55,13 +69,16 @@ interface Props {
 
   topology?: GPUPrimitiveTopology;
   cullMode?: GPUCullMode;
+
   depthWriteEnabled?: boolean;
+  alphaTest?: Node<"float">;
 }
 
 export default function RenderObject({
   positionNode = vec4(positionGeometry, 1),
   normalNode = normalGeometry,
   colorNode,
+  opacityNode,
 
   material,
 
@@ -73,6 +90,7 @@ export default function RenderObject({
   topology,
   cullMode,
   depthWriteEnabled,
+  alphaTest,
 }: Props) {
   const id = useMemo(() => crypto.randomUUID(), []);
   const pipelineCtx = useContext(RenderPipelineContext);
@@ -112,17 +130,30 @@ export default function RenderObject({
       maxSlot: 0,
     };
 
-    function getBindingLayout(name: string) {
+    function getBindingLayout(name: string, isSampler?: boolean) {
       if (bindings[name] || binds.resources[name]) {
         return {
           group: 0,
           binding: getOrcreateSlot(objectSlotGroup, name),
         };
-      } else {
+      } else if (typeof bindingCtx.bindingPoints[name] === "number") {
         return {
           group: 1,
           binding: bindingCtx.bindingPoints[name],
         };
+      } else if (isSampler) {
+        const textureName = name.replace(/_sampler$/, "");
+        if (bindings[textureName] || binds.resources[textureName]) {
+          return {
+            group: 0,
+            binding: getOrcreateSlot(objectSlotGroup, name),
+          };
+        } else {
+          // @TODO group sampler
+          throw new Error(`Missing binding ${textureName}`);
+        }
+      } else {
+        throw new Error(`Missing binding ${name}`);
       }
     }
 
@@ -157,9 +188,18 @@ export default function RenderObject({
         vertex.uuid = position!.uuid + "-zIndexEnabled";
       }
 
+      let fragmentNode = vec4(color!, opacityNode ?? float(1));
+
+      if (typeof alphaTest !== "undefined") {
+        fragmentNode = alphaDiscard({
+          color: fragmentNode,
+          test: alphaTest,
+        });
+      }
+
       materials[pass.id] = createMaterial(
         vertex,
-        vec4(color!, material?.opacity ?? float(1)),
+        fragmentNode,
         getBindingLayout,
         getAttributeLayout,
         {
@@ -172,12 +212,12 @@ export default function RenderObject({
 
     return materials;
   }, [
-    positionNode,
-    normalNode,
-    colorNode,
+    positionNode.uuid,
+    normalNode.uuid,
+    colorNode.uuid,
     zIndexEnabled,
-    material?.metallic,
-    material?.roughness,
+    material?.metallic?.uuid,
+    material?.roughness?.uuid,
   ]);
 
   useEffect(() => {

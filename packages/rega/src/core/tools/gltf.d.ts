@@ -1,3 +1,26 @@
+export interface GLTFMaterial {
+  extensions: {};
+  pbrMetallicRoughness: {
+    metallicFactor?: number;
+    roughnessFactor?: number;
+    baseColorFactor?: number[];
+    baseColorTexture?: {
+      textureId: string;
+      sampler: {};
+    };
+    metallicRoughnessTexture?: {
+      textureId: string;
+      sampler: {};
+    };
+  };
+  normalTexture?: {
+    textureId: string;
+    sampler: {};
+  };
+  alphaMode: "OPAQUE" | "MASK" | "BLEND";
+  alphaTest?: number;
+}
+
 export interface GLTFMesh {
   topology: GPUPrimitiveTopology;
   geometry: {
@@ -6,6 +29,7 @@ export interface GLTFMesh {
     index: SharedArrayBuffer;
     attributes: Record<string, SharedArrayBuffer>;
   };
+  material: GLTFMaterial;
 }
 
 export interface GLTFNode {

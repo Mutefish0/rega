@@ -73,7 +73,7 @@ const cahce = new Map<string, MaterialJSON>();
 export default function createMaterial(
   vertexNode: Node<"vec4">,
   fragmentNode: Node<"vec4">,
-  getBindingLayout: (name: string) => { group: number; binding: number },
+  getBindingLayout: (name: string, isSampler?: boolean) => { group: number; binding: number },
   getAttributeLayout: (name: string) => number,
   options: Options = {
     frontFace: "ccw",
@@ -135,7 +135,7 @@ export default function createMaterial(
     let bindingIndex = 0;
 
     for (const b of g.bindings) {
-      const layout = getBindingLayout(b.name);
+      const layout = getBindingLayout(b.name, b.isSampler);
 
       if (layout.group !== index) {
         throw new Error("Unmatched group: " + b.name);

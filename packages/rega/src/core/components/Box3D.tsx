@@ -47,9 +47,7 @@ export default function Box3D({
       <RenderObject
         bindings={bindings.resources}
         colorNode={color}
-        material={{
-          opacity,
-        }}
+        opacityNode={opacity}
         vertexCount={cube.vertexCount}
         vertex={cube.vertex}
         index={cube.index}

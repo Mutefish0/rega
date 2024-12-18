@@ -2,8 +2,6 @@ import {
   AnimationClip,
   Bone,
   Box3,
-  //BufferAttribute,
-  BufferGeometry,
   ClampToEdgeWrapping,
   Color,
   ColorManagement,
@@ -11,7 +9,6 @@ import {
   DoubleSide,
   FileLoader,
   FrontSide,
-  Group,
   ImageBitmapLoader,
   InstancedMesh,
   InterleavedBuffer,
@@ -19,10 +16,7 @@ import {
   Interpolant,
   InterpolateDiscrete,
   InterpolateLinear,
-  Line,
   LineBasicMaterial,
-  LineLoop,
-  LineSegments,
   LinearFilter,
   LinearMipmapLinearFilter,
   LinearMipmapNearestFilter,
@@ -32,7 +26,6 @@ import {
   Material,
   MathUtils,
   Matrix4,
-  Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
@@ -41,7 +34,6 @@ import {
   NearestMipmapLinearFilter,
   NearestMipmapNearestFilter,
   NumberKeyframeTrack,
-  Object3D,
   OrthographicCamera,
   PerspectiveCamera,
   PointLight,
@@ -57,17 +49,15 @@ import {
   SpotLight,
   Texture,
   TextureLoader,
-  //TriangleFanDrawMode,
-  //TriangleStripDrawMode,
   Vector2,
   Vector3,
   VectorKeyframeTrack,
   SRGBColorSpace,
   InstancedBufferAttribute,
 } from "three";
-//import { toTrianglesDrawMode } from "three/addons/utils/BufferGeometryUtils.js";
 
 import { createVertexBinding, createIndexBinding } from "../render/vertex";
+import TextureManager from "../common/texture_manager";
 import { traverseTreePreDFS } from "./tree";
 
 class GLTFLoader extends Loader {
@@ -2245,7 +2235,7 @@ class GLTFParser {
     this.cache = new GLTFRegistry();
 
     // associations between Three.js objects and glTF elements
-    this.associations = new Map();
+    //this.associations = new Map();
 
     // BufferGeometry caching
     this.primitiveCache = {};
@@ -2531,9 +2521,7 @@ class GLTFParser {
           break;
 
         case "material":
-          dependency = this._invokeOne(function (ext) {
-            return ext.loadMaterial && ext.loadMaterial(index);
-          });
+          dependency = this.loadMaterial(index);
           break;
 
         case "texture":
@@ -2854,30 +2842,11 @@ class GLTFParser {
     }
 
     const promise = this.loadImageSource(sourceIndex, loader)
-      .then(function (texture) {
-        texture.flipY = false;
-
-        texture.name = textureDef.name || sourceDef.name || "";
-
-        if (
-          texture.name === "" &&
-          typeof sourceDef.uri === "string" &&
-          sourceDef.uri.startsWith("data:image/") === false
-        ) {
-          texture.name = sourceDef.uri;
-        }
-
-        const samplers = json.samplers || {};
-        const sampler = samplers[textureDef.sampler] || {};
-
-        texture.magFilter = WEBGL_FILTERS[sampler.magFilter] || LinearFilter;
-        texture.minFilter =
-          WEBGL_FILTERS[sampler.minFilter] || LinearMipmapLinearFilter;
-        texture.wrapS = WEBGL_WRAPPINGS[sampler.wrapS] || RepeatWrapping;
-        texture.wrapT = WEBGL_WRAPPINGS[sampler.wrapT] || RepeatWrapping;
-
-        parser.associations.set(texture, { textures: textureIndex });
-
+      .then(function (textureId) {
+        const texture = {
+          textureId,
+          sampler: json.samplers[textureDef.sampler],
+        };
         return texture;
       })
       .catch(function () {
@@ -2906,6 +2875,9 @@ class GLTFParser {
     let isObjectURL = false;
 
     if (sourceDef.bufferView !== undefined) {
+      // @TODO
+      throw new Error(`GLTFLoader: BufferView image not supported.`);
+
       // Load binary image data from bufferView, if provided.
 
       sourceURI = parser
@@ -2924,46 +2896,9 @@ class GLTFParser {
       );
     }
 
-    const promise = Promise.resolve(sourceURI)
-      .then(function (sourceURI) {
-        return new Promise(function (resolve, reject) {
-          let onLoad = resolve;
+    const textureId = LoaderUtils.resolveURL(sourceURI, options.path);
 
-          if (loader.isImageBitmapLoader === true) {
-            onLoad = function (imageBitmap) {
-              const texture = new Texture(imageBitmap);
-              texture.needsUpdate = true;
-
-              resolve(texture);
-            };
-          }
-
-          loader.load(
-            LoaderUtils.resolveURL(sourceURI, options.path),
-            onLoad,
-            undefined,
-            reject
-          );
-        });
-      })
-      .then(function (texture) {
-        // Clean up resources and configure Texture.
-
-        if (isObjectURL === true) {
-          URL.revokeObjectURL(sourceURI);
-        }
-
-        assignExtrasToUserData(texture, sourceDef);
-
-        texture.userData.mimeType =
-          sourceDef.mimeType || getImageURIMimeType(sourceDef.uri);
-
-        return texture;
-      })
-      .catch(function (error) {
-        console.error("THREE.GLTFLoader: Couldn't load texture", sourceURI);
-        throw error;
-      });
+    const promise = TextureManager.add(textureId).then(() => textureId);
 
     this.sourceCache[sourceIndex] = promise;
     return promise;
@@ -3104,197 +3039,44 @@ class GLTFParser {
    * @param {number} materialIndex
    * @return {Promise<Material>}
    */
-  loadMaterial(materialIndex) {
+  async loadMaterial(materialIndex) {
     const parser = this;
     const json = this.json;
     const extensions = this.extensions;
     const materialDef = json.materials[materialIndex];
-
-    let materialType;
-    const materialParams = {};
-    const materialExtensions = materialDef.extensions || {};
-
     const pending = [];
 
-    if (materialExtensions[EXTENSIONS.KHR_MATERIALS_UNLIT]) {
-      const kmuExtension = extensions[EXTENSIONS.KHR_MATERIALS_UNLIT];
-      materialType = kmuExtension.getMaterialType();
-      pending.push(
-        kmuExtension.extendParams(materialParams, materialDef, parser)
-      );
-    } else {
-      // Specification:
-      // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
+    const { pbrMetallicRoughness = {}, normalTexture } = materialDef;
+    const {
+      baseColorFactor,
+      baseColorTexture,
+      metallicRoughnessTexture,
+      metallicFactor,
+      roughnessFactor,
+    } = pbrMetallicRoughness;
 
-      const metallicRoughness = materialDef.pbrMetallicRoughness || {};
+    const material = {
+      extensions: materialDef.extensions || {},
+      normalTexture:
+        normalTexture &&
+        (await this.getDependency("texture", normalTexture.index)),
+      pbrMetallicRoughness: {
+        baseColorFactor,
+        metallicFactor,
+        roughnessFactor,
 
-      materialParams.color = new Color(1.0, 1.0, 1.0);
-      materialParams.opacity = 1.0;
+        baseColorTexture:
+          baseColorTexture &&
+          (await this.getDependency("texture", baseColorTexture.index)),
+        metallicRoughnessTexture:
+          metallicRoughnessTexture &&
+          (await this.getDependency("texture", metallicRoughnessTexture.index)),
+      },
+      alphaMode: materialDef.alphaMode || "OPAQUE",
+      alphaTest: materialDef.alphaCutoff || 0.5,
+    };
 
-      if (Array.isArray(metallicRoughness.baseColorFactor)) {
-        const array = metallicRoughness.baseColorFactor;
-
-        materialParams.color.setRGB(
-          array[0],
-          array[1],
-          array[2],
-          LinearSRGBColorSpace
-        );
-        materialParams.opacity = array[3];
-      }
-
-      if (metallicRoughness.baseColorTexture !== undefined) {
-        pending.push(
-          parser.assignTexture(
-            materialParams,
-            "map",
-            metallicRoughness.baseColorTexture,
-            SRGBColorSpace
-          )
-        );
-      }
-
-      materialParams.metalness =
-        metallicRoughness.metallicFactor !== undefined
-          ? metallicRoughness.metallicFactor
-          : 1.0;
-      materialParams.roughness =
-        metallicRoughness.roughnessFactor !== undefined
-          ? metallicRoughness.roughnessFactor
-          : 1.0;
-
-      if (metallicRoughness.metallicRoughnessTexture !== undefined) {
-        pending.push(
-          parser.assignTexture(
-            materialParams,
-            "metalnessMap",
-            metallicRoughness.metallicRoughnessTexture
-          )
-        );
-        pending.push(
-          parser.assignTexture(
-            materialParams,
-            "roughnessMap",
-            metallicRoughness.metallicRoughnessTexture
-          )
-        );
-      }
-
-      materialType = this._invokeOne(function (ext) {
-        return ext.getMaterialType && ext.getMaterialType(materialIndex);
-      });
-
-      pending.push(
-        Promise.all(
-          this._invokeAll(function (ext) {
-            return (
-              ext.extendMaterialParams &&
-              ext.extendMaterialParams(materialIndex, materialParams)
-            );
-          })
-        )
-      );
-    }
-
-    if (materialDef.doubleSided === true) {
-      materialParams.side = DoubleSide;
-    }
-
-    const alphaMode = materialDef.alphaMode || ALPHA_MODES.OPAQUE;
-
-    if (alphaMode === ALPHA_MODES.BLEND) {
-      materialParams.transparent = true;
-
-      // See: https://github.com/mrdoob/three.js/issues/17706
-      materialParams.depthWrite = false;
-    } else {
-      materialParams.transparent = false;
-
-      if (alphaMode === ALPHA_MODES.MASK) {
-        materialParams.alphaTest =
-          materialDef.alphaCutoff !== undefined ? materialDef.alphaCutoff : 0.5;
-      }
-    }
-
-    if (
-      materialDef.normalTexture !== undefined &&
-      materialType !== MeshBasicMaterial
-    ) {
-      pending.push(
-        parser.assignTexture(
-          materialParams,
-          "normalMap",
-          materialDef.normalTexture
-        )
-      );
-
-      materialParams.normalScale = new Vector2(1, 1);
-
-      if (materialDef.normalTexture.scale !== undefined) {
-        const scale = materialDef.normalTexture.scale;
-
-        materialParams.normalScale.set(scale, scale);
-      }
-    }
-
-    if (
-      materialDef.occlusionTexture !== undefined &&
-      materialType !== MeshBasicMaterial
-    ) {
-      pending.push(
-        parser.assignTexture(
-          materialParams,
-          "aoMap",
-          materialDef.occlusionTexture
-        )
-      );
-
-      if (materialDef.occlusionTexture.strength !== undefined) {
-        materialParams.aoMapIntensity = materialDef.occlusionTexture.strength;
-      }
-    }
-
-    if (
-      materialDef.emissiveFactor !== undefined &&
-      materialType !== MeshBasicMaterial
-    ) {
-      const emissiveFactor = materialDef.emissiveFactor;
-      materialParams.emissive = new Color().setRGB(
-        emissiveFactor[0],
-        emissiveFactor[1],
-        emissiveFactor[2],
-        LinearSRGBColorSpace
-      );
-    }
-
-    if (
-      materialDef.emissiveTexture !== undefined &&
-      materialType !== MeshBasicMaterial
-    ) {
-      pending.push(
-        parser.assignTexture(
-          materialParams,
-          "emissiveMap",
-          materialDef.emissiveTexture,
-          SRGBColorSpace
-        )
-      );
-    }
-
-    return Promise.all(pending).then(function () {
-      const material = new materialType(materialParams);
-
-      if (materialDef.name) material.name = materialDef.name;
-
-      assignExtrasToUserData(material, materialDef);
-
-      parser.associations.set(material, { materials: materialIndex });
-
-      if (materialDef.extensions)
-        addUnknownExtensionsToUserData(extensions, material, materialDef);
-
-      return material;
-    });
+    return material;
   }
 
   /** When Object3D instances are targeted by animation, they need unique names. */
@@ -3496,17 +3278,17 @@ class GLTFParser {
         if (primitive.extensions)
           addUnknownExtensionsToUserData(extensions, mesh, primitive);
 
-        parser.assignFinalMaterial(mesh);
+        //parser.assignFinalMaterial(mesh);
 
         meshes.push(mesh);
       }
 
-      for (let i = 0, il = meshes.length; i < il; i++) {
-        parser.associations.set(meshes[i], {
-          meshes: meshIndex,
-          primitives: i,
-        });
-      }
+      // for (let i = 0, il = meshes.length; i < il; i++) {
+      //   parser.associations.set(meshes[i], {
+      //     meshes: meshIndex,
+      //     primitives: i,
+      //   });
+      // }
 
       if (meshes.length === 1) {
         if (meshDef.extensions)
@@ -3877,11 +3659,11 @@ class GLTFParser {
         }
       }
 
-      if (!parser.associations.has(node)) {
-        parser.associations.set(node, {});
-      }
+      // if (!parser.associations.has(node)) {
+      //   parser.associations.set(node, {});
+      // }
 
-      parser.associations.get(node).nodes = nodeIndex;
+      // parser.associations.get(node).nodes = nodeIndex;
 
       return node;
     });
@@ -3924,26 +3706,26 @@ class GLTFParser {
 
       // Removes dangling associations, associations that reference a node that
       // didn't make it into the scene.
-      const reduceAssociations = (node) => {
-        const reducedAssociations = new Map();
+      // const reduceAssociations = (node) => {
+      //   const reducedAssociations = new Map();
 
-        for (const [key, value] of parser.associations) {
-          if (key instanceof Material || key instanceof Texture) {
-            reducedAssociations.set(key, value);
-          }
-        }
+      //   for (const [key, value] of parser.associations) {
+      //     if (key instanceof Material || key instanceof Texture) {
+      //       reducedAssociations.set(key, value);
+      //     }
+      //   }
 
-        traverseTreePreDFS(node, (node) => {
-          const mappings = parser.associations.get(node);
-          if (mappings != null) {
-            reducedAssociations.set(node, mappings);
-          }
-        });
+      //   traverseTreePreDFS(node, (node) => {
+      //     const mappings = parser.associations.get(node);
+      //     if (mappings != null) {
+      //       reducedAssociations.set(node, mappings);
+      //     }
+      //   });
 
-        return reducedAssociations;
-      };
+      //   return reducedAssociations;
+      // };
 
-      parser.associations = reduceAssociations(scene);
+      // parser.associations = reduceAssociations(scene);
 
       return scene;
     });
