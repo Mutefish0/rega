@@ -57,6 +57,7 @@ export {
   modelWorldMatrixInverse,
   modelViewMatrix,
   uv,
+  legacyUv,
   attribute,
 } from "./misc/nodes";
 

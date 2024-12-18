@@ -23,10 +23,9 @@ export default class TextureManager {
   private static fromCacheData(
     width: number,
     height: number,
+    format: GPUTextureFormat,
     data: ArrayBuffer
   ) {
-    const format = "rgba8unorm" as const;
-
     const bytesPerTexel = getBytesPerTexel(format);
 
     // // 256 byte alignment
@@ -48,7 +47,10 @@ export default class TextureManager {
     return texture;
   }
 
-  public static async add(url: string) {
+  public static async add(
+    url: string,
+    options?: { format?: GPUTextureFormat }
+  ) {
     if (TextureManager.textures.has(url)) {
       return;
     }
@@ -59,6 +61,7 @@ export default class TextureManager {
       const texture = TextureManager.fromCacheData(
         cache.width,
         cache.height,
+        cache.format,
         cache.data
       );
 
@@ -70,7 +73,7 @@ export default class TextureManager {
     await new Promise<Texture>((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
-        const format = "rgba8unorm" as const;
+        const format = options?.format ?? ("rgba8unorm" as const);
         const bytesPerTexel = getBytesPerTexel(format);
 
         // 256 byte alignment
@@ -115,9 +118,13 @@ export default class TextureManager {
             width: image.width,
             height: image.height,
             data: storeBuffer,
+            format,
           })
           .then(() => {
             resolve(texture);
+          })
+          .catch((err) => {
+            console.error(err);
           });
       };
       image.onerror = (err) => {

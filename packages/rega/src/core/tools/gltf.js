@@ -2484,7 +2484,7 @@ class GLTFParser {
    * @param {number} index
    * @return {Promise<Object3D|Material|THREE.Texture|AnimationClip|ArrayBuffer|Object>}
    */
-  getDependency(type, index) {
+  getDependency(type, index, opts) {
     const cacheKey = type + ":" + index;
     let dependency = this.cache.get(cacheKey);
 
@@ -2526,7 +2526,7 @@ class GLTFParser {
 
         case "texture":
           dependency = this._invokeOne(function (ext) {
-            return ext.loadTexture && ext.loadTexture(index);
+            return ext.loadTexture && ext.loadTexture(index, opts);
           });
           break;
 
@@ -2809,7 +2809,7 @@ class GLTFParser {
    * @param {number} textureIndex
    * @return {Promise<THREE.Texture|null>}
    */
-  loadTexture(textureIndex) {
+  loadTexture(textureIndex, opts) {
     const json = this.json;
     const options = this.options;
     const textureDef = json.textures[textureIndex];
@@ -2823,10 +2823,10 @@ class GLTFParser {
       if (handler !== null) loader = handler;
     }
 
-    return this.loadTextureImage(textureIndex, sourceIndex, loader);
+    return this.loadTextureImage(textureIndex, sourceIndex, loader, opts);
   }
 
-  loadTextureImage(textureIndex, sourceIndex, loader) {
+  loadTextureImage(textureIndex, sourceIndex, loader, opts) {
     const parser = this;
     const json = this.json;
 
@@ -2842,7 +2842,9 @@ class GLTFParser {
     }
 
     const promise = this.loadImageSource(sourceIndex, loader)
-      .then(function (textureId) {
+      .then(async function (textureId) {
+        await TextureManager.add(textureId, { format: opts?.format });
+
         const texture = {
           textureId,
           sampler: json.samplers[textureDef.sampler],
@@ -2898,10 +2900,8 @@ class GLTFParser {
 
     const textureId = LoaderUtils.resolveURL(sourceURI, options.path);
 
-    const promise = TextureManager.add(textureId).then(() => textureId);
-
-    this.sourceCache[sourceIndex] = promise;
-    return promise;
+    this.sourceCache[sourceIndex] = textureId;
+    return Promise.resolve(textureId);
   }
 
   /**
@@ -3067,7 +3067,9 @@ class GLTFParser {
 
         baseColorTexture:
           baseColorTexture &&
-          (await this.getDependency("texture", baseColorTexture.index)),
+          (await this.getDependency("texture", baseColorTexture.index, {
+            format: "rgba8unorm-srgb",
+          })),
         metallicRoughnessTexture:
           metallicRoughnessTexture &&
           (await this.getDependency("texture", metallicRoughnessTexture.index)),

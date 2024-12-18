@@ -62,7 +62,7 @@ const transparentDiscard = Fn(({ color }: any) => {
 });
 
 const fragmentNode = (function () {
-  const uvNode = uv();
+  const uvNode = uv;
 
   const offsetX = float(mod(uvNode.x.mul(float(gridSize.x)), 1.0));
   const offsetY = float(mod(uvNode.y.mul(float(gridSize.y)), 1.0));

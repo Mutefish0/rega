@@ -46,7 +46,7 @@ export default class DBStore {
       };
 
       request.onerror = (event) => {
-        reject();
+        reject(event);
       };
     });
   }

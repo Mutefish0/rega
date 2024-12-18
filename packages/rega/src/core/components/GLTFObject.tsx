@@ -3,15 +3,22 @@ import { getModel } from "../common/model_manager";
 import { GLTFMesh, GLTFNode } from "../tools/gltf";
 import RenderObject from "../primitives/RenderObject";
 import Relative from "../primitives/Relative";
-import { vec3, float, uniform, texture } from "pure3";
+import { vec3, float, uniform, texture, legacyUv } from "pure3";
 import useBindings from "../hooks/useBingdings";
 
 interface Props {
   modelId: string;
 }
 
-const baseColorTextureNode = texture("baseColorTexture");
-const normalTextureNode = texture("normalTexture");
+const baseColorTextureNode = texture("baseColorTexture", {
+  sampler: "linearSampler",
+});
+baseColorTextureNode.uvNode = legacyUv;
+
+const normalTextureNode = texture("normalTexture", {
+  sampler: "linearSampler",
+});
+
 const baseColorFactorNode = uniform("vec4", "baseColorFactor");
 
 function Mesh({ mesh }: { mesh: GLTFMesh }) {
@@ -21,6 +28,7 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
 
   const bindings = useBindings(
     {
+      linearSampler: "sampler",
       baseColorTexture: "texture_2d",
       normalTexture: "texture_2d",
       baseColorFactor: "vec4",
@@ -33,6 +41,11 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
       if (pbrMetallicRoughness?.baseColorFactor) {
         init.baseColorFactor(pbrMetallicRoughness?.baseColorFactor);
       }
+      init.linearSampler({
+        magFilter: "linear",
+        minFilter: "linear",
+        maxAnisotropy: 1,
+      });
     }
   );
 
@@ -48,9 +61,10 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
   return (
     <RenderObject
       bindings={bindings.resources}
-      colorNode={colorNode}
-      opacityNode={opacityNode}
-      normalNode={normalNode}
+      colorNode={baseColorTextureNode.rgb}
+      opacityNode={float(1)}
+      //opacityNode={opacityNode}
+      //normalNode={normalNode}
       vertexCount={mesh.geometry.vertexCount}
       vertex={mesh.geometry.attributes}
       index={{
@@ -60,11 +74,11 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
       depthWriteEnabled
       cullMode="back"
       topology={mesh.topology}
-      alphaTest={
-        alphaMode === "MASK" && typeof alphaTest !== "undefined"
-          ? float(alphaTest)
-          : undefined
-      }
+      // alphaTest={
+      //   alphaMode === "MASK" && typeof alphaTest !== "undefined"
+      //     ? float(alphaTest)
+      //     : undefined
+      // }
     />
   );
 }

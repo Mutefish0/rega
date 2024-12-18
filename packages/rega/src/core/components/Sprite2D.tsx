@@ -1,15 +1,6 @@
 import React, { useEffect, useMemo, useContext } from "react";
 
-import {
-  luminance,
-  vec4,
-  texture,
-  uniform,
-  Matrix4,
-  Fn,
-  Discard,
-  If,
-} from "pure3";
+import { luminance, texture, uniform, Matrix4 } from "pure3";
 
 import TextureManager from "../common/texture_manager";
 import ThreeContext from "../primitives/ThreeContext";
@@ -19,7 +10,6 @@ import useAnchor, { AnchorType } from "../hooks/useAnchor";
 import Relative from "../primitives/Relative";
 import { parseColor } from "../tools/color";
 
-import { basicVertexNode } from "../render/shaders/index";
 import quad from "../render/geometry/quad";
 import useBindings from "../hooks/useBingdings";
 import useVertexBinding from "../hooks/useVertexBinding";
@@ -42,24 +32,6 @@ const color = uniform("vec3", "color");
 const opacity = uniform("float", "opacity");
 const tex = texture("tex");
 const texAlpha = texture("texAlpha");
-
-const transparentDiscard = Fn(({ color }: any) => {
-  const result = color.toVar();
-
-  If(color.a.lessThanEqual(0.0), () => {
-    Discard();
-  });
-
-  return result;
-});
-
-const fragmentNode = transparentDiscard({
-  color: tex.mul(vec4(color, opacity)),
-});
-
-const fragmentNodeWithAlpha = transparentDiscard({
-  color: tex.mul(vec4(color, opacity.mul(luminance(texAlpha.rgb)))),
-});
 
 // TODO 支持复用 Vertex
 export default React.memo(function Sprite2D({
@@ -163,8 +135,9 @@ export default React.memo(function Sprite2D({
   return (
     <Relative matrix={matrix}>
       <RenderObject
-        vertexNode={basicVertexNode}
-        fragmentNode={alphaTextureId ? fragmentNodeWithAlpha : fragmentNode}
+        colorNode={tex.rgb.mul(color.rgb)}
+        opacityNode={texAlpha.a.mul(opacity)}
+        alphaTest={alphaTextureId ? luminance(texAlpha.rgb) : undefined}
         bindings={bindings.resources}
         vertexCount={quad.vertexCount}
         vertex={{ position: quad.vertex.position, uv: bUv.buffer }}
