@@ -27,7 +27,6 @@ import {
   modelViewMatrix,
   vec4,
   mat3,
-  legacyUv,
 } from "pure3";
 import useBindings from "../hooks/useBingdings";
 
@@ -57,7 +56,7 @@ const perturbNormal2Arb = /*@__PURE__*/ Fn(
 
     const scale = inverseSqrt(max(dot(T, T), dot(B, B)));
 
-    return mat3(T.mul(scale), B.mul(scale), N);
+    return mat3(T.mul(scale), B.mul(scale), N) as NNode<"mat3">;
   }
 );
 
