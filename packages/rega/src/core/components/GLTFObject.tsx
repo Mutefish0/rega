@@ -3,7 +3,7 @@ import { getModel } from "../common/model_manager";
 import { GLTFMesh, GLTFNode } from "../tools/gltf";
 import RenderObject from "../primitives/RenderObject";
 import Relative from "../primitives/Relative";
-import { vec3, float, uniform, texture, legacyUv } from "pure3";
+import { vec3, float, uniform, texture, uv, sub, max } from "pure3";
 import useBindings from "../hooks/useBingdings";
 
 interface Props {
@@ -11,13 +11,10 @@ interface Props {
 }
 
 const baseColorTextureNode = texture("baseColorTexture", {
-  sampler: "linearSampler",
+  sampler: "baseColorTextureSampler",
 });
-baseColorTextureNode.uvNode = legacyUv;
 
-const normalTextureNode = texture("normalTexture", {
-  sampler: "linearSampler",
-});
+const normalTextureNode = texture("normalTexture");
 
 const baseColorFactorNode = uniform("vec4", "baseColorFactor");
 
@@ -28,7 +25,7 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
 
   const bindings = useBindings(
     {
-      linearSampler: "sampler",
+      baseColorTextureSampler: "sampler",
       baseColorTexture: "texture_2d",
       normalTexture: "texture_2d",
       baseColorFactor: "vec4",
@@ -37,15 +34,16 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
       init.baseColorTexture(
         pbrMetallicRoughness?.baseColorTexture?.textureId || ""
       );
+
+      init.baseColorTextureSampler(
+        pbrMetallicRoughness?.baseColorTexture?.sampler || {}
+      );
+
       init.normalTexture(normalTexture?.textureId || "");
+
       if (pbrMetallicRoughness?.baseColorFactor) {
         init.baseColorFactor(pbrMetallicRoughness?.baseColorFactor);
       }
-      init.linearSampler({
-        magFilter: "linear",
-        minFilter: "linear",
-        maxAnisotropy: 1,
-      });
     }
   );
 
@@ -62,8 +60,7 @@ function Mesh({ mesh }: { mesh: GLTFMesh }) {
     <RenderObject
       bindings={bindings.resources}
       colorNode={baseColorTextureNode.rgb}
-      opacityNode={float(1)}
-      //opacityNode={opacityNode}
+      opacityNode={opacityNode}
       //normalNode={normalNode}
       vertexCount={mesh.geometry.vertexCount}
       vertex={mesh.geometry.attributes}

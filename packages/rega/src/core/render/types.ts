@@ -113,13 +113,19 @@ export type TransferTextureResource = {
   sampleType: "float" | "uint" | "sint";
 };
 
-export type TransferSamplerResource = {
-  type: "sampler";
+export interface SmaplerOptions {
   magFilter?: GPUFilterMode;
   minFilter?: GPUFilterMode;
   compare?: GPUCompareFunction;
   maxAnisotropy?: number;
-};
+  addressModeU?: GPUAddressMode;
+  addressModeV?: GPUAddressMode;
+  addressModeW?: GPUAddressMode;
+}
+
+export type TransferSamplerResource = {
+  type: "sampler";
+} & SmaplerOptions;
 
 export type TransferUniformBufferResource = {
   type: "uniformBuffer";

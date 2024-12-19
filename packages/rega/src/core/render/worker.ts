@@ -87,6 +87,9 @@ function createBindGroupByBindings(
           minFilter: resource.minFilter,
           maxAnisotropy: resource.maxAnisotropy,
           compare: resource.compare,
+          addressModeU: resource.addressModeU,
+          addressModeV: resource.addressModeV,
+          addressModeW: resource.addressModeW,
         }),
       };
     } else {
@@ -173,12 +176,14 @@ const renderPasses = new Map<
   string,
   {
     output: Array<{
+      view: GPUTextureView | null;
       texture: GPUTexture | null;
       storeOp: GPUStoreOp;
       loadOp: GPULoadOp;
     }>;
 
     depth: {
+      view: GPUTextureView;
       texture: GPUTexture;
       storeOp: GPUStoreOp;
       loadOp: GPULoadOp;
@@ -251,6 +256,7 @@ self.addEventListener("message", async (event) => {
         texture: GPUTexture;
         storeOp: GPUStoreOp;
         loadOp: GPULoadOp;
+        view: GPUTextureView;
       };
       if ((_depth as TransferRenderPassRef).ref) {
         const { ref, src, loadOp, storeOp } = _depth as TransferRenderPassRef;
@@ -260,37 +266,43 @@ self.addEventListener("message", async (event) => {
             texture: pass!.depth.texture,
             storeOp,
             loadOp,
+            view: pass!.depth.texture.createView(),
           };
         } else if (src === "output_0") {
           depth = {
             texture: pass!.output[0]!.texture!,
             storeOp,
             loadOp,
+            view: pass!.output[0]!.texture!.createView(),
           };
         } else if (src === "output_1") {
           depth = {
             texture: pass!.output[1]!.texture!,
             storeOp,
             loadOp,
+            view: pass!.output[1]!.texture!.createView(),
           };
         } else if (src === "output_2") {
           depth = {
             texture: pass!.output[2]!.texture!,
             storeOp,
             loadOp,
+            view: pass!.output[2]!.texture!.createView(),
           };
         }
       } else {
         const { width, height, format, loadOp, storeOp } =
           _depth as TransferRenderPassTexture;
+        const texture = device.createTexture({
+          size: [width, height, 1],
+          format,
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
         depth = {
-          texture: device.createTexture({
-            size: [width, height, 1],
-            format,
-            usage: GPUTextureUsage.RENDER_ATTACHMENT,
-          }),
+          texture,
           storeOp,
           loadOp,
+          view: texture.createView(),
         };
       }
 
@@ -298,6 +310,7 @@ self.addEventListener("message", async (event) => {
         texture: GPUTexture | null;
         storeOp: GPUStoreOp;
         loadOp: GPULoadOp;
+        view: GPUTextureView | null;
       }> = [];
 
       for (const item of _output) {
@@ -305,40 +318,49 @@ self.addEventListener("message", async (event) => {
           const { ref, src, loadOp, storeOp } = item as TransferRenderPassRef;
           const pass = renderPasses.get(ref);
           if (ref === "swapchain") {
-            output.push({ texture: null, loadOp, storeOp });
+            output.push({ texture: null, loadOp, storeOp, view: null });
           } else if (src === "depth") {
-            output.push({ texture: pass!.depth.texture, loadOp, storeOp });
+            output.push({
+              texture: pass!.depth.texture,
+              loadOp,
+              storeOp,
+              view: pass!.depth.texture.createView(),
+            });
           } else if (src === "output_0") {
             output.push({
               texture: pass!.output[0]!.texture!,
               loadOp,
               storeOp,
+              view: pass!.output[0]!.texture!.createView(),
             });
           } else if (src === "output_1") {
             output.push({
               texture: pass!.output[1]!.texture!,
               loadOp,
               storeOp,
+              view: pass!.output[1]!.texture!.createView(),
             });
           } else if (src === "output_2") {
             output.push({
               texture: pass!.output[2]!.texture!,
               loadOp,
               storeOp,
+              view: pass!.output[2]!.texture!.createView(),
             });
           }
         } else {
           const { width, height, format, loadOp, storeOp } =
             item as TransferRenderPassTexture;
+          const texture = device.createTexture({
+            size: [width, height, 1],
+            format,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+          });
           output.push({
-            texture: device.createTexture({
-              size: [width, height, 1],
-              format,
-              usage:
-                GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            }),
+            texture,
             storeOp,
             loadOp,
+            view: texture.createView(),
           });
         }
       }
@@ -464,14 +486,14 @@ async function start() {
       } = renderPasses.get(passId)!;
 
       const renderPassDescriptor: GPURenderPassDescriptor = {
-        colorAttachments: output.map(({ texture, loadOp, storeOp }) => ({
-          view: texture?.createView() ?? swapchainTextureView,
+        colorAttachments: output.map(({ view, loadOp, storeOp }) => ({
+          view: view ?? swapchainTextureView,
           loadOp,
           storeOp,
           clearValue: backgroundColor,
         })),
         depthStencilAttachment: {
-          view: depth.texture.createView(),
+          view: depth.view,
           depthClearValue: 1.0, // 深度清除值
           depthStoreOp: depth.storeOp,
           depthLoadOp: depth.loadOp,

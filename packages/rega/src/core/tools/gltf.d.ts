@@ -1,3 +1,11 @@
+interface GLTFSampler {
+  addressModeU: GPUAddressMode;
+  addressModeV: GPUAddressMode;
+  addressModeW: GPUAddressMode;
+  magFilter: GPUFilterMode;
+  minFilter: GPUFilterMode;
+}
+
 export interface GLTFMaterial {
   extensions: {};
   pbrMetallicRoughness: {
@@ -6,11 +14,11 @@ export interface GLTFMaterial {
     baseColorFactor?: number[];
     baseColorTexture?: {
       textureId: string;
-      sampler: {};
+      sampler: GLTFSampler;
     };
     metallicRoughnessTexture?: {
       textureId: string;
-      sampler: {};
+      sampler: GLTFSampler;
     };
   };
   normalTexture?: {

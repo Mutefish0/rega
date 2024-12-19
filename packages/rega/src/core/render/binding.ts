@@ -1,5 +1,5 @@
 import { type WGSLValueType } from "pure3";
-import { TransferResource, UniformType } from "./types";
+import { TransferResource, UniformType, SmaplerOptions } from "./types";
 import { HEADER_SIZE } from "./sharedBufferLayout";
 import createSharedBuffer, {
   createVersionView,
@@ -54,13 +54,6 @@ export interface BindingView<T extends UniformType> {
   get: Viewer<T>;
 }
 
-interface SmaplerOptions {
-  magFilter?: GPUFilterMode;
-  minFilter?: GPUFilterMode;
-  compare?: GPUCompareFunction;
-  maxAnisotropy?: number;
-}
-
 export type BindingsLayout = Record<string, UniformType>;
 
 export type BindingUpdater<
@@ -97,7 +90,7 @@ function createUniformValueBinding<T extends WGSLValueType>(
     update: v.update,
   };
 }
-function createUniformValueBindingView<T extends WGSLValueType>(
+export function createUniformValueBindingView<T extends WGSLValueType>(
   sab: SharedArrayBuffer,
   type: T
 ): BindingView<WGSLValueType> {
@@ -163,6 +156,15 @@ export function createUniformBinding<T extends UniformType>(
         }
         if (opts.maxAnisotropy) {
           resource.maxAnisotropy = opts.maxAnisotropy;
+        }
+        if (opts.addressModeU) {
+          resource.addressModeU = opts.addressModeU;
+        }
+        if (opts.addressModeV) {
+          resource.addressModeV = opts.addressModeV;
+        }
+        if (opts.addressModeW) {
+          resource.addressModeW = opts.addressModeW;
         }
       },
     } as BindingHandle<T>;

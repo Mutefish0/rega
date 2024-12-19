@@ -1926,18 +1926,18 @@ const WEBGL_COMPONENT_TYPES = {
 };
 
 const WEBGL_FILTERS = {
-  9728: NearestFilter,
-  9729: LinearFilter,
-  9984: NearestMipmapNearestFilter,
-  9985: LinearMipmapNearestFilter,
-  9986: NearestMipmapLinearFilter,
-  9987: LinearMipmapLinearFilter,
+  9728: "nearest", //NearestFilter,
+  9729: "linear", //LinearFilter,
+  9984: "nearest", // NearestMipmapNearestFilter,
+  9985: "nearest", // LinearMipmapNearestFilter,
+  9986: "linear", // NearestMipmapLinearFilter,
+  9987: "linear", // LinearMipmapLinearFilter,
 };
 
 const WEBGL_WRAPPINGS = {
-  33071: ClampToEdgeWrapping,
-  33648: MirroredRepeatWrapping,
-  10497: RepeatWrapping,
+  33071: "clamp-to-edge", //ClampToEdgeWrapping,
+  33648: "mirror-repeat",
+  10497: "repeat",
 };
 
 const WEBGL_TYPE_SIZES = {
@@ -2530,6 +2530,10 @@ class GLTFParser {
           });
           break;
 
+        case "sampler":
+          dependency = this.loadSampler(index);
+          break;
+
         case "skin":
           dependency = this.loadSkin(index);
           break;
@@ -2809,7 +2813,7 @@ class GLTFParser {
    * @param {number} textureIndex
    * @return {Promise<THREE.Texture|null>}
    */
-  loadTexture(textureIndex, opts) {
+  async loadTexture(textureIndex, opts) {
     const json = this.json;
     const options = this.options;
     const textureDef = json.textures[textureIndex];
@@ -2822,42 +2826,30 @@ class GLTFParser {
       const handler = options.manager.getHandler(sourceDef.uri);
       if (handler !== null) loader = handler;
     }
+    const textureId = await this.loadImageSource(sourceIndex, loader);
+    const sampler = await this.getDependency("sampler", textureDef.sampler);
 
-    return this.loadTextureImage(textureIndex, sourceIndex, loader, opts);
+    await TextureManager.add(textureId, { format: opts?.format });
+
+    return {
+      textureId,
+      sampler,
+    };
   }
 
-  loadTextureImage(textureIndex, sourceIndex, loader, opts) {
-    const parser = this;
+  async loadSampler(samplerIndex) {
     const json = this.json;
+    const samplers = json.samplers;
 
-    const textureDef = json.textures[textureIndex];
-    const sourceDef = json.images[sourceIndex];
+    const samplerDef = samplers[samplerIndex];
 
-    const cacheKey =
-      (sourceDef.uri || sourceDef.bufferView) + ":" + textureDef.sampler;
-
-    if (this.textureCache[cacheKey]) {
-      // See https://github.com/mrdoob/three.js/issues/21559.
-      return this.textureCache[cacheKey];
-    }
-
-    const promise = this.loadImageSource(sourceIndex, loader)
-      .then(async function (textureId) {
-        await TextureManager.add(textureId, { format: opts?.format });
-
-        const texture = {
-          textureId,
-          sampler: json.samplers[textureDef.sampler],
-        };
-        return texture;
-      })
-      .catch(function () {
-        return null;
-      });
-
-    this.textureCache[cacheKey] = promise;
-
-    return promise;
+    return {
+      addressModeU: WEBGL_WRAPPINGS[samplerDef.wrapS || WEBGL_CONSTANTS.REPEAT],
+      addressModeV: WEBGL_WRAPPINGS[samplerDef.wrapT || WEBGL_CONSTANTS.REPEAT],
+      addressModeW: "clamp-to-edge",
+      minFilter: WEBGL_FILTERS[samplerDef.minFilter || WEBGL_CONSTANTS.LINEAR],
+      magFilter: WEBGL_FILTERS[samplerDef.magFilter || WEBGL_CONSTANTS.LINEAR],
+    };
   }
 
   loadImageSource(sourceIndex, loader) {
@@ -3299,18 +3291,20 @@ class GLTFParser {
         return meshes[0];
       }
 
-      const group = new Group();
+      throw new Error("GLTFLoader: Multiple primitives are not supported.");
 
-      if (meshDef.extensions)
-        addUnknownExtensionsToUserData(extensions, group, meshDef);
+      // const group = new Group();
 
-      parser.associations.set(group, { meshes: meshIndex });
+      // if (meshDef.extensions)
+      //   addUnknownExtensionsToUserData(extensions, group, meshDef);
 
-      for (let i = 0, il = meshes.length; i < il; i++) {
-        group.add(meshes[i]);
-      }
+      // parser.associations.set(group, { meshes: meshIndex });
 
-      return group;
+      // for (let i = 0, il = meshes.length; i < il; i++) {
+      //   group.add(meshes[i]);
+      // }
+
+      // return group;
     });
   }
 

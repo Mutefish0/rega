@@ -57,46 +57,40 @@ function App() {
           output: [{ ref: "swapchain" }],
           layers: [
             Camera.layer,
-            //AmbientLight.layer,
-            //DirectionalLight.layer,
-            //BasicLightModel,
+            AmbientLight.layer,
+            DirectionalLight.layer,
+            BasicLightModel,
           ],
           groups: ["main"],
         },
       }}
     >
-      {/* <AmbientLight intensity={0.8} /> */}
+      <AmbientLight intensity={0.8} />
 
-      {/* <Relative>
+      <Relative>
         <DirectionalLight direction={[0, 0, -1]} intensity={1} />
-      </Relative> */}
+      </Relative>
 
       <Relative translation={{ z: 5 }}>
         <Camera type="perspective" />
       </Relative>
 
       <RenderGroup id="main">
-        {/* <Animation
+        <Animation
           genFunc={anim}
           renderItem={({ rotateY }) => (
-            <Relative rotation={{ x: Math.PI / 5, y: 0, z: 0 }}>
+            <Relative rotation={{ x: Math.PI / 5, y: rotateY, z: 0 }}>
               <RenderGroup id="main">
                 <GLTFObject modelId="/models/helmet/DamagedHelmet.gltf" />
               </RenderGroup>
             </Relative>
           )}
-        /> */}
+        />
         {/* <Sprite2D
           textureId="/models/helmet/Default_albedo.jpg"
           size={[2, 2]}
           clip={[0, 0, 2048, 2048]}
         /> */}
-
-        <Relative rotation={{ x: Math.PI / 5, y: 0, z: 0 }}>
-          <RenderGroup id="main">
-            <GLTFObject modelId="/models/helmet/DamagedHelmet.gltf" />
-          </RenderGroup>
-        </Relative>
       </RenderGroup>
     </RenderPipeline>
   );
