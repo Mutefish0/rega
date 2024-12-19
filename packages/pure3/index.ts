@@ -44,7 +44,21 @@ export {
 
 export const emptyMatrix4 = new Matrix4();
 
-export { max, min, sub, add, mul, div, normalize, dot } from "./math/vector";
+export {
+  max,
+  min,
+  sub,
+  add,
+  mul,
+  div,
+  normalize,
+  dot,
+  cross,
+  sqrt,
+  inverseSqrt,
+  dpdxFine,
+  dpdyFine,
+} from "./math/vector";
 export type { Vector3Like, Vector2Like, Vector4Like } from "./math/vector";
 
 export { PI, PI2 } from "./math/const";

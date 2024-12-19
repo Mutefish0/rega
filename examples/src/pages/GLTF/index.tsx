@@ -20,7 +20,7 @@ function* anim() {
   // 33 fps
   const dt = 16;
   let time = 0;
-  const w = (2 * Math.PI) / 6000;
+  const w = (2 * Math.PI) / 12000;
   while (true) {
     const offsetY = Math.sin(w * time);
     const rotateY = w * time;
@@ -71,7 +71,7 @@ function App() {
         <DirectionalLight direction={[0, 0, -1]} intensity={1} />
       </Relative>
 
-      <Relative translation={{ z: 5 }}>
+      <Relative translation={{ z: 3 }}>
         <Camera type="perspective" />
       </Relative>
 
@@ -79,7 +79,7 @@ function App() {
         <Animation
           genFunc={anim}
           renderItem={({ rotateY }) => (
-            <Relative rotation={{ x: Math.PI / 5, y: rotateY, z: 0 }}>
+            <Relative rotation={{ x: Math.PI / 2, y: rotateY, z: 0 }}>
               <RenderGroup id="main">
                 <GLTFObject modelId="/models/helmet/DamagedHelmet.gltf" />
               </RenderGroup>

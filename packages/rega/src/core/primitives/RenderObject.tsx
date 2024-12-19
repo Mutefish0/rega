@@ -47,6 +47,8 @@ interface Props {
   bindings?: Record<string, TransferResource>;
 
   positionNode?: Node<"vec4">;
+
+  localNormalNode?: Node<"vec3">;
   normalNode?: Node<"vec3">;
 
   opacityNode?: Node<"float">;
@@ -76,7 +78,9 @@ interface Props {
 
 export default function RenderObject({
   positionNode = vec4(positionGeometry, 1),
+
   normalNode = normalGeometry,
+
   colorNode,
   opacityNode,
 

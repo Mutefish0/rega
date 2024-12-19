@@ -7,8 +7,13 @@ import {
   div as _div,
   normalize as _normalize,
   dot as _dot,
+  cross as _cross,
   PI as _PI,
   PI2 as _PI2,
+  dpdxFine as _dpdxFine,
+  dpdyFine as _dpdyFine,
+  sqrt as _sqrt,
+  inverseSqrt as _inverseSqrt,
 } from "three/src/nodes/TSL.js";
 
 import { WGSLValueType, Node } from "../core/types";
@@ -20,6 +25,23 @@ export const dot = _dot as <T extends "vec2" | "vec3" | "vec4">(
   a: Node<T> | number,
   b: Node<T> | number
 ) => Node<"float">;
+
+export const cross = _cross as <T extends "vec2" | "vec3" | "vec4">(
+  a: Node<T>,
+  b: Node<T>
+) => Node<T>;
+
+export const sqrt = _sqrt as (a: Node<"float">) => Node<"float">;
+
+export const inverseSqrt = _inverseSqrt as (a: Node<"float">) => Node<"float">;
+
+export const dpdxFine = _dpdxFine as <T extends WGSLValueType>(
+  a: Node<T>
+) => Node<T>;
+
+export const dpdyFine = _dpdyFine as <T extends WGSLValueType>(
+  a: Node<T>
+) => Node<T>;
 
 export const normalize = _normalize as <T extends "vec2" | "vec3" | "vec4">(
   a: Node<T> | number
